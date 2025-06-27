@@ -1,6 +1,6 @@
 // frontend/src/services/passwordResetService.js
 
-const API_BASE_URL = 'https://iraibeta-production.up.railway.app/api'
+const API_BASE_URL = 'https://instantresumeai-production.up.railway.app/api'
 
 class PasswordResetService {
   
