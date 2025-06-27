@@ -53,7 +53,7 @@ def create_app():
     bcrypt.init_app(app)
     
     # IMPORTANT: Configure CORS properly for credentials
-    frontend_origin = 'https://frontend-production-6ff2.up.railway.app'
+    frontend_origin = 'https://frontend-production-d76f.up.railway.app'
     CORS(app, 
      resources={r"/api/*": {"origins": [frontend_origin]}},
      supports_credentials=True,
