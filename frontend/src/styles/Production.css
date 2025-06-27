@@ -1,0 +1,329 @@
+/* frontend/src/styles/Production.css */
+
+/* frontend/src/styles/Production.css (Complete and Final) */
+
+/* Error Boundary Styles */
+.error-boundary {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-secondary);
+  text-align: center;
+  padding: 2rem;
+}
+
+.error-boundary h1 {
+  color: var(--error-color);
+}
+
+.error-boundary p {
+  color: var(--text-secondary);
+}
+
+/* Loading Spinner Container */
+.loading-spinner-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner .spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--accent-secondary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner p {
+  color: var(--accent-secondary);
+  font-size: 1.2rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.toast {
+  background: var(--background-primary);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.toast.success { border-left: 4px solid var(--accent-primary); }
+.toast.error { border-left: 4px solid var(--error-color); }
+.toast.warning { border-left: 4px solid #F6AD55; /* A warm amber for warnings */ }
+
+/* And all other original layout and accessibility styles... */
+
+/* Loading Spinner Container */
+.loading-spinner-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(26, 32, 44, 0.9); /* --background-primary with opacity */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  text-align: center;
+}
+
+.loading-spinner .spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(79, 209, 197, 0.3);
+  border-top: 4px solid #4FD1C5; /* --accent-secondary */
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner p {
+  color: #4FD1C5; /* --accent-secondary */
+  font-size: 1.2rem;
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  z-index: 9999;
+  max-width: 400px;
+}
+
+.toast {
+  background: #2D3748; /* --background-secondary */
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.toast.success {
+  border-left: 4px solid #4FD1C5; /* --accent-secondary */
+}
+
+.toast.error {
+  border-left: 4px solid #E53E3E; /* --error-color */
+}
+
+.toast.warning {
+  border-left: 4px solid #805AD5; /* --accent-primary */
+}
+
+.toast-message {
+  flex: 1;
+  color: #E2E8F0; /* --text-primary */
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: #A0AEC0; /* --text-secondary */
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.toast-close:hover {
+  color: #E2E8F0; /* --text-primary */
+}
+
+  
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  /* Secure Form Indicators */
+  .secure-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--bio-luminescent);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+  
+  .secure-indicator svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  /* File Upload Security */
+  .file-security-notice {
+    background: rgba(144, 241, 239, 0.1);
+    border: 1px solid rgba(144, 241, 239, 0.3);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--bio-luminescent);
+  }
+  
+  .file-security-notice ul {
+    margin: 0.5rem 0 0 1.5rem;
+    padding: 0;
+  }
+  
+  /* Session Warning */
+  .session-warning {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 158, 0, 0.95);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(255, 158, 0, 0.3);
+    z-index: 9998;
+    animation: pulseWarning 2s ease infinite;
+  }
+  
+  @keyframes pulseWarning {
+    0%, 100% {
+      transform: translateX(-50%) scale(1);
+    }
+    50% {
+      transform: translateX(-50%) scale(1.02);
+    }
+  }
+  
+  /* Network Status Indicator */
+  .network-status {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 18, 32, 0.9);
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 1000;
+  }
+  
+  .network-status.online {
+    border: 2px solid var(--bio-luminescent);
+  }
+  
+  .network-status.offline {
+    border: 2px solid var(--coral-primary);
+  }
+  
+  .network-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  
+  .network-status.online .network-indicator {
+    background: var(--bio-luminescent);
+  }
+  
+  .network-status.offline .network-indicator {
+    background: var(--coral-primary);
+  }
+  
+  /* Accessibility Improvements */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  
+  /* Focus Visible Styles */
+  *:focus-visible {
+    outline: 2px solid var(--bio-luminescent);
+    outline-offset: 2px;
+  }
+  
+  /* Skip to Content Link */
+  .skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--gradient-thermal);
+    color: white;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    border-radius: 0 0 8px 0;
+    z-index: 10000;
+  }
+  
+  .skip-to-content:focus {
+    top: 0;
+  }
+  
+  /* Responsive improvements */
+  @media (max-width: 768px) {
+    .toast-container {
+      left: 20px;
+      right: 20px;
+      max-width: none;
+    }
+    
+    .session-warning {
+      left: 20px;
+      right: 20px;
+      transform: none;
+      text-align: center;
+    }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }

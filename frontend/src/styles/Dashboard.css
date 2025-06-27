@@ -1,0 +1,469 @@
+/* Dashboard.css - Compact Layout with Reorganized Action Cards */
+
+/* UPDATED: Dashboard container with optimized spacing */
+.dashboard-container {
+  min-height: calc(100vh - var(--navbar-height));
+  padding: 2rem 1rem 3rem;
+  padding-top: 3rem;
+  background: linear-gradient(
+    to bottom,
+    var(--navbar-bg) 0%,
+    rgba(247, 250, 252, 0.9) 5%,
+    var(--gradient-abyss) 15%,
+    var(--gradient-abyss) 100%
+  );
+}
+
+/* UPDATED: Compact dashboard header */
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.dashboard-header h1 {
+  font-size: 2.2rem;
+  color: var(--bio-luminescent);
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.dashboard-subtitle {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* UPDATED: Compact statistics cards */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.stat-card {
+  background: var(--bg-overlay);
+  border: 2px solid var(--border-primary);
+  border-radius: 15px;
+  padding: 1.8rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(125, 211, 201, 0.1),
+    transparent);
+  transition: all 0.5s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--bio-luminescent);
+  box-shadow: 0 8px 25px var(--shadow-primary);
+}
+
+.stat-card:hover::before {
+  left: 100%;
+}
+
+.stat-card h3 {
+  color: var(--bio-luminescent);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.stat-number {
+  font-size: 2.2rem;
+  color: var(--thermal-vent);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.stat-status {
+  font-size: 1.3rem;
+  color: var(--bio-luminescent);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.stat-date {
+  font-size: 1.1rem;
+  color: var(--coral-primary);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.stat-description {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.3;
+}
+
+/* UPDATED: Compact action cards with reorganized layout */
+.dashboard-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.8rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Enhanced primary card for resume enhancement */
+.action-card.primary {
+  background: var(--bg-overlay);
+  border: 3px solid var(--thermal-vent);
+  border-radius: 20px;
+  padding: 2.5rem;
+  text-align: center;
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transform: scale(1.02);
+}
+
+.action-card.primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-thermal);
+}
+
+.action-card.primary::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(244, 162, 97, 0.1),
+    transparent
+  );
+  transform: rotate(45deg);
+  transition: all 0.6s ease;
+  opacity: 0;
+}
+
+.action-card.primary:hover::after {
+  animation: primaryCardGlow 3s infinite;
+  opacity: 1;
+}
+
+.action-card.primary:hover {
+  transform: scale(1.02) translateY(-8px);
+  box-shadow: 0 15px 40px rgba(244, 162, 97, 0.4);
+  border-color: var(--coral-primary);
+}
+
+/* Standard action cards */
+.action-card {
+  background: var(--bg-overlay);
+  border: 2px solid var(--coral-primary);
+  border-radius: 18px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.action-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(255, 77, 109, 0.08),
+    transparent
+  );
+  transform: rotate(45deg);
+  transition: all 0.6s ease;
+  opacity: 0;
+}
+
+.action-card:hover::before {
+  animation: cardGlow 3s infinite;
+  opacity: 1;
+}
+
+.action-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px var(--shadow-accent);
+  border-color: var(--thermal-vent);
+}
+
+.action-card h2 {
+  color: var(--bio-luminescent);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  position: relative;
+  z-index: 2;
+  line-height: 1.3;
+}
+
+.action-card.primary h2 {
+  font-size: 1.7rem;
+  color: var(--thermal-vent);
+  margin-bottom: 1.2rem;
+}
+
+.action-card p {
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  font-size: 0.95rem;
+  position: relative;
+  z-index: 2;
+}
+
+.action-card.primary p {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.action-button {
+  display: inline-block;
+  background: var(--gradient-thermal);
+  color: white;
+  padding: 1rem 2.5rem;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--shadow-accent);
+}
+
+.action-button.secondary {
+  background: transparent;
+  border: 2px solid var(--bio-luminescent);
+  color: var(--bio-luminescent);
+  padding: 0.9rem 2.3rem;
+}
+
+.action-button.secondary:hover {
+  background: rgba(125, 211, 201, 0.1);
+  box-shadow: 0 6px 20px var(--shadow-primary);
+  border-color: var(--thermal-vent);
+  color: var(--thermal-vent);
+}
+
+/* Action card icons for better visual hierarchy */
+.action-card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  display: block;
+  position: relative;
+  z-index: 2;
+}
+
+.action-card.primary .action-card-icon {
+  font-size: 3rem;
+  color: var(--thermal-vent);
+}
+
+.action-card .action-card-icon {
+  color: var(--bio-luminescent);
+}
+
+@keyframes cardGlow {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(45deg);
+  }
+}
+
+@keyframes primaryCardGlow {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(45deg);
+  }
+}
+
+/* UPDATED: Responsive Design for Compact Layout */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1.5rem 0.5rem 2.5rem;
+    padding-top: 2.5rem;
+  }
+  
+  .dashboard-header {
+    margin-bottom: 2rem;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .dashboard-subtitle {
+    font-size: 1rem;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .stat-card {
+    padding: 1.5rem;
+    min-height: 120px;
+  }
+  
+  .stat-number {
+    font-size: 1.8rem;
+  }
+  
+  .stat-status {
+    font-size: 1.1rem;
+  }
+  
+  .stat-date {
+    font-size: 0.95rem;
+  }
+  
+  .dashboard-actions {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .action-card {
+    padding: 1.8rem;
+    min-height: 200px;
+  }
+  
+  .action-card.primary {
+    padding: 2rem;
+    min-height: 220px;
+    transform: none;
+  }
+  
+  .action-card.primary:hover {
+    transform: translateY(-5px);
+  }
+  
+  .action-card h2 {
+    font-size: 1.3rem;
+  }
+  
+  .action-card.primary h2 {
+    font-size: 1.5rem;
+  }
+  
+  .action-card p {
+    font-size: 0.9rem;
+  }
+  
+  .action-button {
+    padding: 0.9rem 2rem;
+    font-size: 0.95rem;
+    width: 100%;
+    max-width: 250px;
+  }
+  
+  .action-card-icon {
+    font-size: 2rem;
+  }
+  
+  .action-card.primary .action-card-icon {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header h1 {
+    font-size: 1.6rem;
+  }
+  
+  .dashboard-subtitle {
+    font-size: 0.95rem;
+  }
+  
+  .stat-card {
+    padding: 1.2rem;
+    min-height: 100px;
+  }
+  
+  .stat-number {
+    font-size: 1.6rem;
+  }
+  
+  .action-card {
+    padding: 1.5rem;
+    min-height: 180px;
+  }
+  
+  .action-card.primary {
+    padding: 1.8rem;
+    min-height: 200px;
+  }
+  
+  .action-card h2 {
+    font-size: 1.2rem;
+  }
+  
+  .action-card.primary h2 {
+    font-size: 1.4rem;
+  }
+  
+  .action-button {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}

@@ -1,0 +1,38 @@
+/* frontend/src/index.css (Complete and Final) */
+
+/* --- Global Font Import --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* --- "Natural Clarity" Color Palette --- */
+:root {
+  --background-primary: #FFFFFF;
+  --background-secondary: #F8F9FA;
+  --text-primary: #212529;
+  --text-secondary: #6C757D;
+  --accent-primary: #2F855A; /* Sage Green */
+  --accent-primary-hover: #276749; /* Darker Sage Green */
+  --accent-secondary: #4A5568; /* Slate */
+  --border-color: #DEE2E6;
+  --error-color: #D32F2F;
+}
+
+/* --- CSS Reset and Base Styles --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+  
+html {
+    scroll-behavior: smooth;
+}
+  
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
