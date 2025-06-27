@@ -1,5 +1,5 @@
 import axios from 'axios';
-const API_URL = 'https://iraibeta-production.up.railway.app/api';
+const API_URL = 'https://instantresumeai-production.up.railway.app/api';
 console.log('API_URL being used:', API_URL);
 console.log('Environment variable:', process.env.REACT_APP_API_URL);
 // Create axios instance
