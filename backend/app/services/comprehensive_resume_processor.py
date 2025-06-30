@@ -27,12 +27,18 @@ class IntegratedResumeService:
         This function will now be called at the start of the enhancement process.
         """
         try:
+            import openai
+            print("=== OpenAI Debug Info ===")
+            print("OpenAI module path:", openai.__file__)
+            print("OpenAI version:", getattr(openai, "__version__", "unknown"))
+            print("OpenAI OpenAI class:", str(getattr(openai, "OpenAI", "Not found")))
+            print("=========================")
             api_key = os.getenv('OPENAI_API_KEY')
             
             if not api_key:
                 print("ERROR: OpenAI API key not found in environment.")
                 return None
-            return OpenAI(api_key=api_key)
+            return openai.OpenAI(api_key=api_key)
         except Exception as e:
             print(f"ERROR: OpenAI initialization failed: {str(e)}")
             return None
