@@ -92,13 +92,12 @@ downloadResume: async (resumeId) => {
 
   // Validate file before upload
   validateFile: (file) => {
-    const allowedTypes = ['application/pdf', 'application/msword', 
-                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
-                         'text/plain'];
+    const allowedTypes = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const allowedExtension = '.docx';
     const maxSize = 10 * 1024 * 1024; // 10MB
     
-    if (!allowedTypes.includes(file.type)) {
-      return { valid: false, error: 'Please upload a PDF, DOC, DOCX, or TXT file' };
+    if (!file.name.toLowerCase().endsWith(allowedExtension) || !allowedTypes.includes(file.type)) {
+      return { valid: false, error: 'Please upload a DOCX file' };
     }
     
     if (file.size > maxSize) {
