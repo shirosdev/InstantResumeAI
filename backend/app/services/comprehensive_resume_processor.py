@@ -15,30 +15,38 @@ class IntegratedResumeService:
     """
 
     def __init__(self):
-        self.client = None
-        self._initialize_openai()
+        # The client is no longer initialized here.
+        # It will be initialized on-demand in the enhance_resume method.
         self.non_enhanceable_pattern = re.compile(
             r'linkedin\.com|github\.com|@|\+?\d{1,3}[-.\s]?\(?\d{3}\)?|Environment:|^\s*([A-Z\s,]){5,50}\s*$'
         )
 
     def _initialize_openai(self):
-        """Initializes the standard OpenAI client."""
+        """
+        Initializes the OpenAI client.
+        This function will now be called at the start of the enhancement process.
+        """
         try:
             api_key = os.getenv('OPENAI_API_KEY')
             if not api_key:
-                print("ERROR: OpenAI API key not found.")
-                return
-            self.client = OpenAI(api_key=api_key)
+                print("ERROR: OpenAI API key not found in environment.")
+                return None
+            return OpenAI(api_key=api_key)
         except Exception as e:
             print(f"ERROR: OpenAI initialization failed: {str(e)}")
+            return None
 
     def enhance_resume(self, original_file_path: str, job_description: str, output_path: str) -> dict:
         """
         Main method to perform batch enhancement of the resume in a single API call.
         """
         print("=== STARTING BATCH-PROMPT RESUME ENHANCEMENT ===")
-        if not self.client:
-            return {'success': False, 'error': 'OpenAI client not initialized.'}
+        
+        # Initialize the client at the beginning of the request.
+        client = self._initialize_openai()
+        if not client:
+            return {'success': False, 'error': 'OpenAI client could not be initialized. Check API key.'}
+
         if not os.path.exists(original_file_path):
             return {'success': False, 'error': 'Original file not found.'}
 
@@ -127,7 +135,7 @@ class IntegratedResumeService:
             """
 
             # 3. MAKE THE SINGLE API CALL WITH JSON MODE AND TOKEN LIMIT
-            response = self.client.chat.completions.create(
+            response = client.chat.completions.create(
                 model='gpt-4.1',
                 messages=[
                     {"role": "system", "content": system_prompt},
