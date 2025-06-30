@@ -1,7 +1,7 @@
 // frontend/src/services/resumeService.js
 
 import api from './api';
-
+console.log("check api key");
 const resumeService = {
   // Enhance resume with job description
   enhanceResume: async (resumeFile, jobDescription) => {
