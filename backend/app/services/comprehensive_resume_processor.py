@@ -139,14 +139,14 @@ class IntegratedResumeService:
 
             # 3. MAKE THE SINGLE API CALL WITH JSON MODE AND TOKEN LIMIT
             response = client.chat.completions.create(
-                model='gpt-4.1',
+                model='gpt-4o',
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.2, # Keep temperature low for consistent, precise output
-                max_tokens=16000 # Ensure ample space for the full response JSON
+                temperature=0.3, # Keep temperature low for consistent, precise output
+                max_tokens=15000 # Ensure ample space for the full response JSON
             )
 
             # 4. PARSE THE RESPONSE AND UPDATE THE DOCUMENT
