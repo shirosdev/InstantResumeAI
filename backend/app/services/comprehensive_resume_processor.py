@@ -45,7 +45,7 @@ class IntegratedResumeService:
         # Initialize the client at the beginning of the request.
         client = self._initialize_openai()
         if not client:
-            return {'success': False, 'error': 'OpenAI client could not be initialized. Check API key.'}
+            return {'success': False, 'error': 'OpenAI client could not be initialized. Check API key, once Check again.'}
 
         if not os.path.exists(original_file_path):
             return {'success': False, 'error': 'Original file not found.'}
