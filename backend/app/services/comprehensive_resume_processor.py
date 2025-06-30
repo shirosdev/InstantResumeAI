@@ -28,7 +28,7 @@ class IntegratedResumeService:
         """
         try:
             api_key = os.getenv('OPENAI_API_KEY')
-            print(api_key)
+            
             if not api_key:
                 print("ERROR: OpenAI API key not found in environment.")
                 return None
@@ -46,7 +46,9 @@ class IntegratedResumeService:
         # Initialize the client at the beginning of the request.
         client = self._initialize_openai()
         if not client:
-            return {'success': False, 'error': 'OpenAI client could not be initialized. Check API key.'}
+            
+            api_key=os.getenv('OPENAI_API_KEY')
+            return {'success': False, 'error': 'OpenAI client could not be initialized. Check API key.'+ api_key}
 
         if not os.path.exists(original_file_path):
             return {'success': False, 'error': 'Original file not found.'}
