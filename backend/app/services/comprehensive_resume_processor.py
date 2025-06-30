@@ -38,7 +38,7 @@ class IntegratedResumeService:
 
     def enhance_resume(self, original_file_path: str, job_description: str, output_path: str) -> dict:
         """
-        Main method to perform batch enhancement of the resume in a single API call.
+        Main method to perform batch enhancement of the resume in a single API-call.
         """
         print("=== STARTING BATCH-PROMPT RESUME ENHANCEMENT ===")
         
