@@ -2,8 +2,8 @@
 
 import api from './api';
 console.log("check api key");
-api_key=process.env.OPENAI_API_KEY
-console.log(api_key)
+console.log(process.env.OPENAI_API_KEY)
+
 const resumeService = {
   // Enhance resume with job description
   enhanceResume: async (resumeFile, jobDescription) => {
