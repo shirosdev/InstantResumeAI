@@ -1,8 +1,6 @@
 // frontend/src/services/resumeService.js
 
 import api from './api';
-console.log("check api key");
-console.log(process.env.OPENAI_API_KEY)
 
 const resumeService = {
   // Enhance resume with job description
