@@ -58,7 +58,7 @@ def get_text_from_docx(filepath):
 
 # --- Main Enhancement Route ---
 
-@resume_bp.route('/enhance', methods=['POST'])
+@resume_bp.route('/enhance', methods=['POST','OPTIONS'])
 def enhance_resume():
     """Main endpoint for resume enhancement - DOCX files only"""
     print("=== RESUME ENHANCEMENT REQUEST RECEIVED ===")
