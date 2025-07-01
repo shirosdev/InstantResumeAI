@@ -35,7 +35,8 @@ ipykernel==6.29.5
 jsonpath-python==1.0.6
 mysql-connector-python==9.3.0
 networkx==3.4.2
-openai==1.55.0
+openai==1.55.3
+httpx==0.27.2
 PyJWT==2.10.1
 PyMySQL==1.1.1
 PyPDF2==3.0.1
