@@ -55,7 +55,10 @@ def create_app():
     # IMPORTANT: Configure CORS properly for credentials
     frontend_origin = 'https://frontend-production-d76f.up.railway.app'
     CORS(app, 
-     resources={r"/api/*": {"origins": [frontend_origin]}},
+     resources={r"/api/*": {"origins": [
+         "https://frontend-production-d76f.up.railway.app",
+         "https://www.instantresumeai.com"
+     ]}},
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
