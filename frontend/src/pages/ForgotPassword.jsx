@@ -114,62 +114,77 @@ const ForgotPassword = () => {
         )}
         
         {!emailSent ? (
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your registered email address"
-                autoComplete="email"
-                disabled={loading}
-                required
-              />
-            </div>
-            
-            <button 
-              type="submit" 
-              className="auth-button"
-              disabled={loading}
-            >
-              {loading ? 'Sending Code...' : 'Send Verification Code'}
-            </button>
-          </form>
-        ) : (
-          <div className="email-sent-confirmation">
-            <div className="success-message">
-              <strong>✓ Verification code sent!</strong>
-              <p>We've sent a 6-digit verification code to <strong>{formData.email}</strong></p>
-              <p>The code will expire in 15 minutes for security.</p>
-            </div>
-            
-            <div className="action-buttons" style={{ marginTop: '2rem' }}>
-              <button 
-                onClick={handleProceedToVerification}
-                className="auth-button"
-                style={{ marginBottom: '1rem' }}
-              >
-                Enter Verification Code
-              </button>
-              
-              <button 
-                onClick={handleResendEmail}
-                className="auth-button"
-                disabled={loading}
-                style={{ 
-                  background: 'transparent', 
-                  border: '2px solid var(--bio-luminescent)', 
-                  color: 'var(--bio-luminescent)' 
-                }}
-              >
-                {loading ? 'Resending...' : 'Resend Code'}
-              </button>
-            </div>
+  <form onSubmit={handleSubmit}>
+    <div className="form-group">
+      <label htmlFor="email">Email Address</label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        value={formData.email}
+        onChange={handleChange}
+        placeholder="Enter your registered email address"
+        autoComplete="email"
+        disabled={loading}
+        required
+      />
+    </div>
+    
+    <button 
+      type="submit" 
+      className="auth-button"
+      disabled={loading}
+    >
+      {loading ? 'Sending Code...' : 'Send Verification Code'}
+    </button>
+  </form>
+) : (
+  <div className="email-sent-confirmation">
+    {/* Use structured status layout similar to VerifyResetToken */}
+    <div className="verification-status">
+      <div className="status-item">
+        <div className="status-icon">✓</div>
+        <div className="status-content">
+          <div className="status-title">Reset instructions have been sent to your email address.</div>
+        </div>
+      </div>
+      
+      <div className="status-item">
+        <div className="status-icon">✓</div>
+        <div className="status-content">
+          <div className="status-title">Verification code sent!</div>
+          <div className="status-description">
+            We've sent a 6-digit verification code to <strong>{formData.email}</strong>
           </div>
-        )}
+        </div>
+      </div>
+
+      <div className="timer-container">
+        <div className="timer-display">
+          The code will expire in 15 minutes for security.
+        </div>
+      </div>
+    </div>
+    
+    <div className="action-buttons">
+      <button 
+        onClick={handleProceedToVerification}
+        className="auth-button"
+        style={{ marginBottom: '1rem' }}
+      >
+        Enter Verification Code
+      </button>
+      
+      <button 
+        onClick={handleResendEmail}
+        className="auth-button secondary"
+        disabled={loading}
+      >
+        {loading ? 'Resending...' : 'Resend Code'}
+      </button>
+    </div>
+  </div>
+)}
         
         <div className="auth-footer">
           Remember your password? <Link to="/login">Sign In</Link>
