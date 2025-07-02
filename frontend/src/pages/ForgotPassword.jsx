@@ -161,7 +161,7 @@ const ForgotPassword = () => {
 
       <div className="timer-container">
         <div className="timer-display">
-          The code will expire in 15 minutes for security.
+          The code will expire in {expiryMinutes} minutes for security.
         </div>
       </div>
     </div>
