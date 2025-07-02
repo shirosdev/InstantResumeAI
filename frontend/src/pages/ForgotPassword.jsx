@@ -1,8 +1,13 @@
 // frontend/src/pages/ForgotPassword.jsx
 
+// frontend/src/pages/ForgotPassword.jsx
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PasswordResetService from '../services/passwordResetService';
+
+// Use the same configuration pattern as VerifyResetToken for consistency
+const expiryMinutes = parseInt(process.env.REACT_APP_RESET_TOKEN_EXPIRY_MINUTES, 10) || 5;
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -67,6 +72,7 @@ const ForgotPassword = () => {
         setMessageType('error');
       }
     } catch (error) {
+      console.error('Password reset request error:', error);
       setMessage('An unexpected error occurred. Please try again.');
       setMessageType('error');
     } finally {
@@ -92,6 +98,7 @@ const ForgotPassword = () => {
         setMessageType('error');
       }
     } catch (error) {
+      console.error('Resend email error:', error);
       setMessage('Failed to resend email. Please try again.');
       setMessageType('error');
     } finally {
@@ -114,77 +121,76 @@ const ForgotPassword = () => {
         )}
         
         {!emailSent ? (
-  <form onSubmit={handleSubmit}>
-    <div className="form-group">
-      <label htmlFor="email">Email Address</label>
-      <input
-        type="email"
-        id="email"
-        name="email"
-        value={formData.email}
-        onChange={handleChange}
-        placeholder="Enter your registered email address"
-        autoComplete="email"
-        disabled={loading}
-        required
-      />
-    </div>
-    
-    <button 
-      type="submit" 
-      className="auth-button"
-      disabled={loading}
-    >
-      {loading ? 'Sending Code...' : 'Send Verification Code'}
-    </button>
-  </form>
-) : (
-  <div className="email-sent-confirmation">
-    {/* Use structured status layout similar to VerifyResetToken */}
-    <div className="verification-status">
-      <div className="status-item">
-        <div className="status-icon">✓</div>
-        <div className="status-content">
-          <div className="status-title">Reset instructions have been sent to your email address.</div>
-        </div>
-      </div>
-      
-      <div className="status-item">
-        <div className="status-icon">✓</div>
-        <div className="status-content">
-          <div className="status-title">Verification code sent!</div>
-          <div className="status-description">
-            We've sent a 6-digit verification code to <strong>{formData.email}</strong>
-          </div>
-        </div>
-      </div>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your registered email address"
+                autoComplete="email"
+                disabled={loading}
+                required
+              />
+            </div>
+            
+            <button 
+              type="submit" 
+              className="auth-button"
+              disabled={loading}
+            >
+              {loading ? 'Sending Code...' : 'Send Verification Code'}
+            </button>
+          </form>
+        ) : (
+          <div className="email-sent-confirmation">
+            <div className="verification-status">
+              <div className="status-item">
+                <div className="status-icon">✓</div>
+                <div className="status-content">
+                  <div className="status-title">Reset instructions have been sent to your email address.</div>
+                </div>
+              </div>
+              
+              <div className="status-item">
+                <div className="status-icon">✓</div>
+                <div className="status-content">
+                  <div className="status-title">Verification code sent!</div>
+                  <div className="status-description">
+                    We've sent a 6-digit verification code to <strong>{formData.email}</strong>
+                  </div>
+                </div>
+              </div>
 
-      <div className="timer-container">
-        <div className="timer-display">
-          The code will expire in {expiryMinutes} minutes for security.
-        </div>
-      </div>
-    </div>
-    
-    <div className="action-buttons">
-      <button 
-        onClick={handleProceedToVerification}
-        className="auth-button"
-        style={{ marginBottom: '1rem' }}
-      >
-        Enter Verification Code
-      </button>
-      
-      <button 
-        onClick={handleResendEmail}
-        className="auth-button secondary"
-        disabled={loading}
-      >
-        {loading ? 'Resending...' : 'Resend Code'}
-      </button>
-    </div>
-  </div>
-)}
+              <div className="timer-container">
+                <div className="timer-display">
+                  The code will expire in {expiryMinutes} minutes for security.
+                </div>
+              </div>
+            </div>
+            
+            <div className="action-buttons">
+              <button 
+                onClick={handleProceedToVerification}
+                className="auth-button"
+                style={{ marginBottom: '1rem' }}
+              >
+                Enter Verification Code
+              </button>
+              
+              <button 
+                onClick={handleResendEmail}
+                className="auth-button secondary"
+                disabled={loading}
+              >
+                {loading ? 'Resending...' : 'Resend Code'}
+              </button>
+            </div>
+          </div>
+        )}
         
         <div className="auth-footer">
           Remember your password? <Link to="/login">Sign In</Link>
