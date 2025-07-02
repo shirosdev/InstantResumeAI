@@ -9,6 +9,7 @@ from app.models.user import User
 from app.services.email_service import EmailService
 from app.services.auth_service import AuthService
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +18,8 @@ class PasswordResetService:
     
     def __init__(self):
         self.email_service = EmailService()
-        self.token_expiry_minutes = 15  # Reset tokens expire in 15 minutes
-        self.max_attempts_per_hour = 5  # Maximum reset attempts per email per hour
+        self.token_expiry_minutes = int(os.getenv('RESET_TOKEN_EXPIRY_MINUTES', '15'))
+        self.max_attempts_per_hour = 10  # Maximum reset attempts per email per hour
     
     def generate_reset_token(self) -> str:
         """
