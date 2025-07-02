@@ -4,8 +4,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PasswordResetService from '../services/passwordResetService';
 
+const expiryMinutes = parseInt(process.env.REACT_APP_RESET_TOKEN_EXPIRY_MINUTES, 10) || 5;
+const expirySeconds = expiryMinutes * 60;
+
 const VerifyResetToken = () => {
   const navigate = useNavigate();
+  const [isInitialized, setIsInitialized] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     token: ''
@@ -14,25 +18,31 @@ const VerifyResetToken = () => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(expirySeconds);
   const tokenInputRef = useRef(null);
 
   useEffect(() => {
-    // Get email from previous step or redirect if not found
-    const storedEmail = sessionStorage.getItem('reset_email');
-    if (storedEmail) {
-      setFormData(prev => ({ ...prev, email: storedEmail }));
-    } else {
-      navigate('/forgot-password');
-      return;
-    }
+    const initializeComponent = () => {
+      const storedEmail = sessionStorage.getItem('reset_email');
+      if (storedEmail) {
+        setFormData(prev => ({ ...prev, email: storedEmail }));
+        setIsInitialized(true);
+      } else {
+        navigate('/forgot-password');
+        return;
+      }
+    };
 
-    // Focus on token input
+    initializeComponent();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+
     if (tokenInputRef.current) {
       tokenInputRef.current.focus();
     }
 
-    // Start countdown timer
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -44,7 +54,7 @@ const VerifyResetToken = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [navigate]);
+  }, [isInitialized]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -68,7 +78,6 @@ const VerifyResetToken = () => {
       }));
     }
     
-    // Clear messages when user starts typing
     if (message) {
       setMessage('');
       setMessageType('');
@@ -78,7 +87,6 @@ const VerifyResetToken = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate inputs
     if (!formData.email.trim()) {
       setMessage('Email address is required');
       setMessageType('error');
@@ -96,7 +104,7 @@ const VerifyResetToken = () => {
       setMessageType('error');
       return;
     }
-
+    
     setLoading(true);
     setMessage('');
     
@@ -106,11 +114,8 @@ const VerifyResetToken = () => {
       if (result.success && result.valid) {
         setMessage('Verification successful! Redirecting...');
         setMessageType('success');
-        
-        // Store verified token for password reset
         sessionStorage.setItem('verified_token', formData.token);
         
-        // Redirect to password reset page
         setTimeout(() => {
           navigate('/reset-password');
         }, 1500);
@@ -136,8 +141,8 @@ const VerifyResetToken = () => {
       if (result.success) {
         setMessage('New verification code sent successfully');
         setMessageType('success');
-        setTimeLeft(900); // Reset timer to 15 minutes
-        setFormData(prev => ({ ...prev, token: '' })); // Clear current token
+        setTimeLeft(expirySeconds);
+        setFormData(prev => ({ ...prev, token: '' }));
       } else {
         setMessage(result.message);
         setMessageType('error');
@@ -155,37 +160,65 @@ const VerifyResetToken = () => {
     navigate('/forgot-password');
   };
 
+  if (!isInitialized) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="loading">
+            <div className="spinner"></div>
+            <p>Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h2>Enter Verification Code</h2>
-        <p className="auth-description">
-          We've sent a 6-digit verification code to <strong>{formData.email}</strong>
-        </p>
-        
-        <div className="timer-display" style={{
-          textAlign: 'center',
-          margin: '1rem 0',
-          padding: '0.8rem',
-          background: timeLeft > 300 ? 'rgba(125, 211, 201, 0.1)' : 'rgba(255, 77, 109, 0.1)',
-          borderRadius: '8px',
-          color: timeLeft > 300 ? 'var(--bio-luminescent)' : 'var(--coral-primary)',
-          fontWeight: '600'
-        }}>
-          {timeLeft > 0 ? (
-            <>Code expires in: {formatTime(timeLeft)}</>
-          ) : (
-            <>Code has expired. Please request a new one.</>
-          )}
+        <div className="auth-header">
+          <h2>Enter Verification Code</h2>
+          <p className="auth-description">
+            We've sent a 6-digit verification code to <strong>{formData.email}</strong>
+          </p>
         </div>
-        
+
+        <div className="verification-status">
+          <div className="status-item">
+            <div className="status-icon">✓</div>
+            <div className="status-content">
+              <div className="status-title">Reset instructions have been sent to your email address.</div>
+            </div>
+          </div>
+          
+          <div className="status-item">
+            <div className="status-icon">✓</div>
+            <div className="status-content">
+              <div className="status-title">Verification code sent!</div>
+              <div className="status-description">
+                We've sent a 6-digit verification code to {formData.email}
+              </div>
+            </div>
+          </div>
+
+          <div className="timer-container">
+            <div className={`timer-display ${timeLeft <= 300 ? 'timer-warning' : ''}`}>
+              {timeLeft > 0 ? (
+                <>Code expires in: {formatTime(timeLeft)}</>
+              ) : (
+                <>Code has expired. Please request a new one.</>
+              )}
+            </div>
+          </div>
+        </div>
+
         {message && (
-          <div className={messageType === 'success' ? 'success-message' : 'auth-error'}>
+          <div className={`auth-message ${messageType === 'success' ? 'success-message' : 'auth-error'}`}>
             {message}
           </div>
         )}
-        
-        <form onSubmit={handleSubmit}>
+
+        <form onSubmit={handleSubmit} className="verification-form">
           <div className="form-group">
             <label htmlFor="token">Verification Code</label>
             <input
@@ -197,95 +230,58 @@ const VerifyResetToken = () => {
               onChange={handleChange}
               placeholder="Enter 6-digit code"
               maxLength="6"
-              style={{
-                fontSize: '1.5rem',
-                textAlign: 'center',
-                letterSpacing: '0.5rem',
-                fontWeight: '600'
-              }}
+              className="token-input"
               disabled={loading || timeLeft === 0}
               required
             />
-            <div style={{ 
-              fontSize: '0.85rem', 
-              color: 'rgba(255, 255, 255, 0.6)', 
-              marginTop: '0.5rem',
-              textAlign: 'center'
-            }}>
+            <div className="input-help">
               Enter the 6-digit code from your email
             </div>
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="auth-button"
             disabled={loading || timeLeft === 0 || formData.token.length !== 6}
           >
             {loading ? 'Verifying...' : 'Verify Code'}
           </button>
         </form>
-        
-        <div className="resend-section" style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <p style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '1rem' }}>
-            Didn't receive the code?
-          </p>
-          
-          <button 
+
+        <div className="resend-section">
+          <p className="resend-text">Didn't receive the code?</p>
+
+          <button
             onClick={handleResendCode}
-            className="auth-button"
-            disabled={resendLoading || timeLeft > 840} // Can resend after 1 minute
-            style={{ 
-              background: 'transparent', 
-              border: '2px solid var(--bio-luminescent)', 
-              color: 'var(--bio-luminescent)',
-              marginBottom: '1rem'
-            }}
+            className="auth-button secondary"
+            disabled={resendLoading || timeLeft > expirySeconds - 60}
           >
             {resendLoading ? 'Resending...' : 'Resend Code'}
           </button>
-          
-          {timeLeft > 840 && (
-            <p style={{ 
-              fontSize: '0.8rem', 
-              color: 'rgba(255, 255, 255, 0.6)',
-              marginTop: '0.5rem'
-            }}>
-              You can resend the code in {Math.ceil((timeLeft - 840) / 60)} minute(s)
+
+          {timeLeft > expirySeconds - 60 && (
+            <p className="resend-timer">
+              You can resend the code in {Math.ceil((timeLeft - (expirySeconds - 60)) / 60)} minute(s)
             </p>
           )}
         </div>
-        
-        <div className="navigation-links" style={{ marginTop: '2rem' }}>
+
+        <div className="auth-navigation">
           <div className="auth-footer">
-            <button 
-              onClick={handleBackToEmail}
-              style={{ 
-                background: 'none', 
-                border: 'none', 
-                color: 'var(--bio-luminescent)', 
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                fontSize: 'inherit',
-                fontFamily: 'inherit'
-              }}
-            >
+            <button onClick={handleBackToEmail} className="link-button">
               Use different email
             </button>
           </div>
-          
-          <div className="auth-footer" style={{ marginTop: '0.5rem' }}>
+
+          <div className="auth-footer">
             Remember your password? <Link to="/login">Sign In</Link>
           </div>
         </div>
-        
-        <div className="security-notice" style={{ 
-          marginTop: '2rem', 
-          fontSize: '0.85rem', 
-          color: 'rgba(255, 255, 255, 0.6)',
-          textAlign: 'center',
-          lineHeight: '1.4'
-        }}>
-          <p>Check your spam folder if you don't see the email. The verification code is valid for 15 minutes.</p>
+
+        <div className="security-notice">
+          <p>
+            Check your spam folder if you don't see the email. The verification code is valid for {expiryMinutes} minutes.
+          </p>
         </div>
       </div>
     </div>
