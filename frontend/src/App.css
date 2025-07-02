@@ -874,3 +874,139 @@ body {
     font-size: 1rem;
   }
 }
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.verification-status {
+  margin: 2rem 0;
+}
+
+.status-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(125, 211, 201, 0.1);
+  border: 1px solid rgba(125, 211, 201, 0.3);
+  border-radius: 8px;
+}
+
+.status-icon {
+  color: var(--bio-luminescent);
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.status-content {
+  flex: 1;
+}
+
+.status-title {
+  font-weight: 600;
+  color: var(--bio-luminescent);
+  margin-bottom: 0.25rem;
+}
+
+.status-description {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.timer-container {
+  margin-top: 1rem;
+}
+
+.timer-display {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(125, 211, 201, 0.1);
+  border: 1px solid rgba(125, 211, 201, 0.3);
+  border-radius: 8px;
+  color: var(--bio-luminescent);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.timer-display.timer-warning {
+  background: rgba(255, 77, 109, 0.1);
+  border-color: rgba(255, 77, 109, 0.3);
+  color: var(--coral-primary);
+}
+
+.auth-message {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.verification-form {
+  margin: 2rem 0;
+}
+
+.token-input {
+  font-size: 1.5rem !important;
+  text-align: center;
+  letter-spacing: 0.5rem;
+  font-weight: 600;
+}
+
+.input-help {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.resend-section {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.resend-text {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1rem;
+}
+
+.auth-button.secondary {
+  background: transparent;
+  border: 2px solid var(--bio-luminescent);
+  color: var(--bio-luminescent);
+  margin-bottom: 1rem;
+}
+
+.resend-timer {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.5rem;
+}
+
+.auth-navigation {
+  margin-top: 2rem;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--bio-luminescent);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+}
+
+.link-button:hover {
+  color: var(--thermal-vent);
+}
+
+.security-notice {
+  margin-top: 2rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  line-height: 1.4;
+}
