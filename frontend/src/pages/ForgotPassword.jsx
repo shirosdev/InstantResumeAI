@@ -66,7 +66,7 @@ const ForgotPassword = () => {
         // Auto-redirect to verification after 3 seconds
         setTimeout(() => {
           navigate('/verify-reset-token');
-        }, 3000);
+        }, 7000);
       } else {
         setMessage(result.message);
         setMessageType('error');
