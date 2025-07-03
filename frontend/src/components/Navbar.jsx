@@ -1,9 +1,9 @@
 // frontend/src/components/Navbar.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import logo from '../assets/logo.png'; // You'll need to add your logo
+import logo from '../assets/logo.png';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -15,10 +15,7 @@ const Navbar = () => {
     e.stopPropagation();
     setIsMobileMenuOpen(false);
     
-    // First logout
     await logout();
-    
-    // Then navigate using React Router
     navigate('/', { replace: true });
   };
 
@@ -26,10 +23,39 @@ const Navbar = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobileMenuOpen && !event.target.closest('.navbar')) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isMobileMenuOpen]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
+
   return (
     <nav className="navbar">
-      <div className="container navbar-container">
-        <Link to="/" className="logo-link">
+      <div className="navbar-container">
+        <Link to="/" className="logo-link" onClick={closeMobileMenu}>
           <img src={logo} alt="InstantResumeAI" className="navbar-logo" />
         </Link>
         
@@ -38,22 +64,22 @@ const Navbar = () => {
             // Authenticated user navigation
             <>
               <li>
-                <Link to="/" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/" className="nav-link" onClick={closeMobileMenu}>
                   Home
                 </Link>
               </li>
               <li>
-                <Link to="/dashboard" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/dashboard" className="nav-link" onClick={closeMobileMenu}>
                   Dashboard
                 </Link>
               </li>
               <li>
-                <Link to="/profile" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/profile" className="nav-link" onClick={closeMobileMenu}>
                   Profile
                 </Link>
               </li>
               <li>
-                <Link to="/pricing" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/pricing" className="nav-link" onClick={closeMobileMenu}>
                   Pricing
                 </Link>
               </li>
@@ -72,32 +98,32 @@ const Navbar = () => {
             // Public navigation
             <>
               <li>
-                <Link to="/" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/" className="nav-link" onClick={closeMobileMenu}>
                   Home
                 </Link>
               </li>
               <li>
-                <Link to="/how-it-works" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/how-it-works" className="nav-link" onClick={closeMobileMenu}>
                   How It Works
                 </Link>
               </li>
               <li>
-                <Link to="/pricing" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/pricing" className="nav-link" onClick={closeMobileMenu}>
                   Pricing
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/contact" className="nav-link" onClick={closeMobileMenu}>
                   Contact
                 </Link>
               </li>
               <li>
-                <Link to="/login" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/login" className="nav-link" onClick={closeMobileMenu}>
                   Login
                 </Link>
               </li>
               <li>
-                <Link to="/signup" className="nav-link register-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/signup" className="nav-link register-link" onClick={closeMobileMenu}>
                   Register
                 </Link>
               </li>
@@ -105,7 +131,12 @@ const Navbar = () => {
           )}
         </ul>
         
-        <button className="mobile-nav-toggle" onClick={toggleMobileMenu}>
+        <button 
+          className="mobile-nav-toggle" 
+          onClick={toggleMobileMenu}
+          aria-label="Toggle navigation menu"
+          aria-expanded={isMobileMenuOpen}
+        >
           {isMobileMenuOpen ? '✕' : '☰'}
         </button>
       </div>
