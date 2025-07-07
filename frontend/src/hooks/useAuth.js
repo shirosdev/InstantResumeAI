@@ -42,13 +42,7 @@ export const AuthProvider = ({ children }) => {
     if (!isSilent) {
         console.log('Logging out...');
     }
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('lastActivityTime');
-    setUser(null);
-    setError(null);
-
+    
     try {
       // Fire and forget logout API call
       await authService.logout();
@@ -57,6 +51,15 @@ export const AuthProvider = ({ children }) => {
           console.error('Logout API call failed:', err);
       }
     }
+
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('lastActivityTime');
+    setUser(null);
+    setError(null);
+
+    
   }, []);
 
   // Effect for Initial Authentication Check (runs once on mount)
