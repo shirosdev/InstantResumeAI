@@ -12,7 +12,7 @@ const LandingPage = () => {
             <h1 className="hero-title">
               <span className="emoji-icon">🧠</span>Welcome to InstantResumeAI
             </h1>
-            <p className="hero-tagline">Your <Resume></Resume>. Smarter. Designed for Success.</p>
+            <p className="hero-tagline">Your Resume. Smarter. Designed for Success.</p>
             
             <div className="hero-description">
               <p>
@@ -75,7 +75,7 @@ const LandingPage = () => {
             <div className="process-steps">
               <div className="process-step">
                 <div className="step-icon">1</div>
-                <h3>Upload Your <Resume></Resume></h3>
+                <h3>Upload Your Resume</h3>
                 <p>Submit your current resume in any format</p>
               </div>
               <div className="process-step">
