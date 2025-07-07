@@ -10,9 +10,9 @@ const LandingPage = () => {
         <div className="container">
           <div className="hero-content">
             <h1 className="hero-title">
-              <span className="emoji-icon">🧠</span> Welcome to InstantResumeAI
+              <span className="emoji-icon">🧠</span>Welcome to InstantResumeAI
             </h1>
-            <p className="hero-tagline">Your Resume. Smarter. Designed for Success.</p>
+            <p className="hero-tagline">Your <Resume></Resume>. Smarter. Designed for Success.</p>
             
             <div className="hero-description">
               <p>
@@ -44,7 +44,7 @@ const LandingPage = () => {
         <div className="container">
           <div className="section-content">
             <h2 className="section-title">
-              <span className="emoji-icon">🚀</span> The Role of AI in Modern Hiring
+              <span className="emoji-icon">🚀</span>The Role of AI in Modern Hiring
             </h2>
             <p className="section-text">
               Recruitment has evolved. Traditional resumes often fall short when matched against modern hiring algorithms. 
@@ -62,7 +62,7 @@ const LandingPage = () => {
         <div className="container">
           <div className="section-content">
             <h2 className="section-title">
-              <span className="emoji-icon">💡</span> What We Do
+              <span className="emoji-icon">💡</span>What We Do
             </h2>
             <p className="section-text">
               Our application is built to do one thing exceptionally well — make your resume smarter. You simply upload 
@@ -75,7 +75,7 @@ const LandingPage = () => {
             <div className="process-steps">
               <div className="process-step">
                 <div className="step-icon">1</div>
-                <h3>Upload Your Resume</h3>
+                <h3>Upload Your <Resume></Resume></h3>
                 <p>Submit your current resume in any format</p>
               </div>
               <div className="process-step">
@@ -100,7 +100,7 @@ const LandingPage = () => {
         <div className="container">
           <div className="section-content">
             <h2 className="section-title">
-              <span className="emoji-icon">🔮</span> What's Next
+              <span className="emoji-icon">🔮</span>What's Next
             </h2>
             <p className="section-text">
               As we grow, we're moving InstantResumeAI to Microsoft Azure for better scalability, performance, 
@@ -120,7 +120,7 @@ const LandingPage = () => {
         <div className="container">
           <div className="cta-content">
             <h2 className="cta-title">
-              <span className="emoji-icon">🌟</span> Your career journey deserves better tools.
+              <span className="emoji-icon">🌟</span>Your career journey deserves better tools.
             </h2>
             <p className="cta-subtitle">
               Start today with InstantResumeAI and make your resume work for you.
