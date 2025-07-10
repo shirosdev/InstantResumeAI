@@ -1,13 +1,13 @@
-/* Auth.css - Updated with improved layout and alignment */
+/* Auth.css - Inherit global variables from App.css, remove redundant variable definitions, and use --navbar-height where needed */
 
 /* FIXED: Auth container with proper navbar consideration */
 .auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - var(--navbar-height));
+  min-height: calc(100vh - var(--navbar-height)); /* Use global navbar height */
   padding: 2rem 1rem;
-  padding-top: 4rem;
+  padding-top: var(--navbar-height);
   background: linear-gradient(
     to bottom,
     var(--navbar-bg) 0%,
@@ -22,9 +22,9 @@
   background: rgba(0, 18, 32, 0.95);
   border: 2px solid var(--coral-primary);
   border-radius: 20px;
-  padding: 3rem;
+  padding: 3rem 3.5rem; /* Restore original desktop padding */
   width: 100%;
-  max-width: 480px;
+  max-width: 540px; /* Restore original desktop max-width */
   box-shadow: 0 0 40px rgba(255, 77, 109, 0.3);
   position: relative;
   overflow: hidden;
@@ -55,7 +55,7 @@
   text-align: center;
   margin-bottom: 1rem;
   font-size: 2.2rem;
-  color: var(--bio-luminescent);
+  color: var(--bio-luminescent); /* Use global variable */
   font-weight: 600;
   position: relative;
   z-index: 1;
@@ -73,7 +73,7 @@
 
 /* FIXED: Form group layout and spacing */
 .form-group {
-  margin-bottom: 1.8rem;
+  margin-bottom: 2.2rem; /* Restore original desktop spacing */
   position: relative;
   z-index: 1;
 }
@@ -476,67 +476,77 @@
   }
 }
 
-/* FIXED: Responsive improvements */
-@media (max-width: 768px) {
+/* --- UNIVERSAL BOX SIZING FOR RELIABLE LAYOUTS --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* --- AUTHORITATIVE MOBILE LAYOUT FOR AUTH CARD --- */
+@media (max-width: 480px) {
   .auth-container {
-    padding: 1.5rem 1rem;
-    padding-top: 3rem;
+    align-items: center !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    background: var(--gradient-abyss);
   }
-  
   .auth-card {
-    padding: 2.5rem;
-    max-width: 95%;
+    width: 100% !important;
+    max-width: 340px !important;
+    margin: 2.2rem auto 1.2rem auto !important;
+    padding: 0.7rem 1rem 1rem 1rem !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.10) !important;
+    border: 1.5px solid var(--coral-primary) !important;
+    background: rgba(10, 20, 32, 0.93) !important;
   }
-  
   .auth-card h2 {
-    font-size: 2rem;
+    font-size: 1.3rem !important;
+    margin-bottom: 0.5rem !important;
   }
-  
+  .auth-description {
+    font-size: 0.93rem !important;
+    margin-bottom: 0.7rem !important;
+  }
   .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.7rem !important;
   }
-  
-  .social-login-buttons {
-    grid-template-columns: 1fr;
+  .form-group input {
+    width: 92% !important;
+    margin: 0.3rem auto !important;
+    display: block !important;
+    padding: 0.6rem 0.6rem !important;
+    font-size: 0.97rem !important;
+    border-radius: 7px !important;
+    background: rgba(0, 18, 32, 0.8);
+  }
+  .auth-button {
+    padding: 0.7rem 1.2rem !important;
+    font-size: 1rem !important;
+    margin-top: 0.7rem !important;
+    border-radius: 7px !important;
+    width: 100% !important;
+  }
+  .auth-footer,
+  .auth-error,
+  .auth-success {
+    margin-top: 0.7rem !important;
+    margin-bottom: 0.7rem !important;
+    padding: 0.7rem !important;
+    border-radius: 7px !important;
+    font-size: 0.93rem !important;
+  }
+  .login-help {
+    margin-top: 1rem !important;
+    padding: 0.7rem !important;
+    border-radius: 7px !important;
+    font-size: 0.9rem !important;
   }
 }
 
-@media (max-width: 480px) {
-  .auth-container {
-    padding: 1rem 0.5rem;
-    padding-top: 2rem;
-  }
-  
-  .auth-card {
-    padding: 2rem;
-  }
-  
-  .auth-card h2 {
-    font-size: 1.8rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .auth-description {
-    font-size: 0.95rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .form-group {
-    margin-bottom: 1.2rem;
-  }
-  
-  .form-group input {
-    padding: 0.9rem 1rem;
-    font-size: 0.95rem;
-  }
-  
-  .auth-button {
-    padding: 1rem 1.5rem;
-    font-size: 1rem;
-  }
-  
-  .social-login-title::before,
-  .social-login-title::after {
-    width: 60px;
-  }
-}
+/* --- COMMENTED OUT REDUNDANT/CONFLICTING MOBILE RULES --- */
+/*
+@media (max-width: 480px) { ... }
+@media (max-width: 768px) { ... }
+*/

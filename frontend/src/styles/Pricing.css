@@ -1,9 +1,9 @@
-/* Pricing.css - No Scroll Cards Implementation */
+/* Pricing.css - Inherit global variables from App.css, remove redundant variable definitions, and use --navbar-height where needed */
 
 .pricing-container {
-  min-height: calc(100vh - var(--navbar-height));
+  min-height: calc(100vh - var(--navbar-height)); /* Use global navbar height */
+  padding-top: var(--navbar-height);
   padding: 2rem 0 3rem;
-  padding-top: 3rem;
   background: linear-gradient(
     to bottom,
     var(--navbar-bg) 0%,
@@ -23,7 +23,7 @@
   text-align: center;
   font-size: 2rem;
   font-weight: 600;
-  color: var(--bio-luminescent);
+  color: var(--bio-luminescent); /* Use global variable */
   margin-bottom: 0.5rem;
   line-height: 1.2;
 }
