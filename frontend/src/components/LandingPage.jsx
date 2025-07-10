@@ -85,7 +85,7 @@ const LandingPage = () => {
               </div>
               <div className="process-step">
                 <div className="step-icon">3</div>
-                <h3>Enhanced Done</h3>
+                <h3>Enhancement Done</h3>
                 <p>Receive your optimized resume in seconds</p>
               </div>
             </div>
@@ -126,7 +126,7 @@ const LandingPage = () => {
               Start today with InstantResumeAI and make your resume work for you.
             </p>
             <Link to="/signup" className="cta-button primary large">
-              Get Started Free
+              Get Started for Free
             </Link>
           </div>
         </div>
