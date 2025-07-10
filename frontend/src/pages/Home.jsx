@@ -16,7 +16,7 @@ const Home = () => {
 };
 
 const Stepper = ({ currentStep }) => {
-  const steps = ["Upload Resume", "Add Job Description", "Download Resume"];
+  const steps = ["Upload Resume", "Add Job Description", "Download Enhanced Resume"];
   return (
     <div className="stepper-container">
       {steps.map((step, index) => (
