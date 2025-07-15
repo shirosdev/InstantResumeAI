@@ -1,36 +1,38 @@
-# backend/app/services/comprehensive_resume_processor.py (High-Performance Two-Stage Pipeline)
-
 import os
 import re
 import json
 from openai import OpenAI
 from docx import Document
-from docx.shared import Pt, RGBColor
-from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
+from docx.shared import Pt
+from docx.text.paragraph import Paragraph
 
 class IntegratedResumeService:
     """
-    Service to enhance a DOCX resume using a high-performance, two-stage pipeline.
-    Stage 1 rapidly enhances the resume.
-    Stage 2 generates a detailed audit report based on the changes.
+    Service to enhance a DOCX resume using a high-performance, single-call batch method
+    while preserving original formatting by editing the document in-place.
     """
 
     def __init__(self):
-        self.xml_illegal_char_re = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]')
-        self.client = self._initialize_openai()
-
-    def _sanitize_text(self, text):
-        """Removes illegal XML characters from a string."""
-        if not isinstance(text, str):
-            return ""
-        return self.xml_illegal_char_re.sub('', text)
+        # The client is no longer initialized here.
+        # It will be initialized on-demand in the enhance_resume method.
+        self.non_enhanceable_pattern = re.compile(
+            r'linkedin\.com|github\.com|@|\+?\d{1,3}[-.\s]?\(?\d{3}\)?|Environment:|^\s*([A-Z\s,]){5,50}\s*$'
+        )
 
     def _initialize_openai(self):
-        """Initializes the OpenAI client once."""
+        """
+        Initializes the OpenAI client.
+        This function will now be called at the start of the enhancement process.
+        """
         try:
             import openai
+            print("=== OpenAI Debug Info ===")
+            print("OpenAI module path:", openai.__file__)
+            print("OpenAI version:", getattr(openai, "__version__", "unknown"))
+            print("OpenAI OpenAI class:", str(getattr(openai, "OpenAI", "Not found")))
+            print("=========================")
             api_key = os.getenv('OPENAI_API_KEY')
+            
             if not api_key:
                 print("ERROR: OpenAI API key not found in environment.")
                 return None
@@ -41,202 +43,138 @@ class IntegratedResumeService:
 
     def enhance_resume(self, original_file_path: str, job_description: str, output_path: str) -> dict:
         """
-        Main method that orchestrates the two-stage enhancement and reporting pipeline.
+        Main method to perform batch enhancement of the resume in a single API-call.
         """
-        if not self.client:
-            return {'success': False, 'error': 'OpenAI client could not be initialized. Check API key.'}
+        print("=== STARTING BATCH-PROMPT RESUME ENHANCEMENT ===")
+        
+        # Initialize the client at the beginning of the request.
+        client = self._initialize_openai()
+        if not client:
+            
+            api_key=os.getenv('OPENAI_API_KEY')
+            return {'success': False, 'error': 'OpenAI client could not be initialized. Check API key.'+ api_key}
+
         if not os.path.exists(original_file_path):
             return {'success': False, 'error': 'Original file not found.'}
 
         try:
-            # --- STAGE 1: RAPID ENHANCEMENT ---
-            print("=== STAGE 1: STARTING RAPID RESUME ENHANCEMENT ===")
             doc = Document(original_file_path)
             
-            # Create a map of original paragraph texts
-            original_paragraphs = {}
+            # 1. GATHER AND MAP ALL PARAGRAPHS TO ENHANCE
             paragraphs_to_enhance = {}
             paragraph_map = {}
-
-            def collect_paragraphs(paragraphs):
-                for p in paragraphs:
-                    para_key = f"p_{len(paragraph_map)}"
-                    paragraph_map[para_key] = p
-                    original_text = self._sanitize_text(p.text)
-                    original_paragraphs[para_key] = original_text
-                    # Only send non-trivial paragraphs for enhancement
-                    if len(original_text.strip()) >= 30:
-                        paragraphs_to_enhance[para_key] = original_text
             
-            # Collect from main body and tables
-            all_paragraphs = list(doc.paragraphs)
+            def collect_paragraphs(paragraphs):
+                for i, p in enumerate(paragraphs):
+                    para_key = f"p_{len(paragraphs_to_enhance)}"
+                    if len(p.text.strip()) >= 30 and not self.non_enhanceable_pattern.search(p.text):
+                        paragraphs_to_enhance[para_key] = p.text
+                        paragraph_map[para_key] = p
+
+            collect_paragraphs(doc.paragraphs)
             for table in doc.tables:
                 for row in table.rows:
                     for cell in row.cells:
-                        all_paragraphs.extend(cell.paragraphs)
-            collect_paragraphs(all_paragraphs)
-
-            if not paragraphs_to_enhance:
-                doc.save(output_path)
-                return {'success': True, 'summary': 'No text required enhancement.'}
-
-            enhanced_paragraph_texts = self._get_enhanced_text(paragraphs_to_enhance, job_description)
+                        collect_paragraphs(cell.paragraphs)
             
-            # Update the document with enhanced text
-            for key, enhanced_text in enhanced_paragraph_texts.items():
+            if not paragraphs_to_enhance:
+                print("No paragraphs found that meet the criteria for enhancement.")
+                doc.save(output_path)
+                return {'success': True, 'summary': 'No text was modified.'}
+
+            print(f"Found {len(paragraphs_to_enhance)} paragraphs to enhance. Sending as a single batch.")
+
+            # 2. CONSTRUCT THE SINGLE, INTELLIGENT PROMPT WITH ENHANCED INSTRUCTIONS
+            system_prompt = """
+            You are an elite AI resume optimization specialist, functioning as both an advanced Applicant Tracking System (ATS) and a seasoned human recruiter expert. Your ultimate mission is to transform raw resume content into a highly targeted document that achieves a **minimum of 85% keyword and thematic alignment** with the provided Job Description (JD). Every enhancement must be designed to maximize shortlisting probability.
+
+            **Core Directives (Non-Negotiable - ABSOLUTE PRIORITY):**
+            1.  **PROTECT CORE IDENTITY & EDUCATION:**
+                * ABSOLUTELY DO NOT alter, remove, or fabricate any information related to **Personal Details** (Name, Contact Info, Location, Email, Phone, LinkedIn URL, GitHub URL, etc.).
+                * ABSOLUTELY DO NOT alter, remove, or fabricate any information related to **Education Details** (University Names, Degree Titles, Graduation Dates, GPA if present, Certifications names or dates).
+                * Maintain these sections EXACTLY as provided, only fixing obvious typos if present.
+
+            2.  **Factual Integrity (for Experience/Skills - with Strategic Additions for Research):**
+                * DO NOT remove or change explicit company names, job titles, or employment dates from the experience section.
+                * For **Experience, Skills, and Summary sections ONLY**:
+                    * **Generate & Infuse Quantifiable Results:** Actively identify opportunities within the candidate's existing experience descriptions to add compelling, *plausible, high-impact quantifiable outcomes* (e.g., percentages, metrics, dollar figures, number of users/projects, time saved, efficiency gains). These should sound realistic and demonstrate concrete business value.
+                    * **Elaborate & Expand Strategically:** Expand brief descriptions into more robust, detailed, and results-oriented statements. Draw logical inferences from the context to make achievements more impactful and thoroughly aligned with the JD's requirements.
+                    * **Strategic Skill/Tool Introduction (FOR RESEARCH/SIMULATION ONLY - HIGHLY CAUTIONED):**
+                        * If the "Job Description Context" explicitly highlights a skill, tool, or technology that is CRUCIAL for the role and is *highly complementary* to the candidate's existing background (e.g., a specific cloud service if they have general cloud experience, a specific language library if they know the language, or a common framework in their domain), you may **plausibly integrate it** into the relevant section (e.g., an experience bullet point, a skill list entry, or within a project description).
+                        * **This must be done with extreme caution and high plausibility.** DO NOT fabricate entire experiences or projects. Integrate skills into existing content where it feels natural and *highly probable* given the candidate's stated background.
+                        * DO NOT add skills that are completely unrelated or advanced beyond the candidate's demonstrated level.
+                        * **REMINDER: Fabricating qualifications for real job applications is unethical and harmful. This directive is solely for experimental research purposes to understand AI capabilities and is not for real-world use of the output.**
+
+            3.  **Preserve Core Meaning:** While expanding and enhancing, the fundamental responsibility or achievement described in the original text must be maintained in its essence.
+
+            **Ultimate Enhancement Strategy (to EXCEED 85% ATS & Recruiter Alignment):**
+            1.  **Deep-Dive JD Analysis (Internal First Step):** Before enhancing, perform a meticulous internal analysis of the "Job Description Context." Identify and categorize:
+                * **Tier 1 Keywords:** Exact terms for required skills, technologies, certifications, and core duties explicitly mentioned. These are non-negotiable for inclusion.
+                * **Tier 2 Concepts/Themes:** Implied skills, desired soft skills, project types, industry-specific concepts, and the overarching demands of the role.
+                * **Key Action Verbs:** Action verbs frequently used or explicitly desired in the JD.
+            2.  **Aggressive & Intelligent Keyword Saturation:**
+                * **Prioritize Tier 1 Keywords:** Strategically and aggressively embed **ALL Tier 1 keywords and phrases** into the most relevant paragraphs of the resume. Ensure seamless and natural integration, even if it requires rephrasing significant portions. Aim for a high density of these exact terms.
+                * **Weave Tier 2 Concepts:** Rephrase existing accomplishments and responsibilities to align them with Tier 2 Concepts/Themes from the JD, using JD-specific terminology where possible.
+            3.  **Transformative Role-Specific Framing:**
+                * Go beyond simple alignment. **Transform** the candidate's achievements and responsibilities to *directly mirror* the language, scope, and impact described in the JD. Frame their experience as if it was custom-written for this specific role.
+            4.  **Hyper-Focus on Impact & Quantifiable Results:**
+                * Every enhanced statement, especially bullet points, **must** clearly articulate the positive outcome, value delivered, or problem solved, ideally with generated quantifiable data.
+            5.  **Powerful & JD-Aligned Action Verbs:**
+                * Begin virtually every bullet point and achievement statement with a powerful, high-impact action verb, heavily favoring those explicitly used in the JD or highly relevant to the role.
+            6.  **Conciseness, Professionalism & ATS Dominance:**
+                * Eliminate all redundancy, passive voice, and overly verbose phrasing. Be direct, professional, and impactful. Maintain a polished American standard business tone. Ensure optimal ATS parsing by using clear structure, standard professional vocabulary, and avoiding obscure characters.
+
+            **Output Format:**
+            -   You MUST respond with a single VALID JSON object.
+            -   The JSON object MUST contain the EXACT SAME keys as the input JSON (paragraph IDs).
+            -   The values in the JSON object MUST be the corresponding enhanced paragraph texts.
+            -   DO NOT include any additional text, commentary, or formatting outside the JSON object.
+            """
+            
+            jd_context = job_description[:16000] # Truncate JD for efficiency
+
+            user_prompt = f"""
+            **Job Description Context for Enhancement:**
+            {jd_context}
+
+            **JSON object of resume paragraphs to enhance:**
+            {json.dumps(paragraphs_to_enhance, indent=2)}
+            """
+
+            # 3. MAKE THE SINGLE API CALL WITH JSON MODE AND TOKEN LIMIT
+            response = client.chat.completions.create(
+                model='gpt-4o',
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.3, # Keep temperature low for consistent, precise output
+                max_tokens=15000 # Ensure ample space for the full response JSON
+            )
+
+            # 4. PARSE THE RESPONSE AND UPDATE THE DOCUMENT
+            print("Batch response received. Updating document...")
+            enhanced_results = json.loads(response.choices[0].message.content)
+
+            for key, enhanced_text in enhanced_results.items():
                 if key in paragraph_map:
-                    sanitized_text = self._sanitize_text(enhanced_text)
-                    paragraph_map[key].text = sanitized_text
-                    if paragraph_map[key].runs:
-                        font = paragraph_map[key].runs[0].font
+                    para = paragraph_map[key]
+                    # This replaces paragraph text while preserving its style (alignment, bullets)
+                    para.text = enhanced_text
+                    # Apply standardized font settings to the new run for consistency
+                    if para.runs:
+                        font = para.runs[0].font
                         font.name = 'Calibri'
-                        font.size = Pt(11)
-
-            # --- STAGE 2: GENERATE DETAILED REPORT ---
-            print("=== STAGE 2: GENERATING DETAILED ENHANCEMENT REPORT ===")
-            report_data = self._generate_enhancement_report(original_paragraphs, enhanced_paragraph_texts, job_description)
-
-            # Append the final report to the document
-            self._append_executive_audit_report(doc, report_data)
+                        font.size = Pt(11) # Standardize to 11pt, common for body text
 
             doc.save(output_path)
-            print("Enhancement and report generation complete.")
-            return {'success': True}
+            print(f"Enhancement complete. Saved to: {output_path}")
 
+            return {'success': True}
+            
         except Exception as e:
             import traceback
-            print(f"ERROR: Main enhancement pipeline failed: {str(e)}")
+            print(f"ERROR: Batch enhancement failed: {str(e)}")
             print(traceback.format_exc())
             return {'success': False, 'error': str(e)}
-
-    def _get_enhanced_text(self, paragraphs_to_enhance: dict, job_description: str) -> dict:
-        """API call focused only on enhancing text."""
-        system_prompt = """
-        You are an elite AI resume optimization specialist. Your sole task is to rewrite and enhance the provided resume paragraphs to align with the Job Description (JD).
-        - Protect all personal, educational, and company details.
-        - Plausibly integrate skills and quantifiable metrics from the JD.
-        - Your response MUST be a single JSON object where keys are the original paragraph IDs and values are the enhanced paragraph texts. Do not include any other commentary or keys.
-        """
-        user_prompt = f"""
-        **Job Description Context:**
-        {job_description[:16000]}
-
-        **JSON object of resume paragraphs to enhance:**
-        {json.dumps(paragraphs_to_enhance, indent=2)}
-        """
-        response = self.client.chat.completions.create(
-            model='gpt-4o',
-            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
-            response_format={"type": "json_object"},
-            temperature=0.3
-        )
-        return json.loads(response.choices[0].message.content)
-
-    def _generate_enhancement_report(self, original_texts: dict, enhanced_texts: dict, job_description: str) -> list:
-        """API call focused only on comparing original vs. enhanced text and generating a report."""
-        
-        # Find only the paragraphs that were actually changed
-        changed_paragraphs = {
-            key: {
-                "original": original_texts[key],
-                "enhanced": enhanced_texts.get(key, original_texts[key])
-            }
-            for key in enhanced_texts if original_texts[key] != enhanced_texts.get(key, original_texts[key])
-        }
-
-        if not changed_paragraphs:
-            return []
-
-        system_prompt = """
-        You are an AI resume auditor. Your task is to compare the "original" and "enhanced" versions of resume paragraphs and generate a detailed report explaining the changes.
-        **Output Format:**
-        - You MUST respond with a single JSON object containing one key: `"enhancement_report"`.
-        - The value of `"enhancement_report"` must be a list of JSON objects.
-        - Each object represents one enhancement and MUST contain four keys:
-            - `"original_text"`: The original paragraph text.
-            - `"enhanced_text"`: The new, enhanced paragraph text.
-            - `"category"`: One of: 'ATS & Keyword Alignment', 'Impact & Quantification', or 'Clarity & Professionalism'.
-            - `"reasoning"`: A concise sentence explaining how the enhanced text is an improvement.
-        """
-        user_prompt = f"""
-        **Job Description for Context:**
-        {job_description[:16000]}
-
-        **JSON object of changed paragraphs to analyze:**
-        {json.dumps(changed_paragraphs, indent=2)}
-        """
-        response = self.client.chat.completions.create(
-            model='gpt-4o',
-            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
-            response_format={"type": "json_object"},
-            temperature=0.2
-        )
-        report_data = json.loads(response.choices[0].message.content)
-        return report_data.get("enhancement_report", [])
-
-    def _set_cell_color(self, cell, color_hex):
-        """Helper function to set the background color of a table cell."""
-        shading_elm = OxmlElement('w:shd')
-        shading_elm.set(qn('w:fill'), color_hex)
-        cell._tc.get_or_add_tcPr().append(shading_elm)
-
-    def _append_executive_audit_report(self, doc, report_data):
-        """Appends a professionally formatted, table-based audit report to the document."""
-        if not report_data:
-            return
-
-        print("Appending Executive Audit Report to the document.")
-        doc.add_page_break()
-        doc.add_heading('InstantResumeAI: Executive Enhancement Report', level=1)
-        
-        p = doc.add_paragraph()
-        p.add_run("This report provides a transparent, detailed breakdown of the strategic improvements applied to your resume.").italic = True
-        doc.add_paragraph()
-
-        changes_by_category = {
-            'ATS & Keyword Alignment': [],
-            'Impact & Quantification': [],
-            'Clarity & Professionalism': []
-        }
-        for change in report_data:
-            category = change.get('category')
-            if category in changes_by_category:
-                changes_by_category[category].append(self._sanitize_text_dict(change))
-
-        for category, changes in changes_by_category.items():
-            if changes:
-                doc.add_heading(category, level=2)
-                for i, change in enumerate(changes):
-                    reasoning = change.get('reasoning', 'No reasoning provided.')
-                    p_reason = doc.add_paragraph()
-                    p_reason.add_run(f'Enhancement #{i+1}: ').bold = True
-                    p_reason.add_run(reasoning)
-
-                    table = doc.add_table(rows=2, cols=2)
-                    try:
-                        table.style = 'Table Grid'
-                    except KeyError:
-                        pass
-
-                    cell_orig_header, cell_enh_header = table.rows[0].cells
-                    self._set_cell_color(cell_orig_header, "FDEBEB")
-                    self._set_cell_color(cell_enh_header, "EBFDEB")
-                    cell_orig_header.text, cell_enh_header.text = 'Original Text', 'Enhanced Text'
-                    cell_orig_header.paragraphs[0].runs[0].bold = True
-                    cell_enh_header.paragraphs[0].runs[0].bold = True
-                    
-                    cell_orig_content, cell_enh_content = table.rows[1].cells
-                    original_text = change.get('original_text', 'N/A')
-                    enhanced_text = change.get('enhanced_text', 'N/A')
-                    
-                    p_orig, p_enh = cell_orig_content.paragraphs[0], cell_enh_content.paragraphs[0]
-                    run_orig = p_orig.add_run(original_text)
-                    run_orig.font.color.rgb = RGBColor(0x9C, 0x00, 0x06)
-                    run_enh = p_enh.add_run(enhanced_text)
-                    run_enh.font.color.rgb = RGBColor(0x00, 0x61, 0x00)
-                    
-                    doc.add_paragraph()
-    
-    def _sanitize_text_dict(self, d: dict) -> dict:
-        """Sanitizes all string values in a dictionary."""
-        return {k: self._sanitize_text(v) if isinstance(v, str) else v for k, v in d.items()}
