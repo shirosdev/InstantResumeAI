@@ -33,6 +33,7 @@ import './App.css';
 import './styles/Pages.css';
 import './styles/Pricing.css';
 import './styles/Production.css';
+import './styles/Profile.css';
 
 function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
