@@ -23,6 +23,11 @@ const authService = {
     return api.get('/auth/me');
   },
 
+  // Update user profile
+  updateProfile: async (profileData) => {
+    return api.put('/auth/profile', profileData);
+  },
+
   // Refresh access token
   refreshToken: async () => {
     const refreshToken = localStorage.getItem('refresh_token');
