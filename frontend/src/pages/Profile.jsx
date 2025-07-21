@@ -1,30 +1,90 @@
-import React, { useState } from 'react';
+// frontend/src/pages/Profile.jsx
+
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import authService from '../services/authService';
+import '../styles/Profile.css';
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUserData } = useAuth();
   const navigate = useNavigate();
+
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: user?.first_name || '',
-    lastName: user?.last_name || '',
-    phone: user?.phone_number || '',
-    profession: user?.profession || '',
-    location: user?.location || '',
-    bio: user?.bio || ''
+    first_name: '',
+    last_name: '',
+    phone_number: '',
+    profession: '',
+    location: '',
+    bio: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        phone_number: user.phone_number || '',
+        profession: user.profession || '',
+        location: user.location || '',
+        bio: user.bio || ''
+      });
+    }
+  }, [user]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleLogout = async () => {
     await logout();
     navigate('/');
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: Implement profile update API call
-    console.log('Updating profile with:', formData);
+  const handleEditClick = () => {
+    setIsEditing(true);
+    setError('');
+    setSuccess('');
+  };
+
+  const handleCancelClick = () => {
     setIsEditing(false);
+    setError('');
+    setSuccess('');
+    if (user) {
+      setFormData({
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        phone_number: user.phone_number || '',
+        profession: user.profession || '',
+        location: user.location || '',
+        bio: user.bio || ''
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await authService.updateProfile(formData);
+      setSuccess('Profile updated successfully!');
+      if (updateUserData && response.data.user) {
+        updateUserData(response.data.user);
+      }
+      setIsEditing(false);
+    } catch (err) {
+      setError(err.response?.data?.message || 'An error occurred while updating the profile.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -41,7 +101,7 @@ const Profile = () => {
           <div className="stat-card">
             <h3>Member Since</h3>
             <p className="stat-date">
-              {new Date(user?.created_at).toLocaleDateString()}
+              {user ? new Date(user.created_at).toLocaleDateString() : '...'}
             </p>
             <p className="stat-description">Account creation date</p>
           </div>
@@ -52,16 +112,20 @@ const Profile = () => {
           </div>
         </div>
 
-        <div className="auth-card" style={{ maxWidth: '800px', margin: '2rem auto' }}>
+        <div className="auth-card profile-form-container" style={{ maxWidth: '680px', margin: '2rem auto' }}>
           <h2>Profile Information</h2>
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            {error && <p className="error-message">{error}</p>}
+            {success && <p className="success-message">{success}</p>}
+            
+            <div className="form-grid">
               <div className="form-group">
                 <label>First Name</label>
                 <input 
                   type="text" 
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                  name="first_name"
+                  value={formData.first_name}
+                  onChange={handleChange}
                   disabled={!isEditing}
                 />
               </div>
@@ -69,51 +133,57 @@ const Profile = () => {
                 <label>Last Name</label>
                 <input 
                   type="text" 
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleChange}
                   disabled={!isEditing}
                 />
               </div>
             </div>
             
-            <div className="form-group">
-              <label>Email</label>
-              <input type="email" value={user?.email || ''} disabled />
+            <div className="form-grid">
+                <div className="form-group">
+                  <label>Email</label>
+                  <input type="email" value={user?.email || ''} disabled />
+                </div>
+                <div className="form-group">
+                  <label>Username</label>
+                  <input type="text" value={user?.username || ''} disabled />
+                </div>
             </div>
-            
-            <div className="form-group">
-              <label>Username</label>
-              <input type="text" value={user?.username || ''} disabled />
-            </div>
-            
-            <div className="form-group">
-              <label>Phone Number</label>
-              <input 
-                type="tel" 
-                value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                disabled={!isEditing}
-                placeholder="Enter your phone number"
-              />
-            </div>
-            
-            <div className="form-group">
-              <label>Profession</label>
-              <input 
-                type="text" 
-                value={formData.profession}
-                onChange={(e) => setFormData({...formData, profession: e.target.value})}
-                disabled={!isEditing}
-                placeholder="e.g. Software Engineer, Marketing Manager"
-              />
+
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Phone Number</label>
+                <input 
+                  type="tel" 
+                  name="phone_number"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  placeholder="Enter your phone number"
+                />
+              </div>
+              <div className="form-group">
+                <label>Profession</label>
+                <input 
+                  type="text" 
+                  name="profession"
+                  value={formData.profession}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  placeholder="e.g. Software Engineer"
+                />
+              </div>
             </div>
             
             <div className="form-group">
               <label>Location</label>
               <input 
                 type="text" 
+                name="location"
                 value={formData.location}
-                onChange={(e) => setFormData({...formData, location: e.target.value})}
+                onChange={handleChange}
                 disabled={!isEditing}
                 placeholder="City, State/Country"
               />
@@ -122,57 +192,48 @@ const Profile = () => {
             <div className="form-group">
               <label>Bio</label>
               <textarea 
+                name="bio"
                 value={formData.bio}
-                onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                onChange={handleChange}
                 disabled={!isEditing}
                 placeholder="Tell us about yourself..."
-                rows="4"
-                style={{ 
-                  width: '100%', 
-                  padding: '0.8rem 1rem',
-                  border: '1px solid rgba(144, 241, 239, 0.3)',
-                  borderRadius: '10px',
-                  background: 'rgba(0, 18, 32, 0.8)',
-                  color: 'white',
-                  fontSize: '1rem',
-                  resize: 'vertical'
-                }}
+                rows="3"
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between' }}>
-              <div>
-                {isEditing ? (
-                  <>
-                    <button type="submit" className="auth-button">Save Changes</button>
-                    <button 
-                      type="button" 
-                      className="auth-button" 
-                      style={{ marginLeft: '1rem', background: 'transparent', border: '2px solid var(--bio-luminescent)' }}
-                      onClick={() => setIsEditing(false)}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
+            <div className="profile-actions">
+              {isEditing ? (
+                <>
+                  <button 
+                    type="button" 
+                    className="auth-button secondary"
+                    onClick={handleCancelClick}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="auth-button" disabled={isLoading}>
+                    {isLoading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </>
+              ) : (
+                <>
                   <button 
                     type="button" 
                     className="auth-button"
-                    onClick={() => setIsEditing(true)}
+                    onClick={handleEditClick}
                   >
                     Edit Profile
                   </button>
-                )}
-              </div>
-              
-              <button 
-                type="button"
-                className="auth-button"
-                style={{ background: 'var(--coral-primary)' }}
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
+                  <button 
+                    type="button"
+                    className="auth-button danger"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </button>
+                </>
+              )}
             </div>
           </form>
         </div>
