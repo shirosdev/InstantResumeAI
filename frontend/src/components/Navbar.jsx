@@ -73,8 +73,8 @@ const Navbar = () => {
               Hi, {user.first_name || user.username}
             </span>
           )}
-          <button 
-            className="mobile-nav-toggle" 
+          <button
+            className="mobile-nav-toggle"
             onClick={toggleMobileMenu}
             aria-label="Toggle navigation menu"
             aria-expanded={isMobileMenuOpen}
@@ -99,6 +99,11 @@ const Navbar = () => {
               <li>
                 <Link to="/profile" className="nav-link" onClick={closeMobileMenu}>
                   Profile
+                </Link>
+              </li>
+              <li>
+                <Link to="/investors" className="nav-link" onClick={closeMobileMenu}>
+                  Investors
                 </Link>
               </li>
               <li>
@@ -131,6 +136,11 @@ const Navbar = () => {
               <li>
                 <Link to="/how-it-works" className="nav-link" onClick={closeMobileMenu}>
                   How It Works
+                </Link>
+              </li>
+              <li>
+                <Link to="/investors" className="nav-link" onClick={closeMobileMenu}>
+                  Investors
                 </Link>
               </li>
               <li>
