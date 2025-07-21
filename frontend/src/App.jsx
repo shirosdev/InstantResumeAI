@@ -1,4 +1,4 @@
-// frontend/src/App.jsx - Updated with Password Reset Routes
+// frontend/src/App.jsx - Updated with Investors Route
 
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -18,6 +18,7 @@ import Pricing from './pages/Pricing';
 import HowItWorks from './pages/HowItWorks';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import Investors from './pages/Investors'; // Import the new Investors page
 import Blog from './pages/Blog';
 import Usage from './pages/Usage';
 import Privacy from './pages/Privacy';
@@ -55,29 +56,31 @@ function App() {
       <AuthProvider>
         <Router>
           <div className="App">
-            
+
             <Navbar />
-            
+
             <main id="main-content" className="main-content">
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/investors" element={<Investors />} /> {/* Add the new route */}
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/Usage" element={<Usage />} />
-                
+
                 {/* Password Reset Routes */}
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/verify-reset-token" element={<VerifyResetToken />} />
                 <Route path="/reset-password/:token?" element={<ResetPassword />} />
-                
+
                 {/* Protected routes */}
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
@@ -94,14 +97,14 @@ function App() {
                     <ChangePassword />
                   </ProtectedRoute>
                 } />
-                
+
                 {/* Catch all route */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
-            
+
             <Footer />
-            
+
             {/* Network Status Indicator */}
             <div className={`network-status ${isOnline ? 'online' : 'offline'}`}>
               <div className="network-indicator"></div>
