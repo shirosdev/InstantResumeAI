@@ -1,0 +1,96 @@
+/* frontend/src/styles/Profile.css */
+
+/* --- Further adjustments for a more compact card --- */
+.profile-form-container {
+    padding: 1.8rem 2.2rem !important; /* Further reduced padding */
+  }
+  
+  .profile-form-container h2 {
+      margin-bottom: 1.5rem; /* Add some space below the title */
+  }
+  
+  .profile-form-container .form-group {
+    margin-bottom: 1rem !important; /* Further reduced space between fields */
+  }
+  
+  /* NEW: Style for two-column grid layout */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  
+  /* NEW: Styles for the action buttons container */
+  .profile-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 1.5rem; /* Add space above the buttons */
+  }
+  
+  /* NEW: Specific styles for secondary and danger buttons */
+  .profile-actions .auth-button.secondary {
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    color: var(--text-secondary);
+  }
+  .profile-actions .auth-button.secondary:hover {
+    background: var(--bg-secondary);
+    border-color: var(--text-primary);
+  }
+  
+  .profile-actions .auth-button.danger {
+    background: var(--coral-primary);
+  }
+  .profile-actions .auth-button.danger:hover {
+    background: #e53e3e; /* A darker red for hover */
+  }
+  
+  
+  /* Base styles for profile form elements */
+  .profile-form-container .form-group input,
+  .profile-form-container .form-group textarea {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    display: block !important;
+    padding: 0.8rem 1rem;
+    border: 1px solid rgba(144, 241, 239, 0.3);
+    border-radius: 8px; /* Slightly smaller radius */
+    background: rgba(0, 18, 32, 0.8);
+    color: white;
+    font-size: 0.95rem; /* Slightly smaller font */
+    transition: all 0.3s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+  
+  .profile-form-container .form-group input:disabled,
+  .profile-form-container .form-group textarea:disabled {
+    background: rgba(0, 18, 32, 0.4) !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    border-color: rgba(144, 241, 239, 0.2) !important;
+    cursor: not-allowed !important;
+    opacity: 0.7 !important;
+  }
+  
+  .profile-form-container .form-group input:not(:disabled):focus,
+  .profile-form-container .form-group textarea:not(:disabled):focus {
+    outline: none;
+    border-color: var(--coral-primary);
+    box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.2);
+    background: rgba(0, 18, 32, 0.9);
+  }
+  
+  /* Mobile responsive adjustments */
+  @media (max-width: 768px) {
+    .profile-form-container {
+      padding: 1.5rem !important;
+    }
+    .form-grid {
+      grid-template-columns: 1fr; /* Stack grid items on smaller screens */
+      gap: 0;
+    }
+  }
