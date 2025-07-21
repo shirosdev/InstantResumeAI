@@ -407,6 +407,75 @@ def change_password():
             'message': 'Failed to change password',
             'error': str(e)
         }), 500
+    
+@auth_bp.route('/profile', methods=['PUT', 'PATCH'])
+@jwt_required()
+def update_profile():
+    """Update user profile information"""
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        data = request.get_json()
+        
+        # Define allowed profile fields for security
+        allowed_fields = ['first_name', 'last_name', 'phone_number', 'profession', 'location', 'bio']
+        
+        # Update only provided and allowed fields
+        updated_fields = []
+        for field in allowed_fields:
+            if field in data:
+                # Validate field length and format
+                value = data[field]
+                if value is not None:
+                    value = str(value).strip()
+                    
+                    # Field-specific validation
+                    if field == 'phone_number' and value:
+                        if len(value) > 20:
+                            return jsonify({'message': 'Phone number too long'}), 400
+                    elif field in ['first_name', 'last_name'] and value:
+                        if len(value) > 100:
+                            return jsonify({'message': f'{field.replace("_", " ").title()} too long'}), 400
+                    elif field in ['profession', 'location'] and value:
+                        if len(value) > 255:
+                            return jsonify({'message': f'{field.title()} too long'}), 400
+                    elif field == 'bio' and value:
+                        if len(value) > 1000:
+                            return jsonify({'message': 'Bio too long (maximum 1000 characters)'}), 400
+                
+                # Set the field value
+                setattr(user, field, value if value else None)
+                updated_fields.append(field)
+        
+        # Update timestamp
+        user.updated_at = datetime.utcnow()
+        
+        # Save changes to database
+        db.session.commit()
+        
+        # Log profile update activity
+        AuthService.log_activity(
+            current_user_id,
+            'profile_updated',
+            f'Profile updated: {", ".join(updated_fields)}',
+            request.remote_addr
+        )
+        
+        return jsonify({
+            'message': 'Profile updated successfully',
+            'user': user.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'message': 'Failed to update profile',
+            'error': str(e)
+        }), 500
 
 # =============================================================================
 # UTILITY ENDPOINTS
