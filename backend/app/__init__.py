@@ -67,8 +67,11 @@ def create_app():
     # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.resume import resume_bp
+    from app.routes.contact import contact_bp
+    
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(resume_bp, url_prefix='/api/resume')
+    app.register_blueprint(contact_bp, url_prefix='/api/contact')
     
     # JWT error handlers
     @jwt.invalid_token_loader
