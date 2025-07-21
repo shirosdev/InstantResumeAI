@@ -158,15 +158,32 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Setup activity listeners
-    const activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
-    activityEvents.forEach(event => window.addEventListener(event, updateLastActivityTime, { passive: true }));
-
+    const activityEvents = ['mousemove', 'keydown', 'scroll', 'touchstart'];
+    const activityHandler = (event) => {
+      // Defensive check to ensure event.target exists and has required methods
+      if (!event.target || typeof event.target.closest !== 'function') {
+        updateLastActivityTime();
+        return;
+      }
+      
+      // Check if the event originates from form elements
+      if (event.target.tagName === 'BUTTON' || 
+          event.target.tagName === 'INPUT' || 
+          event.target.tagName === 'TEXTAREA' ||
+          event.target.closest('.profile-form-container')) {
+        return;
+      }
+      updateLastActivityTime();
+    };
+      activityEvents.forEach(event => 
+        window.addEventListener(event, activityHandler, { passive: true })
+      );
     // Start the inactivity check interval
     inactivityTimer = setInterval(checkInactivity, 60 * 1000); // Check every minute
 
     // Cleanup function for this effect
     return () => {
-      activityEvents.forEach(event => window.removeEventListener(event, updateLastActivityTime));
+      activityEvents.forEach(event => window.removeEventListener(event, activityHandler));
       if (inactivityTimer) {
         clearInterval(inactivityTimer);
       }
@@ -240,7 +257,12 @@ export const AuthProvider = ({ children }) => {
     error,
     login,
     signup,
-    logout
+    logout,
+    updateUserData: (userData) => {
+      setUser(userData);
+      localStorage.setItem('user_data', JSON.stringify(userData));
+      updateLastActivityTime();
+    }
   };
 
   return (
