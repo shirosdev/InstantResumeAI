@@ -1,5 +1,5 @@
 # backend/app/services/email_service.py
-
+# note: this might change, remember when the time comes!
 import smtplib
 import os
 from email.mime.text import MIMEText
@@ -12,106 +12,136 @@ import logging
 logger = logging.getLogger(__name__)
 
 class EmailService:
-    """Service for sending emails including password reset notifications"""
+    """Service for sending emails including password reset and contact form notifications"""
     
     def __init__(self):
         self.smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
         self.smtp_port = int(os.getenv('SMTP_PORT', '587'))
         self.smtp_username = os.getenv('SMTP_USERNAME')
         self.smtp_password = os.getenv('SMTP_PASSWORD')
+        # This 'from_email' is your authenticated user, which MUST match the login credentials.
         self.from_email = os.getenv('FROM_EMAIL', self.smtp_username)
         self.from_name = os.getenv('FROM_NAME', 'InstantResumeAI')
         
-    def send_password_reset_email(self, to_email: str, reset_token: str, user_name: str = None) -> bool:
+    def send_contact_inquiry(self, from_name: str, from_email: str, subject: str, message_body: str) -> bool:
         """
-        Send password reset email with verification code
-        
-        Args:
-            to_email: Recipient email address
-            reset_token: 6-digit verification code
-            user_name: Optional user name for personalization
-            
-        Returns:
-            bool: True if email sent successfully, False otherwise
+        Sends the contact form submission. 
+        WARNING: This version spoofs the 'From' address and is not reliable.
         """
         try:
-            subject = "Reset Your InstantResumeAI Password"
+            to_email = self.from_email  # Sending to yourself
+            email_subject = f"New Contact Inquiry: {subject}"
             
-            # Create email content
+            # UPDATED: The user's email is now a clickable mailto link
+            html_content = f"""
+            <h3>You have a new contact form submission:</h3>
+            <p><strong>From:</strong> {from_name}</p>
+            <p><strong>Email (Reply-To):</strong> <a href="mailto:{from_email}">{from_email}</a></p>
+            <p><strong>Subject:</strong> {subject}</p>
+            <hr>
+            <h4>Message:</h4>
+            <p>{message_body.replace('\n', '<br>')}</p>
+            """
+            
+            # The plain text version remains the same
+            text_content = f"""
+            You have a new contact form submission:
+            
+            From: {from_name}
+            Email (Reply-To): {from_email}
+            Subject: {subject}
+            
+            Message:
+            {message_body}
+            """
+
+            # This call now includes the from_email_override
+            return self._send_email(
+                to_email=to_email,
+                subject=email_subject,
+                html_content=html_content,
+                text_content=text_content,
+                from_name_override=from_name,
+                from_email_override=from_email
+            )
+        except Exception as e:
+            logger.error(f"Failed to send contact inquiry from {from_email}: {str(e)}")
+            return False
+    
+    def send_password_reset_email(self, to_email: str, reset_token: str, user_name: str = None) -> bool:
+        """Sends password reset email with verification code"""
+        try:
+            subject = "Reset Your InstantResumeAI Password"
             html_content = self._create_password_reset_html(reset_token, user_name)
             text_content = self._create_password_reset_text(reset_token, user_name)
-            
             return self._send_email(
                 to_email=to_email,
                 subject=subject,
                 html_content=html_content,
                 text_content=text_content
             )
-            
         except Exception as e:
             logger.error(f"Failed to send password reset email to {to_email}: {str(e)}")
             return False
     
     def send_password_change_confirmation(self, to_email: str, user_name: str = None) -> bool:
-        """
-        Send confirmation email after successful password change
-        
-        Args:
-            to_email: Recipient email address
-            user_name: Optional user name for personalization
-            
-        Returns:
-            bool: True if email sent successfully, False otherwise
-        """
+        """Sends confirmation email after successful password change"""
         try:
             subject = "Password Changed Successfully - InstantResumeAI"
-            
             html_content = self._create_password_changed_html(user_name)
             text_content = self._create_password_changed_text(user_name)
-            
             return self._send_email(
                 to_email=to_email,
                 subject=subject,
                 html_content=html_content,
                 text_content=text_content
             )
-            
         except Exception as e:
             logger.error(f"Failed to send password change confirmation to {to_email}: {str(e)}")
             return False
     
-    def _send_email(self, to_email: str, subject: str, html_content: str, text_content: str) -> bool:
+    def _send_email(self, to_email: str, subject: str, html_content: str, text_content: str, reply_to: str = None, from_name_override: str = None, from_email_override: str = None) -> bool:
+        """
+        Internal method updated to allow overriding the FROM address.
+        """
         if not self.smtp_username or not self.smtp_password:
             logger.error("SMTP credentials not configured")
             return False
         
         try:
-            # Create message
+            # Determine the display name and email for the "From" field
+            display_from_name = from_name_override if from_name_override else self.from_name
+            display_from_email = from_email_override if from_email_override else self.from_email
+
             msg = MIMEMultipart('alternative')
-            msg['From'] = f"{self.from_name} <{self.from_email}>"
+            # THIS IS THE RISKY CHANGE: Sets the 'From' header to the user-provided email.
+            msg['From'] = f"{display_from_name} <{display_from_email}>"
             msg['To'] = to_email
             msg['Subject'] = subject
             
-            # Attach text and HTML parts
+            # If the from address is spoofed, Reply-To is redundant but harmless.
+            if reply_to:
+                msg.add_header('Reply-To', reply_to)
+            
             text_part = MIMEText(text_content, 'plain')
             html_part = MIMEText(html_content, 'html')
             
             msg.attach(text_part)
             msg.attach(html_part)
             
-            # Use SSL connection for port 465
+            # The 'sendmail' method's 'from_addr' should be your authenticated user.
+            # Sending with a different 'From' header in the message is the spoof itself.
+            auth_user_email = self.from_email
+
             if self.smtp_port == 465:
                 with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
                     server.login(self.smtp_username, self.smtp_password)
-                    text = msg.as_string()
-                    server.sendmail(self.from_email, to_email, text)
+                    server.sendmail(auth_user_email, to_email, msg.as_string())
             else:
-                # Use STARTTLS for other ports (like 587)
                 with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                     server.starttls()
                     server.login(self.smtp_username, self.smtp_password)
-                    text = msg.as_string()
-                    server.sendmail(self.from_email, to_email, text)
+                    server.sendmail(auth_user_email, to_email, msg.as_string())
             
             logger.info(f"Email sent successfully to {to_email}")
             return True

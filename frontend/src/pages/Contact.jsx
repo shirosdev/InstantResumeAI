@@ -1,103 +1,122 @@
-import React, { useState } from 'react';
+// frontend/src/pages/Contact.jsx
+
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import contactService from '../services/contactService';
+import { getErrorMessage } from '../utils/errorMessages';
 
 const Contact = () => {
+  const { user } = useAuth();
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
     message: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: Implement contact form submission
-    alert('Thank you for your message. Our executive will get back to you in 24 hours!');
-  };
+  useEffect(() => {
+    if (user) {
+      setFormData(prevData => ({ ...prevData, email: user.email }));
+    }
+  }, [user]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      setError("Please log in to send a message.");
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await contactService.sendMessage(formData);
+      setSuccess(response.data.message);
+      setFormData({
+        name: '',
+        email: user.email,
+        subject: '',
+        message: ''
+      });
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="page-container">
+    <div className="page-container contact-page">
       <div className="container">
-        <h1>Contact Us</h1>
-        <div className="contact-content">
-          <div className="contact-info">
-            <h2>Get in Touch</h2>
-            <p>We're here to help you. Reach out with any questions or feedback.</p>
-            
-            <div className="contact-details">
-              <div className="contact-item">
-                <h3>Email</h3>
-                <p>info@instantresumeai.com</p>
+        <header className="contact-page-header">
+          <h1>Get In Touch</h1>
+          <p>We'd love to hear from you. Please fill out the form below or use our contact details.</p>
+        </header>
+
+        <div className="contact-card">
+          <div className="contact-details-grid">
+            <div className="contact-detail-item">
+              <div className="contact-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
               </div>
-              <div className="contact-item">
-                <h3>Phone</h3>
-                <p>(800) 971-8013</p>
+              <h3>Email Us</h3>
+              <a href="mailto:info@instantresumeai.com">info@instantresumeai.com</a>
+            </div>
+            <div className="contact-detail-item">
+              <div className="contact-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
               </div>
-              <div className="contact-item">
-                <h3>Business Hours</h3>
-                <p>Monday - Friday: 9:00 AM - 6:00 PM CST</p>
+              <h3>Call Us</h3>
+              <p>(800) 971-8013</p>
+            </div>
+            <div className="contact-detail-item">
+              <div className="contact-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
+              <h3>Business Hours</h3>
+              <p>Mon - Fri: 9 AM - 6 PM CST</p>
             </div>
           </div>
-          
+
+          <hr className="contact-divider" />
+
           <div className="contact-form-section">
             <h2>Send Us a Message</h2>
             <form onSubmit={handleSubmit} className="contact-form">
-              <div className="form-group">
-                <label htmlFor="name">Your Name</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
+              {success && <p className="success-message">{success}</p>}
+              {error && <p className="error-message">{error}</p>}
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="name">Your Name</label>
+                  <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required disabled={isLoading} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="email">Your Email</label>
+                  <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required disabled={!!user || isLoading} placeholder={!user ? "Log in to auto-fill email" : ""} />
+                </div>
               </div>
-              
-              <div className="form-group">
-                <label htmlFor="email">Email Address</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              
               <div className="form-group">
                 <label htmlFor="subject">Subject</label>
-                <input
-                  type="text"
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  required
-                />
+                <input type="text" id="subject" name="subject" value={formData.subject} onChange={handleChange} required disabled={isLoading} />
               </div>
-              
               <div className="form-group">
                 <label htmlFor="message">Message</label>
-                <textarea
-                  id="message"
-                  name="message"
-                  rows="5"
-                  value={formData.message}
-                  onChange={handleChange}
-                  required
-                ></textarea>
+                <textarea id="message" name="message" rows="5" value={formData.message} onChange={handleChange} required disabled={isLoading}></textarea>
               </div>
-              
-              <button type="submit" className="submit-button">Send Message</button>
+              <div className="button-wrapper">
+                <button type="submit" className="submit-button" disabled={!user || isLoading}>
+                  {isLoading ? 'Sending...' : 'Send Message'}
+                </button>
+                {!user && <span className="tooltip-text">Please log in to send a message</span>}
+              </div>
             </form>
           </div>
         </div>
