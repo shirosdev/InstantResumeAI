@@ -6,7 +6,7 @@ import contactService from '../services/contactService';
 import { getErrorMessage } from '../utils/errorMessages';
 
 const Contact = () => {
-  const { user } = useAuth();
+  const { user } = useAuth(); // Get user from auth context
 
   const [formData, setFormData] = useState({
     name: '',
@@ -18,11 +18,12 @@ const Contact = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Effect to pre-populate email if user is logged in
   useEffect(() => {
     if (user) {
       setFormData(prevData => ({ ...prevData, email: user.email }));
     }
-  }, [user]);
+  }, [user]); // Reruns when the user logs in or out
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,23 +31,21 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user) {
-      setError("Please log in to send a message.");
-      return;
-    }
     setIsLoading(true);
     setError('');
     setSuccess('');
+
     try {
       const response = await contactService.sendMessage(formData);
       setSuccess(response.data.message);
+      // Clear form on success, keeping email if user is logged in
       setFormData({
         name: '',
-        email: user.email,
+        email: user ? user.email : '',
         subject: '',
         message: ''
       });
-    } catch (err) {
+    } catch (err) { // <-- CORRECTED THIS LINE
       setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
@@ -100,7 +99,7 @@ const Contact = () => {
                 </div>
                 <div className="form-group">
                   <label htmlFor="email">Your Email</label>
-                  <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required disabled={!!user || isLoading} placeholder={!user ? "Log in to auto-fill email" : ""} />
+                  <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required disabled={!!user || isLoading} />
                 </div>
               </div>
               <div className="form-group">
@@ -112,10 +111,9 @@ const Contact = () => {
                 <textarea id="message" name="message" rows="5" value={formData.message} onChange={handleChange} required disabled={isLoading}></textarea>
               </div>
               <div className="button-wrapper">
-                <button type="submit" className="submit-button" disabled={!user || isLoading}>
+                <button type="submit" className="submit-button" disabled={isLoading}>
                   {isLoading ? 'Sending...' : 'Send Message'}
                 </button>
-                {!user && <span className="tooltip-text">Please log in to send a message</span>}
               </div>
             </form>
           </div>
