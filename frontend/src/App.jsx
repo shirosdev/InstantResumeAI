@@ -27,6 +27,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyResetToken from './pages/VerifyResetToken';
 import ChangePassword from './pages/ChangePassword';
+import History from './pages/History';
 
 // Styles
 import './App.css';
@@ -35,6 +36,7 @@ import './styles/Pricing.css';
 import './styles/Production.css';
 import './styles/Profile.css';
 import './styles/Contact.css';
+import './styles/History.css';
 
 function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -99,6 +101,7 @@ function App() {
                     <ChangePassword />
                   </ProtectedRoute>
                 } />
+                <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
 
                 {/* Catch all route */}
                 <Route path="*" element={<Navigate to="/" replace />} />

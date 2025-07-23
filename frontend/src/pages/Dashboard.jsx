@@ -64,9 +64,10 @@ const Dashboard = () => {
 
         <div className="dashboard-actions">
           {/* ... (Your action cards remain the same) ... */}
+          
           <div className="action-card">
             <h2>View History</h2>
-            <p>Check your previous resume enhancements and download them</p>
+            <p>Review a log of your 5 most recent resume enhancements</p> {/* <-- UPDATED TEXT */}
             <Link to="/history" className="action-button secondary">
               View History
             </Link>

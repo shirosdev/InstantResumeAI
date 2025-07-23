@@ -1,0 +1,125 @@
+/* frontend/src/styles/History.css */
+
+.history-page .container {
+    max-width: 900px;
+  }
+  
+  .history-page-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  
+  .history-page-header h1 {
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    color: var(--bio-luminescent);
+    margin-bottom: 0.5rem;
+  }
+  
+  .history-page-header p {
+    font-size: clamp(1rem, 2vw, 1.1rem);
+    color: var(--text-secondary);
+  }
+  
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .history-item {
+    display: flex;
+    align-items: center;
+    background: var(--bg-secondary);
+    padding: 1.25rem 1.5rem; /* Increased padding */
+    border-radius: 10px;
+    border: 1px solid var(--border-primary);
+    transition: all 0.3s ease;
+  }
+  
+  .history-item:hover {
+    transform: translateY(-3px);
+    border-color: var(--coral-primary);
+  }
+  
+  .history-item-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    background: rgba(125, 211, 201, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.5rem;
+  }
+  
+  .history-item-icon svg {
+    width: 20px;
+    height: 20px;
+    color: var(--bio-luminescent);
+  }
+  
+  .history-item-details {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 0.25rem; /* Add gap between items */
+  }
+  
+  .history-filename {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 1rem;
+  }
+  
+  /* --- NEW: Styles for the Job Description Snippet --- */
+  .history-jd-snippet {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0.25rem 0;
+    /* Truncate long text to one line */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 500px; /* Adjust as needed */
+  }
+  
+  .history-jd-snippet strong {
+    color: var(--text-secondary);
+  }
+  /* --- END NEW STYLES --- */
+  
+  .history-date {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  
+  .history-status {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    text-transform: uppercase;
+  }
+  
+  .history-status.status-completed {
+    background-color: rgba(72, 187, 120, 0.1);
+    color: var(--success-color);
+  }
+  
+  .history-status.status-failed {
+    background-color: rgba(229, 62, 62, 0.1);
+    color: var(--error-color);
+  }
+  
+  .no-history {
+    text-align: center;
+    padding: 3rem;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    border: 1px dashed var(--border-primary);
+  }
+  
+  .no-history p {
+    color: var(--text-muted);
+  }

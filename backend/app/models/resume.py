@@ -22,5 +22,15 @@ class ResumeEnhancement(db.Model):
     
     user = relationship('User', back_populates='enhancements')
 
+    def to_dict(self):
+        """Convert enhancement object to dictionary for JSON serialization"""
+        return {
+            'enhancement_id': self.enhancement_id,
+            'original_filename': self.original_filename,
+            'enhancement_status': self.enhancement_status,
+            'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
+            'job_description_snippet': self.job_description_snippet
+        }
+
     def __repr__(self):
         return f'<ResumeEnhancement {self.enhancement_id} for user {self.user_id}>'
