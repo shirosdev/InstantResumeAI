@@ -28,7 +28,7 @@ const Dashboard = () => {
     };
 
     fetchStats();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   return (
     <div className="dashboard-container">
