@@ -9,4 +9,4 @@ from app.models.subscription import SubscriptionPlan, UserSubscription
 # This file makes the models directory a Python package and 
 # imports all models for easier access from other parts of the application
 
-__all__ = ['User', 'SocialAuth', 'UserSession', 'ActivityLog', 'SubscriptionPlan', 'UserSubscription']
+__all__ = ['User', 'SocialAuth', 'UserSession', 'ActivityLog', 'SubscriptionPlan', 'UserSubscription','ResumeEnhancement']

@@ -14,6 +14,7 @@ from app.models.user import User
 from app.models.activity import ActivityLog
 from app.services.comprehensive_resume_processor import IntegratedResumeService
 from app.services.enhancement_validator import EnhancementValidator
+from app.models.resume import ResumeEnhancement
 
 resume_bp = Blueprint('resume', __name__)
 
@@ -159,23 +160,38 @@ def enhance_resume():
         final_file_size = os.path.getsize(enhanced_filepath)
         
         try:
+            # Create a new record in the resume_enhancements table
+            new_enhancement = ResumeEnhancement(
+                user_id=user_id_from_token,
+                original_filename=saved_filename,
+                enhanced_filename=enhanced_filename,
+                file_path=os.path.join('enhanced', enhanced_filename),
+                enhancement_status='completed',
+                job_description_snippet=job_description[:500],
+                completed_at=datetime.utcnow()
+            )
+            db.session.add(new_enhancement)
+            
+            # Your existing activity log
             activity_log = ActivityLog(
                 user_id=user_id_from_token,
                 action='resume_enhanced',
-                description='Resume enhanced successfully with format preservation.',
+                description='Resume enhanced successfully.',
                 ip_address=request.remote_addr,
                 user_agent=request.headers.get('User-Agent'),
                 activity_metadata={
-                    'original_file': saved_filename,
-                    'enhanced_file': enhanced_filename,
+                    'enhancement_id': new_enhancement.enhancement_id,
                     'file_size': final_file_size,
                     'validation_score': validation_results['overall_score']
                 }
             )
             db.session.add(activity_log)
             db.session.commit()
-        except Exception as log_error:
-            print(f"Activity logging failed: {str(log_error)}")
+            
+        except Exception as db_error:
+            db.session.rollback()
+            print(f"Database logging/saving failed: {str(db_error)}")
+            # Even if logging fails, we can still proceed to send the file to the user
 
         # D. SEND SUCCESS RESPONSE
         return jsonify({

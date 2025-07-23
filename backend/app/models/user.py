@@ -34,6 +34,7 @@ class User(db.Model):
     subscriptions = relationship('UserSubscription', back_populates='user', cascade='all, delete-orphan')
     sessions = relationship('UserSession', back_populates='user', cascade='all, delete-orphan')
     activity_logs = relationship('ActivityLog', back_populates='user', cascade='all, delete-orphan')
+    enhancements = relationship('ResumeEnhancement', back_populates='user', cascade='all, delete-orphan')
     
     def to_dict(self):
         """Convert user object to dictionary for JSON serialization"""

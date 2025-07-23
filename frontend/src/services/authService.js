@@ -27,6 +27,9 @@ const authService = {
   updateProfile: async (profileData) => {
     return api.put('/auth/profile', profileData);
   },
+  getUserStats: async () => {
+    return api.get('/auth/stats');
+  },
 
   // Refresh access token
   refreshToken: async () => {

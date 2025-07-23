@@ -10,6 +10,11 @@ const Profile = () => {
   const { user, logout, updateUserData } = useAuth();
   const navigate = useNavigate();
 
+  // State for the enhancement count
+  const [enhancementCount, setEnhancementCount] = useState(0);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  // State for the form
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
@@ -23,6 +28,7 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Effect to populate form data
   useEffect(() => {
     if (user) {
       setFormData({
@@ -36,6 +42,23 @@ const Profile = () => {
     }
   }, [user]);
 
+  // Effect to fetch user stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await authService.getUserStats();
+        if (response.data?.stats) {
+          setEnhancementCount(response.data.stats.enhancement_count);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user stats:", error);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -44,7 +67,7 @@ const Profile = () => {
     await logout();
     navigate('/');
   };
-
+  
   const handleEditClick = () => {
     setIsEditing(true);
     setError('');
@@ -107,7 +130,9 @@ const Profile = () => {
           </div>
           <div className="stat-card">
             <h3>Resumes Enhanced</h3>
-            <p className="stat-number">0</p>
+            <p className="stat-number">
+              {isLoadingStats ? '...' : enhancementCount}
+            </p>
             <p className="stat-description">Total enhancements</p>
           </div>
         </div>
@@ -115,6 +140,7 @@ const Profile = () => {
         <div className="auth-card profile-form-container" style={{ maxWidth: '680px', margin: '2rem auto' }}>
           <h2>Profile Information</h2>
           <form onSubmit={handleSubmit}>
+            {/* ... (rest of your form is the same) ... */}
             {error && <p className="error-message">{error}</p>}
             {success && <p className="success-message">{success}</p>}
             

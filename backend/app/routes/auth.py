@@ -8,6 +8,7 @@ from app.models.activity import ActivityLog
 from app.services.auth_service import AuthService
 from app.services.password_reset_service import PasswordResetService
 from app.utils.validators import validate_email, validate_password, validate_username
+from app.models.resume import ResumeEnhancement
 from datetime import datetime
 import re
 
@@ -476,6 +477,28 @@ def update_profile():
             'message': 'Failed to update profile',
             'error': str(e)
         }), 500
+@auth_bp.route('/stats', methods=['GET'])
+@jwt_required()
+def get_user_stats():
+    """Get statistics for the current authenticated user"""
+    try:
+        current_user_id = get_jwt_identity()
+        
+        # Query the database for the count of completed enhancements
+        enhancement_count = ResumeEnhancement.query.filter_by(
+            user_id=current_user_id, 
+            enhancement_status='completed'
+        ).count()
+        
+        return jsonify({
+            'message': 'Stats retrieved successfully',
+            'stats': {
+                'enhancement_count': enhancement_count
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': 'Failed to retrieve user stats', 'error': str(e)}), 500
 
 # =============================================================================
 # UTILITY ENDPOINTS
