@@ -1,7 +1,7 @@
 // frontend/src/pages/History.jsx
 import React, { useState, useEffect } from 'react';
 import resumeService from '../services/resumeService';
-import { formatInTimeZone } from 'date-fns-tz'; // Import the formatting function
+// Removed date-fns-tz dependency - using native browser APIs
 import '../styles/History.css';
 
 const History = () => {
@@ -53,19 +53,23 @@ const History = () => {
                     <strong>For:</strong> {item.job_description_snippet}
                   </p>
                   <span className="history-date">
-                    {/* --- UPDATED: Enhanced timezone handling with debugging --- */}
+                    {/* --- Native browser timezone formatting without external dependencies --- */}
                     {(() => {
                       const date = new Date(item.created_at);
                       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                       
-                      // Debug logging (remove in production)
-                      console.log('Original timestamp:', item.created_at);
-                      console.log('Parsed date object:', date);
-                      console.log('User timezone:', userTimezone);
-                      console.log('UTC time:', date.toISOString());
-                      console.log('Local time:', date.toLocaleString());
+                      // Use native Intl.DateTimeFormat for timezone-aware formatting
+                      const formatter = new Intl.DateTimeFormat('en-US', {
+                        timeZone: userTimezone,
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      });
                       
-                      return formatInTimeZone(date, userTimezone, 'MM/dd/yyyy, hh:mm a zzz');
+                      return formatter.format(date);
                     })()}
                   </span>
                 </div>
