@@ -1,5 +1,3 @@
-
-
 // frontend/src/hooks/useAuth.js
 
 import { useState, useEffect, useContext, createContext, useCallback } from 'react';
@@ -96,7 +94,7 @@ export const AuthProvider = ({ children }) => {
       // If we have a token, stored user data, AND a recent activity timestamp,
       // initially trust the local state to avoid unnecessary logouts on transient /me failures.
       if (storedUser && lastActivity) {
-          console.log('Found valid token, user data, and recent activity. Initializing from localStorage.');
+          
           if (mounted) {
               setUser(storedUser); // Set user state from localStorage
               setLoading(false); // Stop loading
