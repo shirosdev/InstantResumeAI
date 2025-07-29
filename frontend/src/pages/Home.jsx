@@ -44,6 +44,20 @@ const EnhancementWorkbench = () => {
     setError('');
   }, [currentStep]);
 
+  useEffect(() => {
+    const savedResult = sessionStorage.getItem('lastEnhancementResult');
+    if (savedResult) {
+      try {
+        const parsedResult = JSON.parse(savedResult);
+        setEnhancementResult(parsedResult);
+        setCurrentStep(3); // Go directly to the download step
+      } catch (e) {
+        console.error("Failed to parse saved enhancement result", e);
+        sessionStorage.removeItem('lastEnhancementResult');
+      }
+    }
+  }, []);
+
   const handleResumeUpload = (file) => {
     setResumeFile(file);
     setCurrentStep(2);
@@ -61,6 +75,7 @@ const EnhancementWorkbench = () => {
       const response = await resumeService.enhanceResume(resumeFile, jobDescription);
       if (response.data) {
         setEnhancementResult(response.data);
+        sessionStorage.setItem('lastEnhancementResult', JSON.stringify(response.data));
         setCurrentStep(3);
       }
     } catch (err) {
@@ -69,6 +84,7 @@ const EnhancementWorkbench = () => {
       setIsProcessing(false);
     }
   };
+
   
   const handleDownload = async () => {
     if (!enhancementResult?.enhanced_resume_id) return;
@@ -85,6 +101,7 @@ const EnhancementWorkbench = () => {
     setJobDescription('');
     setEnhancementResult(null);
     setError('');
+    sessionStorage.removeItem('lastEnhancementResult');
     const fileInput = document.getElementById('resume-upload');
     if (fileInput) fileInput.value = '';
   };
@@ -192,6 +209,7 @@ const ResultsStep = ({ onDownload, onReset }) => {
         <div className="results-icon">✓</div>
         <h3>Enhancement Complete!</h3>
         <p>Your AI-powered resume is ready for download.</p>
+        <p>Kindly note that the downloaded resume will include a detailed summary of all enhancements at the end</p>
         <div className="panel-actions simplified">
           <button className="submit-button secondary" onClick={onReset}>Enhance Another</button>
           <button className="submit-button" onClick={onDownload}>Download Your Resume</button>
