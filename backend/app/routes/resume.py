@@ -7,6 +7,7 @@ import uuid
 import re
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.services.auth_service import AuthService
 
 # Make sure to import the necessary libraries and modules
 import docx
@@ -124,7 +125,7 @@ def enhance_resume():
         )
         db.session.add(new_enhancement)
         db.session.commit()
-
+        AuthService.log_activity(user_id_from_token, 'resume_enhanced', f'User enhanced resume: {user_facing_filename}')
         # --- CORRECTED CLEANUP LOGIC ---
         # Query for all records for the user, sorted with the oldest first
         all_enhancements = ResumeEnhancement.query.filter_by(user_id=user_id_from_token).order_by(ResumeEnhancement.created_at.asc()).all()
