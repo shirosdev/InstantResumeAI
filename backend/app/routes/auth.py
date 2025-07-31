@@ -477,6 +477,7 @@ def update_profile():
             'message': 'Failed to update profile',
             'error': str(e)
         }), 500
+    
 @auth_bp.route('/stats', methods=['GET'])
 @jwt_required()
 def get_user_stats():
@@ -484,11 +485,14 @@ def get_user_stats():
     try:
         current_user_id = get_jwt_identity()
         
-        # Query the database for the count of completed enhancements
-        enhancement_count = ResumeEnhancement.query.filter_by(
+        # --- THIS IS THE FIX ---
+        # Count 'resume_enhanced' actions from the permanent activity log,
+        # not the temporary enhancement records table.
+        enhancement_count = ActivityLog.query.filter_by(
             user_id=current_user_id, 
-            enhancement_status='completed'
+            action='resume_enhanced'
         ).count()
+        # --- END OF FIX ---
         
         return jsonify({
             'message': 'Stats retrieved successfully',
