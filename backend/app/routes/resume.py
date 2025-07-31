@@ -95,7 +95,6 @@ def enhance_resume():
             output_path=enhanced_filepath
         )
         if not processing_result.get('success'):
-            # If enhancement fails, clean up the original uploaded file
             if os.path.exists(filepath):
                 os.remove(filepath)
             error_detail = processing_result.get('error', 'Unknown processing error')
@@ -119,21 +118,28 @@ def enhance_resume():
             file_path=os.path.join('enhanced', enhanced_filename),
             enhancement_status='completed',
             job_description_snippet=job_description[:500],
-            created_at=datetime.utcnow(),  # Explicitly set to ensure UTC consistency
+            created_at=datetime.utcnow(),
             completed_at=datetime.utcnow()
         )
         db.session.add(new_enhancement)
+
+        # Log the 'resume_enhanced' activity in the same transaction
+        new_activity_log = ActivityLog(
+            user_id=user_id_from_token,
+            action='resume_enhanced',
+            description=f'User enhanced resume: {user_facing_filename}'
+        )
+        db.session.add(new_activity_log)
+
+        # Commit both the new_enhancement and new_activity_log at the same time
         db.session.commit()
-        AuthService.log_activity(user_id_from_token, 'resume_enhanced', f'User enhanced resume: {user_facing_filename}')
+
         # --- CORRECTED CLEANUP LOGIC ---
-        # Query for all records for the user, sorted with the oldest first
         all_enhancements = ResumeEnhancement.query.filter_by(user_id=user_id_from_token).order_by(ResumeEnhancement.created_at.asc()).all()
         
         if len(all_enhancements) > 5:
-            # Identify the records and files to delete (all except the last 5)
             records_to_delete = all_enhancements[:-5]
             for record in records_to_delete:
-                # Delete associated files
                 old_enhanced_file = os.path.join(UPLOAD_FOLDER, 'enhanced', record.enhanced_filename)
                 old_original_file_id = record.enhanced_filename.replace('enhanced_', '').replace('.docx', '')
                 old_original_file = os.path.join(UPLOAD_FOLDER, 'resumes', f"{old_original_file_id}.docx")
@@ -143,7 +149,6 @@ def enhance_resume():
                 if os.path.exists(old_original_file):
                     os.remove(old_original_file)
                 
-                # Delete the database record
                 db.session.delete(record)
             
             db.session.commit()
