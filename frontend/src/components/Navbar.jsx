@@ -106,11 +106,7 @@ const Navbar = () => {
                   Investors
                 </Link>
               </li>
-              <li>
-                <Link to="/pricing" className="nav-link" onClick={closeMobileMenu}>
-                  Pricing
-                </Link>
-              </li>
+              
               {/* Desktop user greeting (only render on desktop) */}
               {isDesktop && (
                 <li>
@@ -144,9 +140,7 @@ const Navbar = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/pricing" className="nav-link" onClick={closeMobileMenu}>
-                  Pricing
-                </Link>
+                
               </li>
               <li>
                 <Link to="/contact" className="nav-link" onClick={closeMobileMenu}>
