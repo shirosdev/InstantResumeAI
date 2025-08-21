@@ -478,6 +478,7 @@ def update_profile():
             'error': str(e)
         }), 500
     
+    
 @auth_bp.route('/stats', methods=['GET'])
 @jwt_required()
 def get_user_stats():
