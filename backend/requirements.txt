@@ -15,6 +15,7 @@ docx==0.2.4
 docx2txt==0.8
 docxcompose==1.4.0
 docxtpl==0.20.0
+diff-match-patch
 executing==2.1.0
 Flask==3.1.0
 Flask-Bcrypt==1.0.1
