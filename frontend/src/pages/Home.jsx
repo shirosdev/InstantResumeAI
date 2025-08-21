@@ -42,6 +42,7 @@ const EnhancementWorkbench = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const [enhancementResult, setEnhancementResult] = useState(null);
+  const [isAutoProcessing, setIsAutoProcessing] = useState(false);
 
   useEffect(() => {
     setError('');
@@ -53,7 +54,7 @@ const EnhancementWorkbench = () => {
       try {
         const parsedResult = JSON.parse(savedResult);
         setEnhancementResult(parsedResult);
-        setCurrentStep(4); // Updated to step 4 for download
+        setCurrentStep(4);
       } catch (e) {
         console.error("Failed to parse saved enhancement result", e);
         sessionStorage.removeItem('lastEnhancementResult');
@@ -80,7 +81,7 @@ const EnhancementWorkbench = () => {
     setWantsToAddInstructions(choice);
     setShowInstructionPrompt(false);
     if (!choice) {
-      // User chose not to add instructions, proceed to enhancement
+      setIsAutoProcessing(true);
       handleEnhance();
     }
   };
@@ -93,7 +94,7 @@ const EnhancementWorkbench = () => {
       const response = await resumeService.enhanceResume(
         resumeFile, 
         jobDescription,
-        userInstructions // Pass the user instructions (empty string if user chose not to add)
+        userInstructions
       );
       if (response.data) {
         setEnhancementResult(response.data);
@@ -102,8 +103,10 @@ const EnhancementWorkbench = () => {
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to enhance resume.');
+      setIsAutoProcessing(false);
     } finally {
       setIsProcessing(false);
+      setIsAutoProcessing(false);
     }
   };
 
@@ -114,18 +117,15 @@ const EnhancementWorkbench = () => {
     }
     
     try {
-      setError(''); // Clear any existing errors
+      setError('');
       console.log('Attempting to download resume with ID:', enhancementResult.enhanced_resume_id);
       
-      const result = await resumeService.downloadResume(enhancementResult.enhanced_resume_id);
+      await resumeService.downloadResume(enhancementResult.enhanced_resume_id);
       
-      // If we reach here, download was successful
       console.log('Download initiated successfully');
       
     } catch (err) {
       console.error('Download failed:', err);
-      
-      // Provide specific error messages based on the error
       if (err.message) {
         setError(`Download failed: ${err.message}`);
       } else if (err.response?.data?.message) {
@@ -180,7 +180,10 @@ const EnhancementWorkbench = () => {
                   onChoice={handleInstructionChoice}
                 />
               )}
-              {wantsToAddInstructions && !showInstructionPrompt && (
+              {isAutoProcessing && (
+                <AutoProcessingStep />
+              )}
+              {wantsToAddInstructions && !showInstructionPrompt && !isAutoProcessing && (
                 <UserInstructionsStep
                   userInstructions={userInstructions}
                   setUserInstructions={setUserInstructions}
@@ -318,6 +321,40 @@ const UserInstructionsStep = ({ userInstructions, setUserInstructions, onEnhance
           disabled={isProcessing || userInstructions.length === 0}
         >
           {isProcessing ? <><span className="spinner"></span>Enhancing...</> : 'Enhance Resume'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// New component for the auto-processing loading state
+const AutoProcessingStep = () => {
+  return (
+    <div className="workbench-panel">
+      <h3>Step 3: Standard Enhancement in Progress</h3>
+      <p>You've selected the standard enhancement. The AI is now processing your resume.</p>
+      
+      <div className="processing-placeholder">
+        <div className="spinner-large"></div>
+        <p>Please wait, this may take a moment...</p>
+      </div>
+      
+      {/* Mimic the disabled textarea and buttons for consistent layout */}
+      <textarea
+        className="instructions-textarea"
+        placeholder="Processing, please wait..."
+        rows="8"
+        disabled={true}
+      />
+      <div className="character-count">
+        ...
+      </div>
+      <div className="panel-actions">
+        <button className="submit-button secondary" disabled={true}>
+          Back
+        </button>
+        <button className="submit-button" disabled={true}>
+          <span className="spinner"></span>Enhancing...
         </button>
       </div>
     </div>
