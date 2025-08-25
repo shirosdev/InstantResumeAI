@@ -31,18 +31,30 @@ const getStoredAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Initialize user to null
-  const [loading, setLoading] = useState(true); // Start loading initially
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userStatus, setUserStatus] = useState(null);
 
-  // Stable logout function
+  // This function is the single source of truth for updating the user's status
+  const fetchUserStatus = useCallback(async () => {
+    if (!localStorage.getItem('access_token')) return;
+    try {
+      const statusResponse = await authService.getUserStatus();
+      if (statusResponse.data?.status) {
+        setUserStatus(statusResponse.data.status);
+      }
+    } catch (err) {
+      console.error("Could not fetch user status:", err);
+    }
+  }, []);
+
   const performLogout = useCallback(async (isSilent = false) => {
     if (!isSilent) {
         console.log('Logging out...');
     }
     
     try {
-      // Fire and forget logout API call
       await authService.logout();
     } catch (err) {
       if (!isSilent) {
@@ -55,12 +67,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user_data');
     localStorage.removeItem('lastActivityTime');
     setUser(null);
+    setUserStatus(null);
     setError(null);
-
-    
   }, []);
 
-  // Effect for Initial Authentication Check (runs once on mount)
   useEffect(() => {
     let mounted = true;
 
@@ -68,57 +78,45 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const { token, user: storedUser, lastActivity } = getStoredAuth();
 
-      // 1. No token? Definitely not logged in.
       if (!token) {
         if (mounted) setLoading(false);
         return;
       }
-
-      // 2. Check inactivity based on stored timestamp
+      
       if (lastActivity) {
         const lastActivityTime = parseInt(lastActivity, 10);
         if (Date.now() - lastActivityTime > INACTIVITY_TIMEOUT) {
-          console.log('User inactive on load, logging out.');
           if (mounted) {
-            await performLogout(true); // Silent logout
+            await performLogout(true);
             setLoading(false);
           }
           return;
         }
       } else {
-          // Token exists but no activity time? Set it now.
           updateLastActivityTime();
       }
 
-      // 3. *** MODIFIED LOGIC ***
-      // If we have a token, stored user data, AND a recent activity timestamp,
-      // initially trust the local state to avoid unnecessary logouts on transient /me failures.
       if (storedUser && lastActivity) {
-          
           if (mounted) {
-              setUser(storedUser); // Set user state from localStorage
-              setLoading(false); // Stop loading
+              setUser(storedUser);
+              await fetchUserStatus();
+              setLoading(false);
           }
-          return; // Skip the immediate /me call
+          return;
       }
-
-      // 4. If local state is incomplete (e.g., no storedUser), validate with backend
-      console.log('Local state incomplete or missing activity time. Validating session with /me endpoint.');
+      
       try {
         const response = await authService.getCurrentUser();
         if (mounted && response.data?.user) {
-          // Session is valid, update user state and local storage
           setUser(response.data.user);
           localStorage.setItem('user_data', JSON.stringify(response.data.user));
-          updateLastActivityTime(); // Ensure activity time is updated
+          updateLastActivityTime();
+          await fetchUserStatus();
         } else {
-          // API returned OK but no user data, or error occurred (caught below)
-          console.warn('Session validation via /me failed or returned no user data.');
-          if (mounted) await performLogout(true); // Logout if validation fails
+          if (mounted) await performLogout(true);
         }
       } catch (err) {
-        console.error('Error validating user session via /me:', err);
-        if (mounted) await performLogout(true); // Logout on error
+        if (mounted) await performLogout(true);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -129,67 +127,39 @@ export const AuthProvider = ({ children }) => {
     return () => {
       mounted = false;
     };
-  }, [performLogout]);
+  }, [performLogout, fetchUserStatus]);
 
-  // Effect for Inactivity Monitoring (runs when user is logged in)
   useEffect(() => {
-    // Only run if user is logged in and initial loading is done
     if (!user || loading) {
       return;
     }
 
     let inactivityTimer = null;
-
     const checkInactivity = () => {
       const lastActivity = localStorage.getItem('lastActivityTime');
       if (lastActivity) {
         const lastActivityTime = parseInt(lastActivity, 10);
         if (Date.now() - lastActivityTime > INACTIVITY_TIMEOUT) {
-          console.log('User inactive, logging out.');
-          performLogout(); // Use the stable logout function
+          performLogout();
         }
       } else {
-        // If user is logged in but no activity time, update it now.
-        console.warn('User logged in but no lastActivityTime found during check. Updating timestamp.');
         updateLastActivityTime();
       }
     };
-
-    // Setup activity listeners
+    
     const activityEvents = ['mousemove', 'keydown', 'scroll', 'touchstart'];
-    const activityHandler = (event) => {
-      // Defensive check to ensure event.target exists and has required methods
-      if (!event.target || typeof event.target.closest !== 'function') {
-        updateLastActivityTime();
-        return;
-      }
-      
-      // Check if the event originates from form elements
-      if (event.target.tagName === 'BUTTON' || 
-          event.target.tagName === 'INPUT' || 
-          event.target.tagName === 'TEXTAREA' ||
-          event.target.closest('.profile-form-container')) {
-        return;
-      }
-      updateLastActivityTime();
-    };
-      activityEvents.forEach(event => 
-        window.addEventListener(event, activityHandler, { passive: true })
-      );
-    // Start the inactivity check interval
-    inactivityTimer = setInterval(checkInactivity, 60 * 1000); // Check every minute
+    const activityHandler = () => updateLastActivityTime();
+    activityEvents.forEach(event => window.addEventListener(event, activityHandler, { passive: true }));
+    inactivityTimer = setInterval(checkInactivity, 60 * 1000);
 
-    // Cleanup function for this effect
     return () => {
       activityEvents.forEach(event => window.removeEventListener(event, activityHandler));
       if (inactivityTimer) {
         clearInterval(inactivityTimer);
       }
     };
-    // Re-run when user logs in/out or loading finishes
   }, [user, loading, performLogout]);
 
-  // Login function
   const login = useCallback(async (loginIdentifier, password) => {
     setError(null);
     setLoading(true);
@@ -200,8 +170,9 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('access_token', access_token);
         localStorage.setItem('refresh_token', refresh_token || '');
         localStorage.setItem('user_data', JSON.stringify(loggedInUser));
-        updateLastActivityTime(); // Set initial activity time
-        setUser(loggedInUser); // Update user state
+        updateLastActivityTime();
+        setUser(loggedInUser);
+        await fetchUserStatus();
         setLoading(false);
         return { success: true };
       } else {
@@ -210,13 +181,12 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Login failed';
       setError(errorMessage);
-      await performLogout(true); // Ensure clean state on login failure
+      await performLogout(true);
       setLoading(false);
       return { success: false, error: errorMessage };
     }
-  }, [performLogout]);
+  }, [performLogout, fetchUserStatus]);
 
-  // Signup function
   const signup = useCallback(async (userData) => {
     setError(null);
     setLoading(true);
@@ -229,6 +199,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user_data', JSON.stringify(signedUpUser));
         updateLastActivityTime();
         setUser(signedUpUser);
+        await fetchUserStatus();
         setLoading(false);
         return { success: true };
       } else {
@@ -241,18 +212,18 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       return { success: false, error: errorMessage };
     }
-  }, [performLogout]);
+  }, [performLogout, fetchUserStatus]);
 
-  // Expose the stable logout function, wrapped in useCallback for consistency
   const logout = useCallback(() => {
       performLogout();
   }, [performLogout]);
 
-  // Context value
   const value = {
     user,
     loading,
     error,
+    userStatus,
+    fetchUserStatus,
     login,
     signup,
     logout,
@@ -270,7 +241,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -278,4 +248,3 @@ export const useAuth = () => {
   }
   return context;
 };
-

@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 import re
+from app.models.subscription import UserSubscription, SubscriptionPlan 
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.auth_service import AuthService
@@ -96,9 +97,30 @@ def enhance_resume():
     if not user or not user.is_active:
         return jsonify({'message': 'User not found or is inactive'}), 401
 
+    # --- START: MODIFIED RESTRICTION LOGIC ---
+    try:
+        user_subscription = UserSubscription.query.filter_by(user_id=user_id_from_token).first()
+        if not user_subscription:
+            return jsonify({'message': 'User has no active subscription plan.'}), 403
+
+        plan = SubscriptionPlan.query.get(user_subscription.plan_id)
+        if plan and plan.resume_limit is not None:
+            POLICY_START_DATE = datetime(2025, 8, 23)
+            
+            enhancement_count = ResumeEnhancement.query.filter(
+                ResumeEnhancement.user_id == user_id_from_token,
+                ResumeEnhancement.created_at >= POLICY_START_DATE
+            ).count()
+
+            # THE FIX IS HERE: Change >= to >
+            if enhancement_count > plan.resume_limit:
+                return jsonify({'message': 'You have already used all your free enhancements.'}), 403
+    except Exception as e:
+        return jsonify({'message': 'Could not verify subscription status', 'error': str(e)}), 5000
     # Validate required fields
     if 'resume' not in request.files or 'job_description' not in request.form:
         return jsonify({'message': 'Resume file (.docx) and job description are required'}), 400
+    
     
     resume_file = request.files['resume']
     job_description = request.form.get('job_description', '').strip()

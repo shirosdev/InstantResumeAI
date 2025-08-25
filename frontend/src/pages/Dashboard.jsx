@@ -1,34 +1,14 @@
 // frontend/src/pages/Dashboard.jsx
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
-import authService from '../services/authService'; // Import the service
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const [enhancementCount, setEnhancementCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch user stats when the component mounts
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await authService.getUserStats();
-        if (response.data?.stats) {
-          setEnhancementCount(response.data.stats.enhancement_count);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user stats:", error);
-        // Keep the count at 0 if there's an error
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
+  // We get ALL necessary data directly from the useAuth hook.
+  // There are no separate API calls in this component anymore.
+  const { user, userStatus, loading } = useAuth();
 
   return (
     <div className="dashboard-container">
@@ -44,14 +24,20 @@ const Dashboard = () => {
           <div className="stat-card">
             <h3>Resume Enhancements</h3>
             <p className="stat-number">
-              {isLoading ? '...' : enhancementCount}
+              {/* This now correctly uses the data fetched by useAuth */}
+              {loading || !userStatus ? '...' : userStatus.enhancement_count}
             </p>
-            <p className="stat-description">Total resumes enhanced</p>
+            <p className="stat-description">Enhancements used this period</p>
           </div>
           <div className="stat-card">
             <h3>Subscription Status</h3>
-            <p className="stat-status">Free Plan</p>
-            <p className="stat-description">Trial Period</p>
+            <p className="stat-status">{loading || !userStatus ? '...' : userStatus.plan_name}</p>
+            <p className="stat-description">
+              {loading || !userStatus ? '...' : 
+                userStatus.resume_limit === null ? 'Unlimited Enhancements' : 
+                `${userStatus.remaining_enhancements} Enhancements Left`
+              }
+            </p>
           </div>
           <div className="stat-card">
             <h3>Member Since</h3>
@@ -63,16 +49,13 @@ const Dashboard = () => {
         </div>
 
         <div className="dashboard-actions">
-          {/* ... (Your action cards remain the same) ... */}
-          
           <div className="action-card">
             <h2>View History</h2>
-            <p>Review a log of your 5 most recent resume enhancements</p> {/* <-- UPDATED TEXT */}
+            <p>Review a log of your 5 most recent resume enhancements</p>
             <Link to="/history" className="action-button secondary">
               View History
             </Link>
           </div>
-
           <div className="action-card">
             <h2>Enhance Your Resume</h2>
             <p>Upload your resume and job description to get AI-powered enhancements</p>
@@ -80,7 +63,6 @@ const Dashboard = () => {
               Start Enhancing
             </Link>
           </div>
-
           <div className="action-card">
             <h2>Account Settings</h2>
             <p>Update your profile information and preferences</p>

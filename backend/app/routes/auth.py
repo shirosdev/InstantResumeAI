@@ -5,6 +5,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
 from app import db, bcrypt
 from app.models.user import User
 from app.models.activity import ActivityLog
+from app.models.subscription import UserSubscription, SubscriptionPlan
 from app.services.auth_service import AuthService
 from app.services.password_reset_service import PasswordResetService
 from app.utils.validators import validate_email, validate_password, validate_username
@@ -477,6 +478,49 @@ def update_profile():
             'message': 'Failed to update profile',
             'error': str(e)
         }), 500
+    
+@auth_bp.route('/status', methods=['GET'])
+@jwt_required()
+def get_user_status():
+    """Get the current user's subscription status and usage"""
+    try:
+        current_user_id = get_jwt_identity()
+        user_subscription = UserSubscription.query.filter_by(user_id=current_user_id).first()
+        
+        if not user_subscription:
+            return jsonify({'message': 'No active subscription found for user'}), 404
+            
+        plan = SubscriptionPlan.query.get(user_subscription.plan_id)
+        if not plan:
+            return jsonify({'message': 'Subscription plan not found'}), 404
+
+        # This is the date you deployed the new feature
+        POLICY_START_DATE = datetime(2025, 8, 23)
+
+        # CORRECT: Count from the resume_enhancements table
+        enhancement_count = ResumeEnhancement.query.filter(
+            ResumeEnhancement.user_id == current_user_id,
+            ResumeEnhancement.created_at >= POLICY_START_DATE
+        ).count()
+        
+        remaining = "unlimited"
+        if plan.resume_limit is not None:
+            remaining = plan.resume_limit - enhancement_count
+            if remaining < 0:
+                remaining = 0
+
+        return jsonify({
+            'message': 'User status retrieved successfully',
+            'status': {
+                'plan_name': plan.plan_name,
+                'resume_limit': plan.resume_limit,
+                'enhancement_count': enhancement_count,
+                'remaining_enhancements': remaining
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': 'Failed to retrieve user status', 'error': str(e)}), 500
     
     
 @auth_bp.route('/stats', methods=['GET'])

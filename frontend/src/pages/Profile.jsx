@@ -7,14 +7,18 @@ import authService from '../services/authService';
 import '../styles/Profile.css';
 
 const Profile = () => {
-  const { user, logout, updateUserData } = useAuth();
+  // --- MODIFICATION START ---
+  // 1. Get userStatus, loading state, and fetchUserStatus from the useAuth hook.
+  const { user, logout, updateUserData, userStatus, loading: authLoading, fetchUserStatus } = useAuth();
+  // --- MODIFICATION END ---
+  
   const navigate = useNavigate();
 
-  // State for the enhancement count
-  const [enhancementCount, setEnhancementCount] = useState(0);
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  // This old state is no longer needed, as userStatus provides the data.
+  // const [enhancementCount, setEnhancementCount] = useState(0);
+  // const [isLoadingStats, setIsLoadingStats] = useState(true);
 
-  // State for the form
+  // State for the form (This is your original, preserved code)
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
@@ -28,7 +32,7 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Effect to populate form data
+  // Effect to populate form data (This is your original, preserved code)
   useEffect(() => {
     if (user) {
       setFormData({
@@ -42,22 +46,13 @@ const Profile = () => {
     }
   }, [user]);
 
-  // Effect to fetch user stats
+  // --- MODIFICATION START ---
+  // 2. This useEffect now calls fetchUserStatus to get the latest subscription data.
+  // The old, incorrect call to getUserStats() is removed.
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await authService.getUserStats();
-        if (response.data?.stats) {
-          setEnhancementCount(response.data.stats.enhancement_count);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user stats:", error);
-      } finally {
-        setIsLoadingStats(false);
-      }
-    };
-    fetchStats();
-  }, []);
+    fetchUserStatus();
+  }, [fetchUserStatus]);
+  // --- MODIFICATION END ---
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -115,32 +110,39 @@ const Profile = () => {
       <div className="container">
         <h1>My Profile</h1>
         
+        {/* --- MODIFICATION START --- */}
+        {/* 3. The stat cards now use the live data from userStatus. */}
         <div className="dashboard-stats">
           <div className="stat-card">
             <h3>Account Type</h3>
-            <p className="stat-status">Free Unlimited</p>
-            <p className="stat-description">Development Phase</p>
+            <p className="stat-status">
+              {authLoading || !userStatus ? 'Loading...' : userStatus.plan_name}
+            </p>
+            <p className="stat-description">Current subscription plan</p>
           </div>
           <div className="stat-card">
-            <h3>Member Since</h3>
-            <p className="stat-date">
-              {user ? new Date(user.created_at).toLocaleDateString() : '...'}
+            <h3>Enhancements Left</h3>
+            <p className="stat-number">
+              {authLoading || !userStatus ? '...' : 
+                userStatus.remaining_enhancements === 'unlimited' ? '∞' : userStatus.remaining_enhancements
+              }
             </p>
-            <p className="stat-description">Account creation date</p>
+            <p className="stat-description">Credits remaining</p>
           </div>
           <div className="stat-card">
             <h3>Resumes Enhanced</h3>
             <p className="stat-number">
-              {isLoadingStats ? '...' : enhancementCount}
+              {authLoading || !userStatus ? '...' : userStatus.enhancement_count}
             </p>
-            <p className="stat-description">Total enhancements</p>
+            <p className="stat-description">Total enhancements used</p>
           </div>
         </div>
+        {/* --- MODIFICATION END --- */}
 
         <div className="auth-card profile-form-container" style={{ maxWidth: '680px', margin: '2rem auto' }}>
           <h2>Profile Information</h2>
+          {/* Your entire form and its logic are preserved below, untouched. */}
           <form onSubmit={handleSubmit}>
-            {/* ... (rest of your form is the same) ... */}
             {error && <p className="error-message">{error}</p>}
             {success && <p className="success-message">{success}</p>}
             
