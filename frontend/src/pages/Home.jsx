@@ -45,6 +45,9 @@ const EnhancementWorkbench = () => {
   const [error, setError] = useState('');
   const [enhancementResult, setEnhancementResult] = useState(null);
   const [isAutoProcessing, setIsAutoProcessing] = useState(false);
+  // --- NEW STATE FOR DISCLAIMER ---
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [hasAgreedToDisclaimer, setHasAgreedToDisclaimer] = useState(false);
 
   useEffect(() => {
     fetchUserStatus();
@@ -61,9 +64,17 @@ const EnhancementWorkbench = () => {
         const parsedResult = JSON.parse(savedResult);
         setEnhancementResult(parsedResult);
         setCurrentStep(4);
+        // Also check if disclaimer was agreed to for this session
+        const agreed = sessionStorage.getItem('disclaimerAgreed');
+        if (agreed === parsedResult.enhanced_resume_id) {
+          setHasAgreedToDisclaimer(true);
+        } else {
+          setShowDisclaimer(true); // Show disclaimer if not agreed for this result
+        }
       } catch (e) {
         console.error("Failed to parse saved enhancement result", e);
         sessionStorage.removeItem('lastEnhancementResult');
+        sessionStorage.removeItem('disclaimerAgreed');
       }
     }
   }, []);
@@ -106,8 +117,7 @@ const EnhancementWorkbench = () => {
         setEnhancementResult(response.data);
         sessionStorage.setItem('lastEnhancementResult', JSON.stringify(response.data));
         setCurrentStep(4);
-        
-        // FIX: Fetch the user's new status right after a successful enhancement
+        setShowDisclaimer(true); // Show disclaimer on successful enhancement
         fetchUserStatus();
       }
     } catch (err) {
@@ -139,6 +149,18 @@ const EnhancementWorkbench = () => {
       }
     }
   };
+  
+  // --- NEW FUNCTION TO HANDLE DISCLAIMER AGREEMENT ---
+  const handleDisclaimerAgreement = async () => {
+    try {
+      await resumeService.logDisclaimerAgreement(enhancementResult.enhanced_resume_id);
+      setHasAgreedToDisclaimer(true);
+      setShowDisclaimer(false);
+      sessionStorage.setItem('disclaimerAgreed', enhancementResult.enhanced_resume_id);
+    } catch (err) {
+      setError("Could not save your agreement. Please try again.");
+    }
+  };
 
   const handleReset = () => {
     fetchUserStatus();
@@ -151,7 +173,13 @@ const EnhancementWorkbench = () => {
     setShowInstructionPrompt(false);
     setEnhancementResult(null);
     setError('');
+    // --- CLEAR ALL SESSION STORAGE ON RESET ---
     sessionStorage.removeItem('lastEnhancementResult');
+    sessionStorage.removeItem('disclaimerAgreed');
+    
+    setHasAgreedToDisclaimer(false);
+    setShowDisclaimer(false);
+
     const fileInput = document.getElementById('resume-upload');
     if (fileInput) fileInput.value = '';
   };
@@ -212,10 +240,19 @@ const EnhancementWorkbench = () => {
                 </>
               )}
               {currentStep === 4 && (
-                <ResultsStep
-                  onDownload={handleDownload}
-                  onReset={handleReset}
-                />
+                <>
+                  {showDisclaimer && (
+                    <DisclaimerModal 
+                      onAgree={handleDisclaimerAgreement}
+                      onClose={() => setShowDisclaimer(false)} // Or handle as needed
+                    />
+                  )}
+                  <ResultsStep
+                    onDownload={handleDownload}
+                    onReset={handleReset}
+                    isDownloadDisabled={!hasAgreedToDisclaimer} // Pass disable state
+                  />
+                </>
               )}
             </div>
           </>
@@ -238,7 +275,46 @@ const EnhancementWorkbench = () => {
   );
 };
 
-// --- Sub-components (These remain unchanged) ---
+const DisclaimerModal = ({ onAgree }) => {
+  const [isChecked, setIsChecked] = useState(false);
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content disclaimer-modal-content">
+        <h3 className="disclaimer-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="30"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          Important Notice Before You Proceed
+        </h3>
+        <div className="disclaimer-text">
+          I understand and agree that the resume generated/enhanced by InstantResumeAI is AI-assisted content. I am solely responsible for reviewing, verifying, and using the final document, and InstantResumeAI is not liable for any inaccuracies, misrepresentations, and/or outcomes resulting from its use.
+        </div>
+        <div className="disclaimer-agreement">
+          <input 
+            type="checkbox" 
+            id="disclaimer-checkbox" 
+            checked={isChecked}
+            onChange={() => setIsChecked(!isChecked)}
+          />
+          <label htmlFor="disclaimer-checkbox">
+            I understand and agree to the terms above.
+          </label>
+        </div>
+        <p className="disclaimer-note">
+          InstantResumeAI provides AI-powered assistance to help you create and refine your resume. We do not guarantee job offers, interview calls, or compliance with every employer’s specific requirements. Please ensure accuracy and truthfulness before using your resume for professional purposes.
+        </p>
+        <div className="modal-actions">
+          <button 
+            className="submit-button" 
+            onClick={onAgree}
+            disabled={!isChecked}
+          >
+            Agree & Continue
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const InstructionPromptModal = ({ onChoice }) => {
   return (
@@ -416,7 +492,7 @@ const ResumeUploadStep = ({ onUpload }) => {
   );
 };
 
-const ResultsStep = ({ onDownload, onReset }) => (
+const ResultsStep = ({ onDownload, onReset, isDownloadDisabled }) => (
   <div className="workbench-panel results-panel">
     <div className="results-icon">✓</div>
     <h3>Enhancement Complete!</h3>
@@ -424,7 +500,9 @@ const ResultsStep = ({ onDownload, onReset }) => (
     <p>Kindly note that the downloaded resume will include a detailed summary of all enhancements at the end</p>
     <div className="panel-actions simplified">
       <button className="submit-button secondary" onClick={onReset}>Enhance Another</button>
-      <button className="submit-button" onClick={onDownload}>Download Your Resume</button>
+      <button className="submit-button" onClick={onDownload} disabled={isDownloadDisabled}>
+        {isDownloadDisabled ? 'Agree to Terms to Download' : 'Download Your Resume'}
+      </button>
     </div>
   </div>
 );

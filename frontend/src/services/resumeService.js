@@ -22,6 +22,13 @@ const resumeService = {
     });
   },
 
+  // --- NEW FUNCTION TO LOG DISCLAIMER AGREEMENT ---
+  logDisclaimerAgreement: async (enhancementId) => {
+    return api.post('/resume/log-disclaimer-agreement', {
+      enhancement_id: enhancementId
+    });
+  },
+
   // Download enhanced resume
   downloadResume: async (resumeId) => {
     try {

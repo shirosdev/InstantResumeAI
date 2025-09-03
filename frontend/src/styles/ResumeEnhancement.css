@@ -1250,3 +1250,59 @@
     padding: 1rem;
   }
 }
+
+/* --- NEW: Disclaimer Modal Styles --- */
+.disclaimer-modal-content {
+  text-align: left;
+}
+
+.disclaimer-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1.5rem;
+  color: var(--thermal-vent);
+  margin-bottom: 1.5rem;
+}
+
+.disclaimer-text {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.disclaimer-agreement {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.disclaimer-agreement input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  accent-color: var(--bio-luminescent);
+}
+
+.disclaimer-agreement label {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.disclaimer-note {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+  padding-left: 36px; /* Align with checkbox text */
+  line-height: 1.5;
+}

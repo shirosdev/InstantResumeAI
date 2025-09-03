@@ -404,3 +404,28 @@ def validate_enhancement_input():
             'valid': False,
             'message': f'Validation error: {str(e)}'
         }), 400
+    
+@resume_bp.route('/log-disclaimer-agreement', methods=['POST'])
+@jwt_required()
+def log_disclaimer_agreement():
+    """Logs the user's acceptance of the pre-download disclaimer."""
+    try:
+        current_user_id = get_jwt_identity()
+        data = request.get_json()
+        enhancement_id = data.get('enhancement_id')
+
+        if not enhancement_id:
+            return jsonify({'message': 'Enhancement ID is required'}), 400
+
+        # Create a permanent record of the agreement
+        AuthService.log_activity(
+            user_id=current_user_id,
+            action='disclaimer_accepted',
+            description=f'User agreed to the disclaimer for enhancement ID: {enhancement_id}',
+            ip_address=request.remote_addr
+        )
+        
+        return jsonify({'message': 'Agreement logged successfully'}), 200
+
+    except Exception as e:
+        return jsonify({'message': 'Failed to log agreement', 'error': str(e)}), 500
