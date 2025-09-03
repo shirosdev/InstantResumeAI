@@ -236,15 +236,19 @@ END //
 DELIMITER ;
 """
 
-# Insert default subscription plans
+# --- THIS IS THE ONLY SECTION THAT HAS BEEN CHANGED ---
+# The SQL for inserting plans is updated to match our new requirements.
+# The original 'Free Unlimited' plan is replaced with the two new free plans.
 INSERT_PLANS_SQL = """
 INSERT INTO subscription_plans (plan_name, plan_type, price, duration_days, resume_limit, features) VALUES
-('Free Unlimited', 'free', 0.00, 0, NULL, '{"unlimited_resumes": true, "priority_support": false, "advanced_templates": false, "password_reset": true}'),
+('Free - 3 Enhancements', 'free', 0.00, 0, 3, '{"description": "Basic access with a 3 resume enhancement limit."}'),
+('Internal User Plan', 'free', 0.00, 0, NULL, '{"description": "Unlimited access for internal team members."}'),
 ('Monthly Plan', 'monthly', 9.99, 30, NULL, '{"unlimited_resumes": true, "priority_support": true, "advanced_templates": true, "password_reset": true}'),
 ('Quarterly Plan', 'quarterly', 24.99, 90, NULL, '{"unlimited_resumes": true, "priority_support": true, "advanced_templates": true, "discount": "17%", "password_reset": true}'),
 ('Semi-Annual Plan', 'semi_annual', 44.99, 180, NULL, '{"unlimited_resumes": true, "priority_support": true, "advanced_templates": true, "discount": "25%", "password_reset": true}'),
 ('Annual Plan', 'annual', 79.99, 365, NULL, '{"unlimited_resumes": true, "priority_support": true, "advanced_templates": true, "discount": "33%", "password_reset": true}');
 """
+# --- END OF MODIFIED SECTION ---
 
 def create_database_connection():
     """Create a database connection to MySQL database"""
@@ -274,12 +278,14 @@ def execute_sql_statements(connection, sql_statements):
     finally:
         cursor.close()
 
+# --- THIS FUNCTION IS NOW CORRECTED TO FIX THE TypeError ---
 def execute_event_sql(connection, event_sql):
     """Execute event creation SQL with special handling"""
     cursor = connection.cursor()
     try:
-        # Execute the entire event creation block
-        cursor.execute(event_sql, multi=True)
+        # The mysql-connector requires iterating through the results for multi-statement queries
+        for _ in cursor.execute(event_sql, multi=True):
+            pass
         connection.commit()
         return True
     except Error as e:
@@ -288,6 +294,7 @@ def execute_event_sql(connection, event_sql):
         return False
     finally:
         cursor.close()
+# --- END OF CORRECTION ---
 
 def check_tables_exist(connection):
     """Check which tables already exist"""
