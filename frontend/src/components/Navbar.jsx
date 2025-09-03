@@ -101,11 +101,8 @@ const Navbar = () => {
                   Profile
                 </Link>
               </li>
-              <li>
-                <Link to="/investors" className="nav-link" onClick={closeMobileMenu}>
-                  Investors
-                </Link>
-              </li>
+              
+              {/* THE "INVESTORS" LINK HAS BEEN REMOVED FROM THIS SECTION */}
               
               {/* Desktop user greeting (only render on desktop) */}
               {isDesktop && (
