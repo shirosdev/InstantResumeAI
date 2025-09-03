@@ -64,14 +64,38 @@ def create_app():
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     )
     
+    from app.models.user import User
+
+    # --- START OF DEBUGGING CODE ---
+    @jwt.additional_claims_loader
+    def add_claims_to_jwt(identity):
+        print(f"--- DEBUG: Checking claims for identity: {identity} (type: {type(identity)}) ---")
+        try:
+            user = User.query.get(int(identity))
+            if user:
+                print(f"--- DEBUG: Found user '{user.username}', is_admin status: {user.is_admin} ---")
+                if user.is_admin:
+                    print("--- DEBUG: Returning {'is_admin': True} ---")
+                    return {'is_admin': True}
+            else:
+                print(f"--- DEBUG: User not found for identity: {identity} ---")
+        except Exception as e:
+            print(f"--- DEBUG: Error during user lookup: {e} ---")
+        
+        print("--- DEBUG: Returning {'is_admin': False} ---")
+        return {'is_admin': False}
+    # --- END OF DEBUGGING CODE ---
+
     # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.resume import resume_bp
     from app.routes.contact import contact_bp
-    
+    from app.routes.admin import admin_bp
+
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(resume_bp, url_prefix='/api/resume')
     app.register_blueprint(contact_bp, url_prefix='/api/contact')
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
     
     # JWT error handlers
     @jwt.invalid_token_loader
@@ -86,20 +110,12 @@ def create_app():
     def missing_token_callback(error):
         return {'message': 'Authorization token is missing'}, 401
     
-    # IMPORTANT: Add this to handle token in header properly
     @jwt.revoked_token_loader
     def revoked_token_callback(jwt_header, jwt_payload):
         return {'message': 'Token has been revoked'}, 401
-    # Add this function to handle token extraction
+        
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):
-        return False  # For now, don't check revocation
+        return False
 
-    # Add explicit token verification
-    @jwt.additional_claims_loader
-    def add_claims_to_jwt(identity):
-        return {'user_id': identity}
-    
-   
-    
     return app

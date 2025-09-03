@@ -2,23 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import '../styles/Profile.css';
+import '../styles/Dashboard.css'; // Ensure Dashboard styles are imported for consistency
 
 const Profile = () => {
-  // --- MODIFICATION START ---
-  // 1. Get userStatus, loading state, and fetchUserStatus from the useAuth hook.
   const { user, logout, updateUserData, userStatus, loading: authLoading, fetchUserStatus } = useAuth();
-  // --- MODIFICATION END ---
-  
   const navigate = useNavigate();
 
-  // This old state is no longer needed, as userStatus provides the data.
-  // const [enhancementCount, setEnhancementCount] = useState(0);
-  // const [isLoadingStats, setIsLoadingStats] = useState(true);
-
-  // State for the form (This is your original, preserved code)
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
@@ -32,7 +24,6 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Effect to populate form data (This is your original, preserved code)
   useEffect(() => {
     if (user) {
       setFormData({
@@ -46,13 +37,9 @@ const Profile = () => {
     }
   }, [user]);
 
-  // --- MODIFICATION START ---
-  // 2. This useEffect now calls fetchUserStatus to get the latest subscription data.
-  // The old, incorrect call to getUserStats() is removed.
   useEffect(() => {
     fetchUserStatus();
   }, [fetchUserStatus]);
-  // --- MODIFICATION END ---
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -105,13 +92,22 @@ const Profile = () => {
     }
   };
 
+
   return (
     <div className="dashboard-container">
       <div className="container">
-        <h1>My Profile</h1>
-        
-        {/* --- MODIFICATION START --- */}
-        {/* 3. The stat cards now use the live data from userStatus. */}
+        <div className="profile-page-header">
+          <h1>My Profile</h1>
+          {user && user.is_admin && (
+            <Link to="/admin" className="admin-header-button">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+            </svg>
+            <span>Admin Panel</span>
+          </Link>
+          )}
+        </div>
+
         <div className="dashboard-stats">
           <div className="stat-card">
             <h3>Account Type</h3>
@@ -137,11 +133,9 @@ const Profile = () => {
             <p className="stat-description">Total enhancements used</p>
           </div>
         </div>
-        {/* --- MODIFICATION END --- */}
 
         <div className="auth-card profile-form-container" style={{ maxWidth: '680px', margin: '2rem auto' }}>
           <h2>Profile Information</h2>
-          {/* Your entire form and its logic are preserved below, untouched. */}
           <form onSubmit={handleSubmit}>
             {error && <p className="error-message">{error}</p>}
             {success && <p className="success-message">{success}</p>}

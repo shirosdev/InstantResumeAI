@@ -1,14 +1,18 @@
 // frontend/src/pages/Dashboard.jsx
 
-import React from 'react';
+import React, { useEffect } from 'react'; // Import useEffect
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
   // We get ALL necessary data directly from the useAuth hook.
-  // There are no separate API calls in this component anymore.
-  const { user, userStatus, loading } = useAuth();
+  const { user, userStatus, loading, fetchUserStatus } = useAuth();
+
+  // FIX: Add this useEffect to fetch fresh data every time the dashboard is viewed
+  useEffect(() => {
+    fetchUserStatus();
+  }, [fetchUserStatus]);
 
   return (
     <div className="dashboard-container">

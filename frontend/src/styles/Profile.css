@@ -19,14 +19,76 @@
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
   }
+  .profile-page-header {
+    position: relative;
+    text-align: center;
+    margin-bottom: 2rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .profile-page-header h1 {
+    display: inline-block;
+    margin: 0;
+  }
+  
+  .admin-header-button {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    
+    /* Layout */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    /* Style */
+    text-decoration: none;
+    background: transparent;
+    border: 1px solid var(--border-primary);
+    color: var(--bio-luminescent);
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  
+  .admin-header-button:hover {
+    background: rgba(125, 211, 201, 0.1); /* --bio-luminescent with alpha */
+    border-color: var(--bio-luminescent);
+    color: var(--bio-luminescent);
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 4px 20px rgba(125, 211, 201, 0.2); /* Glow effect */
+  }
+  .admin-header-button svg {
+    width: 16px;
+    height: 16px;
+  }
   
   /* NEW: Styles for the action buttons container */
   .profile-actions {
     display: flex;
     gap: 1rem;
-    justify-content: flex-end;
+    justify-content: flex-end; /* This should be flex-end */
     align-items: center;
-    margin-top: 1.5rem; /* Add space above the buttons */
+    margin-top: 1.5rem;
+  }
+  
+  
+  .profile-actions .auth-button.admin-button {
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    color: var(--text-secondary);
+    text-decoration: none; 
+  }
+  .profile-actions .auth-button.admin-button:hover {
+    background: var(--bg-secondary);
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+    box-shadow: none;
   }
   
   /* NEW: Specific styles for secondary and danger buttons */

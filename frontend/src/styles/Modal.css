@@ -1,0 +1,88 @@
+/* frontend/src/styles/Modal.css */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(26, 35, 50, 0.85); /* Darkened overlay for better contrast */
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .modal-content {
+    background-color: var(--bg-secondary) !important; /* FIX: Force the solid background */
+    padding: 1.8rem 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+    border: 1px solid var(--border-primary);
+  }
+  
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  
+  .user-details-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.8rem 1.2rem;
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+  }
+  
+  .user-details-grid strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.8rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--border-primary);
+  }
+  
+  /* --- NEW: Improved Button Styles for Modal --- */
+  .modal-actions .action-button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .action-button.danger {
+      background-color: var(--error-color);
+      color: white;
+  }
+  .action-button.danger:hover {
+      background-color: #c53030; /* Darker red */
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(229, 62, 62, 0.3);
+  }
+  .action-button.success {
+      background-color: var(--success-color);
+      color: white;
+  }
+  .action-button.success:hover {
+      background-color: #2f855a; /* Darker green */
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+  }

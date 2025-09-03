@@ -107,7 +107,8 @@ const EnhancementWorkbench = () => {
         sessionStorage.setItem('lastEnhancementResult', JSON.stringify(response.data));
         setCurrentStep(4);
         
-        // The fetchUserStatus() call has been REMOVED from here.
+        // FIX: Fetch the user's new status right after a successful enhancement
+        fetchUserStatus();
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to enhance resume.');
@@ -140,8 +141,6 @@ const EnhancementWorkbench = () => {
   };
 
   const handleReset = () => {
-    // THE FIX IS HERE: We now fetch the status only when the user
-    // clicks "Enhance Another", which calls this reset function.
     fetchUserStatus();
 
     setCurrentStep(1);
@@ -166,8 +165,7 @@ const EnhancementWorkbench = () => {
       </div>
     );
   }
-
-  // This check now uses the reliably updated userStatus from the useAuth hook
+  
   const canEnhance = userStatus && (userStatus.resume_limit === null || userStatus.remaining_enhancements > 0);
 
   return (
@@ -177,9 +175,7 @@ const EnhancementWorkbench = () => {
           <h1>Resume Enhancement Workbench</h1>
           <p className="page-subtitle">A guided experience to perfectly tailor your resume.</p>
         </div>
-
-        {/* This logic now works correctly. On the last enhancement, canEnhance is still true,
-            so it shows Step 4. Only after clicking reset does it become false. */}
+        
         {canEnhance || currentStep === 4 ? (
           <>
             <Stepper currentStep={currentStep} />
@@ -310,7 +306,7 @@ const UserInstructionsStep = ({ userInstructions, setUserInstructions, onEnhance
         </button>
         {showExamples && (
           <div className="examples-list">
-            {exampleInstructions.map((example, index) => (
+            {exampleInstructions.map((index, example) => (
               <div 
                 key={index} 
                 className="example-item"

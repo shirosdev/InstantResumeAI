@@ -22,6 +22,7 @@ class User(db.Model):
     profession = Column(String(255))
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
+    is_admin = Column(Boolean, default=False, nullable=False)
     verification_token = Column(String(255))
     password_reset_token = Column(String(255))
     password_reset_expires = Column(DateTime)
@@ -51,6 +52,7 @@ class User(db.Model):
             'profession': self.profession,
             'is_active': self.is_active,
             'is_verified': self.is_verified,
+            'is_admin': self.is_admin,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_login': self.last_login.isoformat() if self.last_login else None
         }

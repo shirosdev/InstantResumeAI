@@ -1,4 +1,4 @@
-// frontend/src/App.jsx - Updated with Investors Route
+// frontend/src/App.jsx
 
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -7,6 +7,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import AdminRoutes from './pages/AdminDashboard';
+import AdminProtectedRoute from './components/AdminProtectedRoute';
 
 // Pages
 import Home from './pages/Home';
@@ -18,7 +20,7 @@ import Pricing from './pages/Pricing';
 import HowItWorks from './pages/HowItWorks';
 import About from './pages/About';
 import Contact from './pages/Contact';
-import Investors from './pages/Investors'; // Import the new Investors page
+import Investors from './pages/Investors';
 import Blog from './pages/Blog';
 import Usage from './pages/Usage';
 import Privacy from './pages/Privacy';
@@ -37,6 +39,10 @@ import './styles/Production.css';
 import './styles/Profile.css';
 import './styles/Contact.css';
 import './styles/History.css';
+import './styles/AdminDashboard.css';
+import './styles/AdminOverview.css';
+import './styles/Modal.css';
+
 
 function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -74,7 +80,7 @@ function App() {
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
-                <Route path="/investors" element={<Investors />} /> {/* Add the new route */}
+                <Route path="/investors" element={<Investors />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
@@ -91,16 +97,26 @@ function App() {
                     <Dashboard />
                   </ProtectedRoute>
                 } />
+
                 <Route path="/profile" element={
                   <ProtectedRoute>
                     <Profile />
                   </ProtectedRoute>
                 } />
+
                 <Route path="/change-password" element={
                   <ProtectedRoute>
                     <ChangePassword />
                   </ProtectedRoute>
                 } />
+
+                {/* FIX: The path should be /admin/* to allow nested routes */}
+                <Route path="/admin/*" element={
+                  <AdminProtectedRoute>
+                    <AdminRoutes />
+                  </AdminProtectedRoute>
+                } />
+
                 <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
 
                 {/* Catch all route */}

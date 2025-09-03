@@ -112,11 +112,11 @@ def enhance_resume():
                 ResumeEnhancement.created_at >= POLICY_START_DATE
             ).count()
 
-            # THE FIX IS HERE: Change >= to >
-            if enhancement_count > plan.resume_limit:
+            # FIX 1: Changed > to >= to correctly handle the limit for free users
+            if enhancement_count >= plan.resume_limit:
                 return jsonify({'message': 'You have already used all your free enhancements.'}), 403
     except Exception as e:
-        return jsonify({'message': 'Could not verify subscription status', 'error': str(e)}), 5000
+        return jsonify({'message': 'Could not verify subscription status', 'error': str(e)}), 500
     # Validate required fields
     if 'resume' not in request.files or 'job_description' not in request.form:
         return jsonify({'message': 'Resume file (.docx) and job description are required'}), 400
@@ -214,6 +214,7 @@ def enhance_resume():
             file_path=os.path.join('enhanced', enhanced_filename),
             enhancement_status='completed',
             job_description_snippet=job_description[:500],
+            enhancement_summary=user_instructions if user_instructions else None,
             created_at=datetime.utcnow(),
             completed_at=datetime.utcnow()
         )
@@ -234,8 +235,8 @@ def enhance_resume():
         # Commit database changes
         db.session.commit()
 
-        # Clean up old enhancements (keep only last 5)
-        cleanup_old_enhancements(user_id_from_token)
+        # FIX 2: Pass the plan to the cleanup function to avoid deleting records for unlimited users
+        cleanup_old_enhancements(user_id_from_token, plan)
 
         # Prepare response
         response_data = {
@@ -273,8 +274,14 @@ def enhance_resume():
             'error': str(e)
         }), 500
 
-def cleanup_old_enhancements(user_id):
-    """Clean up old enhancement records and files"""
+# FIX 2: The function now accepts the plan object
+def cleanup_old_enhancements(user_id, plan):
+    """Clean up old enhancement records and files, but only for users with a limit."""
+    # If the plan has no limit, do nothing.
+    if plan and plan.resume_limit is None:
+        print(f"Skipping cleanup for user {user_id} on unlimited plan.")
+        return
+
     try:
         all_enhancements = ResumeEnhancement.query.filter_by(user_id=user_id)\
             .order_by(ResumeEnhancement.created_at.asc()).all()

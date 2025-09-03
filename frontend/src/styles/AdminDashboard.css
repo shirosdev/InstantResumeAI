@@ -1,0 +1,342 @@
+/* frontend/src/styles/AdminDashboard.css */
+
+.admin-layout {
+    display: flex;
+    min-height: calc(100vh - var(--navbar-height)); /* Full height minus navbar */
+  }
+  
+  .admin-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-primary);
+    padding: 2rem 0;
+    overflow-y: auto;
+  }
+  
+  .admin-content {
+    flex-grow: 1;
+    padding: 2rem 2.5rem; /* Reduced padding */
+    overflow-y: auto;
+  }
+  
+  /* Sidebar Section Styling */
+  .sidebar-section {
+    margin-bottom: 1.5rem; /* Reduced margin */
+  }
+  
+  .sidebar-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .sidebar-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .sidebar-links a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.5rem; /* Adjusted padding */
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 1rem; /* Slightly larger font */
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+  }
+  
+  .sidebar-links a:hover {
+    background: rgba(125, 211, 201, 0.05);
+    color: var(--text-primary);
+  }
+  
+  .sidebar-links a.active {
+    background: rgba(125, 211, 201, 0.1);
+    color: var(--bio-luminescent);
+    border-left-color: var(--bio-luminescent);
+    font-weight: 600;
+  }
+  
+  .sidebar-links a svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  
+  
+  /* --- NEW: Sub-menu Navigation Bar Styles --- */
+  .admin-submenu {
+    display: flex;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border-primary);
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+  }
+  
+  .admin-submenu a {
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  
+  .admin-submenu a:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+  
+  .admin-submenu a.active {
+    background: var(--gradient-thermal);
+    color: white;
+    box-shadow: 0 4px 15px rgba(230, 126, 80, 0.3);
+  }
+  /* --- END NEW STYLES --- */
+  
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .admin-layout {
+      flex-direction: column;
+    }
+    .admin-sidebar {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid var(--border-primary);
+      padding: 1rem 0;
+    }
+    .admin-content {
+      padding: 1.5rem;
+    }
+    .admin-submenu {
+      flex-wrap: wrap; /* Allow submenu items to wrap on small screens */
+    }
+  }
+  .admin-stats {
+    grid-template-columns: repeat(3, 1fr); /* Always 3 columns */
+    margin-bottom: 2.5rem; /* Reduced margin */
+    gap: 1.5rem; /* Reduced gap */
+  }
+
+  /* Compact stat cards for admin view */
+  .admin-stats .stat-card {
+    padding: 1.2rem;
+    min-height: auto;
+  }
+  .admin-stats .stat-card h3 {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+  .admin-stats .stat-card .stat-number {
+    font-size: 2rem;
+  }
+  
+  
+  /* --- NEW: User Table Styles --- */
+  .admin-table-container {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1.5rem; /* Reduced padding */
+    border: 1px solid var(--border-primary);
+  }
+  
+  .admin-table-container h3 {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .admin-table th, .admin-table td {
+    padding: 0.8rem 1rem; /* Reduced padding */
+    text-align: left;
+    border-bottom: 1px solid var(--border-primary);
+  }
+  
+  .admin-table th {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .admin-table td {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+  
+  .admin-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .admin-table tbody tr:hover {
+    background-color: rgba(125, 211, 201, 0.05);
+  }
+  
+  .status-badge {
+    padding: 0.3rem 0.7rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  
+  .status-badge.active {
+    background: rgba(72, 187, 120, 0.1);
+    color: var(--success-color);
+  }
+  
+  .status-badge.inactive {
+    background: rgba(229, 62, 62, 0.1);
+    color: var(--error-color);
+  }
+  
+  /* Compact action button for the table */
+  .admin-table .action-button {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: none;
+    padding: 0.4rem 0.8rem; /* Reduced padding */
+    font-size: 0.8rem; /* Reduced font size */
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .admin-table .action-button:hover {
+    background: var(--bio-luminescent);
+    color: var(--deep-ocean);
+  }
+  .pagination-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-primary);
+  }
+  
+  .pagination-button {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .pagination-button:hover:not(:disabled) {
+    background: var(--bio-luminescent);
+    color: var(--deep-ocean);
+    border-color: var(--bio-luminescent);
+  }
+  
+  .pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .pagination-info {
+    margin: 0 1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .table-header h3 {
+    margin: 0;
+  }
+  
+  .search-bar input {
+    padding: 0.5rem 0.8rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    width: 250px;
+  }
+  .usage-tracking-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  
+  @media (max-width: 992px) {
+    .usage-tracking-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .stat-card-combined {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 0.8rem 1.2rem; /* Adjusted padding */
+  }
+  
+  .combined-item {
+    text-align: center;
+  }
+  
+  .combined-item:first-child {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-primary);
+  }
+  
+  .combined-item:last-child {
+    padding-top: 0.5rem;
+  }
+  
+  .combined-item h3 {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .combined-item .stat-number {
+    font-size: 1.8rem;
+  }
+  
+  .stat-card-link {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg-tertiary); /* Different background to indicate it's a link */
+  }
+  
+  .stat-card-link h3 {
+    color: var(--bio-luminescent);
+    font-size: 1.1rem;
+  }
+  
+  .stat-card-link .stat-description {
+    margin-top: 0.5rem;
+  }
+  
+  .stat-card-link:hover {
+    border-color: var(--thermal-vent);
+    box-shadow: 0 8px 25px var(--shadow-accent);
+  }
