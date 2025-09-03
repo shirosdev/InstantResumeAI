@@ -66,6 +66,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_data');
     localStorage.removeItem('lastActivityTime');
+    
+    // --- FIX: Clear the enhancement result from session storage on logout ---
+    sessionStorage.removeItem('lastEnhancementResult');
+    
     setUser(null);
     setUserStatus(null);
     setError(null);
