@@ -22,23 +22,6 @@ class EmailService:
         # This 'from_email' is your authenticated user, which MUST match the login credentials.
         self.from_email = os.getenv('FROM_EMAIL', self.smtp_username)
         self.from_name = os.getenv('FROM_NAME', 'InstantResumeAI')
-
-    # --- NEW: Method to send a welcome email ---
-    def send_welcome_email(self, to_email: str, user_name: str) -> bool:
-        """Sends a welcome email to a new user upon registration."""
-        try:
-            subject = "Welcome to InstantResumeAI!"
-            html_content = self._create_welcome_html(user_name, to_email)
-            text_content = self._create_welcome_text(user_name, to_email)
-            return self._send_email(
-                to_email=to_email,
-                subject=subject,
-                html_content=html_content,
-                text_content=text_content
-            )
-        except Exception as e:
-            logger.error(f"Failed to send welcome email to {to_email}: {str(e)}")
-            return False
         
     def send_contact_inquiry(self, from_name: str, from_email: str, subject: str, message_body: str) -> bool:
         """
@@ -166,88 +149,6 @@ class EmailService:
         except Exception as e:
             logger.error(f"SMTP error sending to {to_email}: {str(e)}")
             return False
-            
-    # --- NEW: Private method for welcome email HTML content ---
-    def _create_welcome_html(self, user_name: str, user_email: str) -> str:
-        """Create HTML content for the welcome email"""
-        # A simple, modern email template
-        return f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Welcome to InstantResumeAI</title>
-            <style>
-                body {{ font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 0; }}
-                .container {{ max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
-                .header {{ background: linear-gradient(135deg, #e67e50 0%, #f4a261 100%); color: white; padding: 40px; text-align: center; }}
-                .content {{ padding: 30px; }}
-                .content p {{ margin-bottom: 20px; color: #555; }}
-                ul {{ list-style-type: '✓'; padding-left: 20px; margin-bottom: 20px; }}
-                li {{ margin-bottom: 10px; padding-left: 10px; color: #555; }}
-                .button-container {{ text-align: center; margin: 30px 0; }}
-                .button {{ display: inline-block; background-color: #e67e50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; }}
-                .footer {{ background-color: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #888; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>Welcome to InstantResumeAI!</h1>
-                </div>
-                <div class="content">
-                    <p>Hi {user_name},</p>
-                    <p>You've taken the first step toward making your resume sharper, smarter, and more impactful.</p>
-                    <p>With InstantResumeAI, you can:</p>
-                    <ul>
-                        <li>Enhance your existing resume with AI-driven improvements.</li>
-                        <li>Optimize your resume for ATS (Applicant Tracking Systems).</li>
-                        <li>Tailor your resume to highlight your skills and achievements effectively.</li>
-                        <li>Download a polished version that's recruiter-ready.</li>
-                    </ul>
-                    <div class="button-container">
-                        <a href="http://localhost:3000/dashboard" class="button">🚀 Enhance My Resume Now</a>
-                    </div>
-                    <p>We're here to make sure your resume doesn't just get noticed — it gets remembered.</p>
-                    <p>If you didn't create this account, please ignore this email.</p>
-                    <p>Best regards,<br>The InstantResumeAI Team</p>
-                </div>
-                <div class="footer">
-                    <p>This email was sent to {user_email}.</p>
-                    <p>Need help? Contact us anytime at support@instantresumeai.com</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-
-    # --- NEW: Private method for welcome email plain text content ---
-    def _create_welcome_text(self, user_name: str, user_email: str) -> str:
-        """Create plain text content for the welcome email"""
-        return f"""
-        Hi {user_name},
-
-        Welcome to InstantResumeAI! You've taken the first step toward making your resume sharper, smarter, and more impactful.
-
-        With InstantResumeAI, you can:
-        - Enhance your existing resume with AI-driven improvements.
-        - Optimize your resume for ATS (Applicant Tracking Systems).
-        - Tailor your resume to highlight your skills and achievements effectively.
-        - Download a polished version that's recruiter-ready.
-
-        Enhance My Resume Now: http://instantresumeai.com/dashboard
-
-        We're here to make sure your resume doesn't just get noticed — it gets remembered.
-
-        If you didn't create this account, please ignore this email.
-
-        Best regards,
-        The InstantResumeAI Team
-
-        ---
-        This email was sent to {user_email}.
-        Need help? Contact us anytime at info@instantresumeai.com
-        """
     
     def _create_password_reset_html(self, reset_token: str, user_name: str = None) -> str:
         """Create HTML content for password reset email"""

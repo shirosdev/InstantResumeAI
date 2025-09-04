@@ -6,7 +6,6 @@ from app import db, bcrypt
 from app.models.user import User
 from app.models.activity import ActivityLog
 from app.models.subscription import UserSubscription, SubscriptionPlan
-from app.services.email_service import EmailService
 from app.services.auth_service import AuthService
 from app.services.password_reset_service import PasswordResetService
 from app.utils.validators import validate_email, validate_password, validate_username
@@ -74,12 +73,6 @@ def register():
         
         db.session.add(new_user)
         db.session.commit()
-
-        try:
-            email_service = EmailService()
-            email_service.send_welcome_email(to_email=new_user.email, user_name=new_user.first_name or new_user.username)
-        except Exception as e:
-            print(f"Failed to send welcome email to {new_user.email}: {e}")
         
         # Log registration activity
         AuthService.log_activity(new_user.user_id, 'user_registered', f'User {username} registered', request.remote_addr)
