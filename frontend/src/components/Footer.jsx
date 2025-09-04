@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="footer-content">
           <div className="footer-section">
             <h3>InstantResumeAI</h3>
-            <p>Get the job you deserve</p>
+            <p>Smarter resumes. Better opportunities</p>
           </div>
           <div className="footer-section">
             <h3>Quick Links</h3>
@@ -33,6 +33,7 @@ const Footer = () => {
             <h3>Contact Us</h3>
             <p>Email: info@instantresumeai.com</p>
             <p>Phone: (800) 971-8013</p>
+            <p>support: support@instantresumeai.com</p>
           </div>
         </div>
         <div className="footer-bottom">
