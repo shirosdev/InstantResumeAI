@@ -1,15 +1,13 @@
 // frontend/src/pages/Dashboard.jsx
 
-import React, { useEffect } from 'react'; // Import useEffect
+import React, { useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
-  // We get ALL necessary data directly from the useAuth hook.
   const { user, userStatus, loading, fetchUserStatus } = useAuth();
 
-  // FIX: Add this useEffect to fetch fresh data every time the dashboard is viewed
   useEffect(() => {
     fetchUserStatus();
   }, [fetchUserStatus]);
@@ -26,22 +24,28 @@ const Dashboard = () => {
 
         <div className="dashboard-stats">
           <div className="stat-card">
-            <h3>Resume Enhancements</h3>
-            <p className="stat-number">
-              {/* This now correctly uses the data fetched by useAuth */}
-              {loading || !userStatus ? '...' : userStatus.enhancement_count}
-            </p>
-            <p className="stat-description">Enhancements used this period</p>
+            <h3>Enhancement Credits</h3>
+            <div className="stat-card-split">
+              <div className="stat-item">
+                <p className="stat-number">
+                  {loading || !userStatus ? '...' : userStatus.enhancement_count}
+                </p>
+                <p className="stat-description">Used</p>
+              </div>
+              <div className="stat-item">
+                <p className="stat-number">
+                  {loading || !userStatus ? '...' :
+                    userStatus.remaining_enhancements === 'unlimited' ? '∞' : userStatus.remaining_enhancements
+                  }
+                </p>
+                <p className="stat-description">Remaining</p>
+              </div>
+            </div>
           </div>
           <div className="stat-card">
             <h3>Subscription Status</h3>
             <p className="stat-status">{loading || !userStatus ? '...' : userStatus.plan_name}</p>
-            <p className="stat-description">
-              {loading || !userStatus ? '...' : 
-                userStatus.resume_limit === null ? 'Unlimited Enhancements' : 
-                `${userStatus.remaining_enhancements} Enhancements Left`
-              }
-            </p>
+            <p className="stat-description">Current subscription plan</p>
           </div>
           <div className="stat-card">
             <h3>Member Since</h3>

@@ -1,12 +1,13 @@
-// frontend/src/services/adminService.js
+// src/services/adminService.js
 
 import api from './api';
 
 const adminService = {
-  getUserStats: () => {
+  // NEW FUNCTION to get all overview stats
+  getDashboardStats: () => {
     return api.get('/admin/users/stats');
   },
-  
+
   getUsers: (page = 1, perPage = 15, searchQuery = '') => {
     return api.get(`/admin/users?page=${page}&per_page=${perPage}&search_query=${searchQuery}`);
   },
@@ -24,6 +25,10 @@ const adminService = {
   },
   getUserEnhancementHistory: (userId) => {
     return api.get(`/admin/users/${userId}/enhancement-history`);
+  },
+
+  getUserSecurityActivity: (userId) => {
+    return api.get(`/admin/users/${userId}/activity`);
   },
 
   updateUserStatus: (userId, isActive) => {

@@ -3,31 +3,22 @@
 import { useState, useEffect, useContext, createContext, useCallback } from 'react';
 import authService from '../services/authService';
 
-const INACTIVITY_TIMEOUT = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
 const AuthContext = createContext(null);
 
-// Helper function to update last activity time
-const updateLastActivityTime = () => {
-  if (localStorage.getItem('access_token')) {
-      localStorage.setItem('lastActivityTime', Date.now().toString());
-  }
-};
-
-// Helper function to get stored auth data
+// Helper function to get stored auth data from sessionStorage
 const getStoredAuth = () => {
   try {
-    const token = localStorage.getItem('access_token');
-    const userStr = localStorage.getItem('user_data');
-    const lastActivity = localStorage.getItem('lastActivityTime');
+    const token = sessionStorage.getItem('access_token');
+    const userStr = sessionStorage.getItem('user_data');
 
     if (token && userStr) {
       const user = JSON.parse(userStr);
-      return { user, token, lastActivity };
+      return { user, token };
     }
   } catch (error) {
     console.error('Error reading stored auth:', error);
   }
-  return { user: null, token: null, lastActivity: null };
+  return { user: null, token: null };
 };
 
 export const AuthProvider = ({ children }) => {
@@ -36,9 +27,8 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [userStatus, setUserStatus] = useState(null);
 
-  // This function is the single source of truth for updating the user's status
   const fetchUserStatus = useCallback(async () => {
-    if (!localStorage.getItem('access_token')) return;
+    if (!sessionStorage.getItem('access_token')) return;
     try {
       const statusResponse = await authService.getUserStatus();
       if (statusResponse.data?.status) {
@@ -62,13 +52,10 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('lastActivityTime');
-    
-    // --- FIX: Clear the enhancement result from session storage on logout ---
-    sessionStorage.removeItem('lastEnhancementResult');
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('user_data');
+    sessionStorage.removeItem('lastEnhancementResult'); // Also clear enhancement result
     
     setUser(null);
     setUserStatus(null);
@@ -80,49 +67,19 @@ export const AuthProvider = ({ children }) => {
 
     const initAuth = async () => {
       setLoading(true);
-      const { token, user: storedUser, lastActivity } = getStoredAuth();
+      const { token, user: storedUser } = getStoredAuth();
 
-      if (!token) {
+      if (!token || !storedUser) {
         if (mounted) setLoading(false);
         return;
       }
       
-      if (lastActivity) {
-        const lastActivityTime = parseInt(lastActivity, 10);
-        if (Date.now() - lastActivityTime > INACTIVITY_TIMEOUT) {
-          if (mounted) {
-            await performLogout(true);
-            setLoading(false);
-          }
-          return;
-        }
-      } else {
-          updateLastActivityTime();
-      }
-
-      if (storedUser && lastActivity) {
-          if (mounted) {
-              setUser(storedUser);
-              await fetchUserStatus();
-              setLoading(false);
-          }
-          return;
-      }
-      
-      try {
-        const response = await authService.getCurrentUser();
-        if (mounted && response.data?.user) {
-          setUser(response.data.user);
-          localStorage.setItem('user_data', JSON.stringify(response.data.user));
-          updateLastActivityTime();
+      // Since data is in sessionStorage, we can assume it's from an active session.
+      // A full refresh or new tab would clear it.
+      if (mounted) {
+          setUser(storedUser);
           await fetchUserStatus();
-        } else {
-          if (mounted) await performLogout(true);
-        }
-      } catch (err) {
-        if (mounted) await performLogout(true);
-      } finally {
-        if (mounted) setLoading(false);
+          setLoading(false);
       }
     };
 
@@ -131,38 +88,8 @@ export const AuthProvider = ({ children }) => {
     return () => {
       mounted = false;
     };
-  }, [performLogout, fetchUserStatus]);
+  }, [fetchUserStatus]);
 
-  useEffect(() => {
-    if (!user || loading) {
-      return;
-    }
-
-    let inactivityTimer = null;
-    const checkInactivity = () => {
-      const lastActivity = localStorage.getItem('lastActivityTime');
-      if (lastActivity) {
-        const lastActivityTime = parseInt(lastActivity, 10);
-        if (Date.now() - lastActivityTime > INACTIVITY_TIMEOUT) {
-          performLogout();
-        }
-      } else {
-        updateLastActivityTime();
-      }
-    };
-    
-    const activityEvents = ['mousemove', 'keydown', 'scroll', 'touchstart'];
-    const activityHandler = () => updateLastActivityTime();
-    activityEvents.forEach(event => window.addEventListener(event, activityHandler, { passive: true }));
-    inactivityTimer = setInterval(checkInactivity, 60 * 1000);
-
-    return () => {
-      activityEvents.forEach(event => window.removeEventListener(event, activityHandler));
-      if (inactivityTimer) {
-        clearInterval(inactivityTimer);
-      }
-    };
-  }, [user, loading, performLogout]);
 
   const login = useCallback(async (loginIdentifier, password) => {
     setError(null);
@@ -171,10 +98,9 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login({ login: loginIdentifier, password });
       if (response.data?.user && response.data?.access_token) {
         const { user: loggedInUser, access_token, refresh_token } = response.data;
-        localStorage.setItem('access_token', access_token);
-        localStorage.setItem('refresh_token', refresh_token || '');
-        localStorage.setItem('user_data', JSON.stringify(loggedInUser));
-        updateLastActivityTime();
+        sessionStorage.setItem('access_token', access_token);
+        sessionStorage.setItem('refresh_token', refresh_token || '');
+        sessionStorage.setItem('user_data', JSON.stringify(loggedInUser));
         setUser(loggedInUser);
         await fetchUserStatus();
         setLoading(false);
@@ -198,10 +124,9 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.register(userData);
       if (response.data?.user && response.data?.access_token) {
         const { user: signedUpUser, access_token, refresh_token } = response.data;
-        localStorage.setItem('access_token', access_token);
-        localStorage.setItem('refresh_token', refresh_token || '');
-        localStorage.setItem('user_data', JSON.stringify(signedUpUser));
-        updateLastActivityTime();
+        sessionStorage.setItem('access_token', access_token);
+        sessionStorage.setItem('refresh_token', refresh_token || '');
+        sessionStorage.setItem('user_data', JSON.stringify(signedUpUser));
         setUser(signedUpUser);
         await fetchUserStatus();
         setLoading(false);
@@ -233,8 +158,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUserData: (userData) => {
       setUser(userData);
-      localStorage.setItem('user_data', JSON.stringify(userData));
-      updateLastActivityTime();
+      sessionStorage.setItem('user_data', JSON.stringify(userData));
     }
   };
 

@@ -1,13 +1,16 @@
-// frontend/src/pages/AdminDashboard.jsx
+// src/pages/AdminDashboard.jsx
 
-import React from 'react';
-import { NavLink, Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, Routes, Route, Outlet } from 'react-router-dom';
+import adminService from '../services/adminService';
 import '../styles/AdminDashboard.css';
+
+// Import all child components
 import UserManagement from './admin/UserManagement';
 import AdminOverview from './admin/AdminOverview';
 import UsageTracking from './admin/UsageTracking';
+import SecurityCompliance from './admin/SecurityCompliance';
 
-// A placeholder for other sections
 const AdminPlaceholder = ({ title }) => (
   <div>
     <div className="dashboard-header" style={{textAlign: 'left', maxWidth: 'none', marginLeft: 0}}>
@@ -18,18 +21,35 @@ const AdminPlaceholder = ({ title }) => (
 );
 
 const adminNavLinks = [
-    // NEW: Added "Overview" as a visible link
     { title: 'Overview', path: '/admin', end: true },
     { title: 'User Management', path: '/admin/user-management' },
-    { title: 'Subscription & Billing', path: '/admin/billing' },
-    { title: 'Resume Usage Tracking', path: '/admin/usage-tracking' },
     { title: 'Security & Compliance', path: '/admin/security' },
+    { title: 'Resume Usage Tracking', path: '/admin/usage-tracking' },
+    { title: 'Subscription & Billing', path: '/admin/billing' },
     { title: 'System Monitoring', path: '/admin/monitoring' },
     { title: 'Support', path: '/admin/support' },
     { title: 'Admin Actions', path: '/admin/actions' },
 ];
 
+// This is the main layout component that fetches and holds the stats
 const AdminDashboard = () => {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await adminService.getDashboardStats();
+        setStats(res.data);
+      } catch (err) {
+        console.error("Failed to load admin stats", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
   return (
     <div className="admin-layout">
       <aside className="admin-sidebar">
@@ -45,26 +65,24 @@ const AdminDashboard = () => {
           </ul>
         </div>
       </aside>
-
       <main className="admin-content">
-        <Outlet />
+        {/* Pass stats and loading state to the child routes via Outlet context */}
+        <Outlet context={{ stats, loading }} />
       </main>
     </div>
   );
 };
 
+
 const AdminRoutes = () => {
     return (
         <Routes>
             <Route path="/" element={<AdminDashboard />}>
-                {/* Default route remains the AdminOverview */}
                 <Route index element={<AdminOverview />} />
-
-                {/* Other admin routes */}
                 <Route path="user-management" element={<UserManagement />} />
+                <Route path="security" element={<SecurityCompliance />} />
                 <Route path="billing" element={<AdminPlaceholder title="Subscription & Billing" />} />
                 <Route path="usage-tracking" element={<UsageTracking />} />
-                <Route path="security" element={<AdminPlaceholder title="Security & Compliance" />} />
                 <Route path="monitoring" element={<AdminPlaceholder title="System Monitoring" />} />
                 <Route path="support" element={<AdminPlaceholder title="Support" />} />
                 <Route path="actions" element={<AdminPlaceholder title="Admin Actions" />} />
