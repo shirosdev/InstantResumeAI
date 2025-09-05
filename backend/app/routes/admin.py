@@ -4,8 +4,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt
 from functools import wraps
 from app.models.user import User
-from app.models.activity import ActivityLog
-from app.models.session import UserSession
+from app.models.activity import ActivityLog 
 from app.models.subscription import SubscriptionPlan, UserSubscription
 from app.models.resume import ResumeEnhancement
 from app import db
@@ -15,6 +14,7 @@ from collections import OrderedDict
 
 admin_bp = Blueprint('admin', __name__)
 
+# Decorator to protect routes and ensure the user is an admin
 def admin_required():
     def wrapper(fn):
         @wraps(fn)
@@ -31,16 +31,20 @@ def admin_required():
 @admin_bp.route('/', methods=['GET'])
 @admin_required()
 def admin_dashboard():
+    """A placeholder route for the admin dashboard"""
     return jsonify(message="Welcome to the Admin Dashboard!")
 
 @admin_bp.route('/users/stats', methods=['GET'])
 @admin_required()
 def get_user_stats():
+    """Provides key statistics for user management."""
     try:
         total_users = db.session.query(func.count(User.user_id)).scalar()
         active_users = db.session.query(func.count(User.user_id)).filter_by(is_active=True).scalar()
+        
         seven_days_ago = datetime.utcnow() - timedelta(days=7)
         new_signups = db.session.query(func.count(User.user_id)).filter(User.created_at >= seven_days_ago).scalar()
+
         stats = {
             "total_users": total_users,
             "active_users": active_users,
@@ -50,13 +54,13 @@ def get_user_stats():
     except Exception as e:
         return jsonify(message="Failed to retrieve user stats", error=str(e)), 500
 
+# --- UPDATED: Endpoint to get a paginated list of all users with search ---
 @admin_bp.route('/users', methods=['GET'])
 @admin_required()
 def get_all_users():
     """Provides a paginated list of all users with search functionality."""
     try:
         page = request.args.get('page', 1, type=int)
-        # FIX 1: Changed per_page type from str back to int
         per_page = request.args.get('per_page', 15, type=int)
         search_query = request.args.get('search_query', '', type=str)
         
@@ -64,9 +68,9 @@ def get_all_users():
         
         if search_query:
             search_term = f"%{search_query}%"
-            # FIX 2: Removed the invalid search on the integer user_id field
             query = query.filter(
                 or_(
+                    User.user_id.like(search_term),
                     User.username.like(search_term),
                     User.email.like(search_term)
                 )
@@ -85,68 +89,6 @@ def get_all_users():
         }), 200
     except Exception as e:
         return jsonify(message="Failed to retrieve users", error=str(e)), 500
-
-@admin_bp.route('/users/<int:user_id>/activity', methods=['GET'])
-@admin_required()
-def get_user_security_activity(user_id):
-    """Provides detailed security and activity logs for a single user."""
-    try:
-        user = User.query.get(user_id)
-        if not user:
-            return jsonify(message="User not found"), 404
-
-        # 1. Login Activity
-        login_activities = ActivityLog.query.filter_by(user_id=user_id, action='user_login').order_by(ActivityLog.created_at.desc()).limit(20).all()
-        
-        # Simple suspicious login detection
-        recent_ips = set()
-        suspicious_logins = []
-        for log in login_activities:
-            if log.ip_address not in recent_ips:
-                if len(recent_ips) > 0: # Mark as suspicious if IP changes
-                    suspicious_logins.append(log.log_id)
-                recent_ips.add(log.ip_address)
-
-        login_history = [{
-            "id": log.log_id,
-            "ip_address": log.ip_address,
-            "user_agent": log.user_agent,
-            "time": log.created_at.isoformat() + 'Z',
-            "is_suspicious": log.log_id in suspicious_logins
-        } for log in login_activities]
-
-        # 2. Multi-Login Tracking (Active Sessions)
-        active_sessions = UserSession.query.filter_by(user_id=user_id, is_active=True).all()
-        session_details = [{
-            "id": session.session_id,
-            "ip_address": session.ip_address,
-            "user_agent": session.user_agent,
-            "last_activity": session.last_activity.isoformat() + 'Z'
-        } for session in active_sessions]
-
-        # 3. Data Privacy Compliance Logs (Audit Trail)
-        compliance_actions = ['disclaimer_accepted', 'user_data_exported', 'account_deleted']
-        compliance_logs = ActivityLog.query.filter(
-            ActivityLog.user_id == user_id,
-            ActivityLog.action.in_(compliance_actions)
-        ).order_by(ActivityLog.created_at.desc()).limit(50).all()
-
-        audit_trail = [{
-            "id": log.log_id,
-            "action": log.action.replace('_', ' ').title(),
-            "description": log.description,
-            "time": log.created_at.isoformat() + 'Z'
-        } for log in compliance_logs]
-
-        return jsonify({
-            "login_history": login_history,
-            "active_sessions": session_details,
-            "audit_trail": audit_trail
-        }), 200
-
-    except Exception as e:
-        return jsonify(message="Failed to retrieve user activity", error=str(e)), 500
-
 
 @admin_bp.route('/users/chart-data', methods=['GET'])
 @admin_required()
@@ -246,6 +188,7 @@ def delete_user(user_id):
 def get_usage_tracking_data():
     """Provides data for resume usage tracking."""
     try:
+        # Resumes generated per day (last 30 days)
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         daily_enhancements = db.session.query(
             func.date(ResumeEnhancement.created_at),
@@ -254,6 +197,7 @@ def get_usage_tracking_data():
             func.date(ResumeEnhancement.created_at)
         ).order_by(func.date(ResumeEnhancement.created_at).desc()).all()
 
+        # --- MODIFIED QUERY: Added User.user_id ---
         enhancements_per_user = db.session.query(
             User.user_id,
             User.username,
@@ -264,13 +208,16 @@ def get_usage_tracking_data():
             func.count(ResumeEnhancement.enhancement_id).desc()
         ).limit(10).all()
 
+        # Prompt box usage stats
         total_enhancements = db.session.query(func.count(ResumeEnhancement.enhancement_id)).scalar()
         enhancements_with_instructions = ResumeEnhancement.query.filter(
             ResumeEnhancement.enhancement_summary.isnot(None)
         ).count()
 
+
         usage_data = {
             "daily_enhancements": [{"date": date.isoformat(), "count": count} for date, count in daily_enhancements],
+            # --- MODIFIED RESPONSE: Include user_id ---
             "enhancements_per_user": [{"user_id": user_id, "username": username, "count": count} for user_id, username, count in enhancements_per_user],
             "prompt_usage": {
                 "with_instructions": enhancements_with_instructions,
