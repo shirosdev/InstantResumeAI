@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import '../styles/Profile.css';
-import '../styles/Dashboard.css'; // Ensure Dashboard styles are imported for consistency
+import '../styles/Dashboard.css';
 
 const Profile = () => {
   const { user, logout, updateUserData, userStatus, loading: authLoading, fetchUserStatus } = useAuth();
@@ -108,31 +108,7 @@ const Profile = () => {
           )}
         </div>
 
-        <div className="dashboard-stats">
-          <div className="stat-card">
-            <h3>Account Type</h3>
-            <p className="stat-status">
-              {authLoading || !userStatus ? 'Loading...' : userStatus.plan_name}
-            </p>
-            <p className="stat-description">Current subscription plan</p>
-          </div>
-          <div className="stat-card">
-            <h3>Enhancements Left</h3>
-            <p className="stat-number">
-              {authLoading || !userStatus ? '...' : 
-                userStatus.remaining_enhancements === 'unlimited' ? '∞' : userStatus.remaining_enhancements
-              }
-            </p>
-            <p className="stat-description">Credits remaining</p>
-          </div>
-          <div className="stat-card">
-            <h3>Resumes Enhanced</h3>
-            <p className="stat-number">
-              {authLoading || !userStatus ? '...' : userStatus.enhancement_count}
-            </p>
-            <p className="stat-description">Total enhancements used</p>
-          </div>
-        </div>
+        {/* The statistics section has been removed from here */}
 
         <div className="auth-card profile-form-container" style={{ maxWidth: '680px', margin: '2rem auto' }}>
           <h2>Profile Information</h2>
