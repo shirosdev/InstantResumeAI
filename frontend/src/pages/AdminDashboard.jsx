@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Routes, Route, Outlet } from 'react-router-dom';
 import adminService from '../services/adminService';
 import '../styles/AdminDashboard.css';
+import SystemMonitoring from './admin/SystemMonitoring';
 
 // Import all child components
 import UserManagement from './admin/UserManagement';
@@ -21,14 +22,14 @@ const AdminPlaceholder = ({ title }) => (
 );
 
 const adminNavLinks = [
-    { title: 'Overview', path: '/admin', end: true },
-    { title: 'User Management', path: '/admin/user-management' },
-    { title: 'Security & Compliance', path: '/admin/security' },
-    { title: 'Resume Usage Tracking', path: '/admin/usage-tracking' },
-    { title: 'Subscription & Billing', path: '/admin/billing' },
-    { title: 'System Monitoring', path: '/admin/monitoring' },
-    { title: 'Support', path: '/admin/support' },
-    { title: 'Admin Actions', path: '/admin/actions' },
+  { title: 'Overview', path: '/admin', end: true },
+  { title: 'User Management', path: '/admin/user-management' },
+  { title: 'Security & Compliance', path: '/admin/security' },
+  { title: 'Resume Usage Tracking', path: '/admin/usage-tracking' },
+  { title: 'Subscription & Billing', path: '/admin/billing' },
+  { title: 'System Monitoring', path: '/admin/monitoring' },
+  { title: 'Support', path: '/admin/support' },
+  { title: 'Admin Actions', path: '/admin/actions' },
 ];
 
 // This is the main layout component that fetches and holds the stats
@@ -56,7 +57,7 @@ const AdminDashboard = () => {
         <div className="sidebar-section">
           <ul className="sidebar-links">
             {adminNavLinks.map((link) => (
-              <li key={link.title}>
+              <li key={link.path}> {/* FIX: Use the unique path as the key */}
                 <NavLink to={link.path} end={link.end}>
                   <span>{link.title}</span>
                 </NavLink>
@@ -83,7 +84,8 @@ const AdminRoutes = () => {
                 <Route path="security" element={<SecurityCompliance />} />
                 <Route path="billing" element={<AdminPlaceholder title="Subscription & Billing" />} />
                 <Route path="usage-tracking" element={<UsageTracking />} />
-                <Route path="monitoring" element={<AdminPlaceholder title="System Monitoring" />} />
+                {/* FIX: Removed the duplicate route for "monitoring" */}
+                <Route path="monitoring" element={<SystemMonitoring />} />
                 <Route path="support" element={<AdminPlaceholder title="Support" />} />
                 <Route path="actions" element={<AdminPlaceholder title="Admin Actions" />} />
             </Route>

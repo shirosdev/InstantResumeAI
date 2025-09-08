@@ -12,6 +12,7 @@ from app import db
 from sqlalchemy import func, extract, or_
 from datetime import datetime, timedelta
 from collections import OrderedDict
+from app.models.api_log import ApiLog
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -305,3 +306,70 @@ def get_user_enhancement_history(user_id):
         }), 200
     except Exception as e:
         return jsonify(message="Failed to retrieve enhancement history", error=str(e)), 500
+
+@admin_bp.route('/system/stats', methods=['GET'])
+@admin_required()
+def get_system_stats():
+    """Provides aggregated stats for the System Monitoring dashboard."""
+    try:
+        # --- 1. API Health Stats (last 24 hours) ---
+        twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
+        
+        # Base query for recent API logs
+        recent_logs_query = ApiLog.query.filter(ApiLog.timestamp >= twenty_four_hours_ago)
+        
+        # Average response time
+        avg_response_time = recent_logs_query.with_entities(func.avg(ApiLog.response_time_ms)).scalar()
+        
+        # Error rate
+        total_requests = recent_logs_query.count()
+        server_errors = recent_logs_query.filter(ApiLog.status_code >= 500).count()
+        error_rate = (server_errors / total_requests * 100) if total_requests > 0 else 0
+        
+        # Slowest endpoints
+        slowest_endpoints = db.session.query(
+            ApiLog.endpoint,
+            ApiLog.method,
+            func.avg(ApiLog.response_time_ms).label('avg_time')
+        ).filter(ApiLog.timestamp >= twenty_four_hours_ago).group_by(
+            ApiLog.endpoint, ApiLog.method
+        ).order_by(func.avg(ApiLog.response_time_ms).desc()).limit(5).all()
+
+        # --- 2. Background Job Stats (all time) ---
+        job_stats = db.session.query(
+            ResumeEnhancement.enhancement_status,
+            func.count(ResumeEnhancement.enhancement_id)
+        ).group_by(ResumeEnhancement.enhancement_status).all()
+        
+        recent_failed_jobs = ResumeEnhancement.query.filter_by(enhancement_status='failed')\
+            .order_by(ResumeEnhancement.completed_at.desc()).limit(5).all()
+
+        # --- 3. External Service Status (Placeholder) ---
+        # In a real implementation, you would ping the OpenAI status API here
+        openai_status = {"indicator": "operational", "description": "All Systems Operational"}
+
+        return jsonify({
+            "api_health": {
+                "avg_response_time": round(avg_response_time, 2) if avg_response_time else 0,
+                "error_rate_percent": round(error_rate, 2),
+                "slowest_endpoints": [
+                    {"endpoint": e.endpoint, "method": e.method, "avg_time": round(e.avg_time, 2)} for e in slowest_endpoints
+                ]
+            },
+            "job_processing": {
+                "status_counts": {status: count for status, count in job_stats},
+                "recent_failures": [
+                    {
+                        "enhancement_id": job.enhancement_id, 
+                        "user_id": job.user_id, 
+                        "failed_at": job.completed_at.isoformat() + 'Z' if job.completed_at else None
+                    } for job in recent_failed_jobs
+                ]
+            },
+            "external_services": {
+                "openai_api": openai_status
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify(message="Failed to retrieve system monitoring stats", error=str(e)), 500

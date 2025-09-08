@@ -1,6 +1,6 @@
 # backend/app/__init__.py
 
-from flask import Flask
+from flask import Flask,g , request
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
@@ -8,6 +8,7 @@ from flask_bcrypt import Bcrypt
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
+import time
 
 # Load environment variables
 load_dotenv()
@@ -91,6 +92,7 @@ def create_app():
     from app.routes.resume import resume_bp
     from app.routes.contact import contact_bp
     from app.routes.admin import admin_bp
+    from app.models.api_log import ApiLog
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(resume_bp, url_prefix='/api/resume')
@@ -117,5 +119,32 @@ def create_app():
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):
         return False
+    
+    @app.before_request
+    def start_timer():
+        # Use Flask's global 'g' object to store start time
+        if request.path.startswith('/api/'):
+            g.start_time = time.time()
+
+    @app.after_request
+    def log_request(response):
+        if hasattr(g, 'start_time'):
+            # Calculate response time in milliseconds
+            response_time_ms = (time.time() - g.start_time) * 1000
+            
+            # Create a new log entry
+            api_log_entry = ApiLog(
+                endpoint=request.path,
+                method=request.method,
+                status_code=response.status_code,
+                response_time_ms=response_time_ms
+            )
+            
+            # Use a separate session to avoid interfering with the request's transaction
+            with app.app_context():
+                db.session.add(api_log_entry)
+                db.session.commit()
+                
+        return response
 
     return app

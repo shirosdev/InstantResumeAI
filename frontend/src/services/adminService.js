@@ -34,6 +34,9 @@ const adminService = {
   updateUserStatus: (userId, isActive) => {
     return api.put(`/admin/users/${userId}/status`, { is_active: isActive });
   },
+  getSystemStats: () => {
+    return api.get('/admin/system/stats');
+  },
 
   deleteUser: (userId) => {
     return api.delete(`/admin/users/${userId}`);
