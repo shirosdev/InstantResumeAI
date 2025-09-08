@@ -5,8 +5,9 @@ from app.models.social_auth import SocialAuth
 from app.models.session import UserSession
 from app.models.activity import ActivityLog
 from app.models.subscription import SubscriptionPlan, UserSubscription
+from app.models.support_ticket import SupportTicket
 
 # This file makes the models directory a Python package and 
 # imports all models for easier access from other parts of the application
 
-__all__ = ['User', 'SocialAuth', 'UserSession', 'ActivityLog', 'SubscriptionPlan', 'UserSubscription','ResumeEnhancement']
+__all__ = ['User', 'SocialAuth', 'UserSession', 'ActivityLog', 'SubscriptionPlan', 'UserSubscription','ResumeEnhancement','SupportTicket']

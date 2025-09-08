@@ -37,6 +37,14 @@ const adminService = {
   getSystemStats: () => {
     return api.get('/admin/system/stats');
   },
+  getSupportTickets: () => {
+    return api.get('/admin/support-tickets');
+  },
+
+  resolveSupportTicket: (ticketId) => {
+    return api.put(`/admin/support-tickets/${ticketId}/resolve`);
+  },
+
 
   deleteUser: (userId) => {
     return api.delete(`/admin/users/${userId}`);

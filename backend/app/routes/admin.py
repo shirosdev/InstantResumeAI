@@ -13,6 +13,7 @@ from sqlalchemy import func, extract, or_
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from app.models.api_log import ApiLog
+from app.models.support_ticket import SupportTicket
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -373,3 +374,34 @@ def get_system_stats():
 
     except Exception as e:
         return jsonify(message="Failed to retrieve system monitoring stats", error=str(e)), 500
+    
+@admin_bp.route('/support-tickets', methods=['GET'])
+@admin_required()
+def get_support_tickets():
+    """Fetches all support tickets, sorted by status and submission date."""
+    try:
+        tickets = SupportTicket.query.order_by(
+            SupportTicket.status.asc(), 
+            SupportTicket.submitted_at.desc()
+        ).all()
+        return jsonify([ticket.to_dict() for ticket in tickets]), 200
+    except Exception as e:
+        return jsonify(message="Failed to retrieve support tickets", error=str(e)), 500
+
+@admin_bp.route('/support-tickets/<int:ticket_id>/resolve', methods=['PUT'])
+@admin_required()
+def resolve_support_ticket(ticket_id):
+    """Marks a specific support ticket as resolved."""
+    try:
+        ticket = SupportTicket.query.get(ticket_id)
+        if not ticket:
+            return jsonify(message="Ticket not found"), 404
+        
+        ticket.status = 'resolved'
+        ticket.resolved_at = datetime.utcnow() # ADD THIS LINE
+        db.session.commit()
+        
+        return jsonify(message="Ticket marked as resolved", ticket=ticket.to_dict()), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(message="Failed to update ticket status", error=str(e)), 500
