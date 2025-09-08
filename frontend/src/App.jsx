@@ -1,7 +1,8 @@
 // frontend/src/App.jsx
 
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+// FIX: Added useLocation to this import statement
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -9,7 +10,9 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AdminRoutes from './pages/AdminDashboard';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
-import { pageview } from './utils/analytics';
+
+// Analytics tracking utility
+import { pageview } from './utils/analytics'; 
 
 // Pages
 import Home from './pages/Home';
@@ -44,13 +47,16 @@ import './styles/AdminDashboard.css';
 import './styles/AdminOverview.css';
 import './styles/Modal.css';
 
+// Helper component to track pageviews
 const TrackPageViews = () => {
   const location = useLocation();
   useEffect(() => {
+    // This function will now work correctly
     pageview(location.pathname + location.search);
   }, [location]);
   return null;
 };
+
 
 function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -74,9 +80,7 @@ function App() {
       <AuthProvider>
         <Router>
           <div className="App">
-            
             <TrackPageViews />
-
             <Navbar />
 
             <main id="main-content" className="main-content">
@@ -119,8 +123,7 @@ function App() {
                     <ChangePassword />
                   </ProtectedRoute>
                 } />
-
-                {/* FIX: The path should be /admin/* to allow nested routes */}
+                
                 <Route path="/admin/*" element={
                   <AdminProtectedRoute>
                     <AdminRoutes />
