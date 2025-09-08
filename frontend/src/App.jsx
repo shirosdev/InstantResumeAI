@@ -9,6 +9,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AdminRoutes from './pages/AdminDashboard';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
+import { pageview } from './utils/analytics';
 
 // Pages
 import Home from './pages/Home';
@@ -43,6 +44,13 @@ import './styles/AdminDashboard.css';
 import './styles/AdminOverview.css';
 import './styles/Modal.css';
 
+const TrackPageViews = () => {
+  const location = useLocation();
+  useEffect(() => {
+    pageview(location.pathname + location.search);
+  }, [location]);
+  return null;
+};
 
 function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -66,6 +74,8 @@ function App() {
       <AuthProvider>
         <Router>
           <div className="App">
+            
+            <TrackPageViews />
 
             <Navbar />
 
