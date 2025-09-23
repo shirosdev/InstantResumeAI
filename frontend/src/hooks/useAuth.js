@@ -40,6 +40,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const performLogout = useCallback(async (isSilent = false) => {
+    // FIX START: Set loading state to true to prevent UI flicker
+    setLoading(true);
+
     if (!isSilent) {
         console.log('Logging out...');
     }
@@ -60,6 +63,9 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setUserStatus(null);
     setError(null);
+
+    // FIX END: Set loading state to false after state is cleared
+    setLoading(false);
   }, []);
 
   useEffect(() => {
