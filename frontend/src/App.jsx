@@ -42,7 +42,6 @@ import './styles/History.css';
 import './styles/AdminDashboard.css';
 import './styles/AdminOverview.css';
 import './styles/Modal.css';
-import './styles/SupportThread.css';
 
 // New component to access auth context
 const AppContent = () => {
