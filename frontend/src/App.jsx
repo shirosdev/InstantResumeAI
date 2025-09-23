@@ -1,18 +1,14 @@
 // frontend/src/App.jsx
 
 import React, { useEffect, useState } from 'react';
-// FIX: Added useLocation to this import statement
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AuthProvider } from './hooks/useAuth';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './hooks/useAuth';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AdminRoutes from './pages/AdminDashboard';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
-
-// Analytics tracking utility
-import { pageview } from './utils/analytics'; 
 
 // Pages
 import Home from './pages/Home';
@@ -46,19 +42,11 @@ import './styles/History.css';
 import './styles/AdminDashboard.css';
 import './styles/AdminOverview.css';
 import './styles/Modal.css';
+import './styles/SupportThread.css';
 
-// Helper component to track pageviews
-const TrackPageViews = () => {
-  const location = useLocation();
-  useEffect(() => {
-    // This function will now work correctly
-    pageview(location.pathname + location.search);
-  }, [location]);
-  return null;
-};
-
-
-function App() {
+// New component to access auth context
+const AppContent = () => {
+  const { user } = useAuth(); // Access the authenticated user
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -76,75 +64,81 @@ function App() {
   }, []);
 
   return (
+    <div className="App">
+      <Navbar />
+      <main id="main-content" className="main-content">
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/investors" element={<Investors />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/Usage" element={<Usage />} />
+
+          {/* Password Reset Routes */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-reset-token" element={<VerifyResetToken />} />
+          <Route path="/reset-password/:token?" element={<ResetPassword />} />
+
+          {/* Protected routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/change-password" element={
+            <ProtectedRoute>
+              <ChangePassword />
+            </ProtectedRoute>
+          } />
+
+          {/* FIX: The path should be /admin/* to allow nested routes */}
+          <Route path="/admin/*" element={
+            <AdminProtectedRoute>
+              <AdminRoutes />
+            </AdminProtectedRoute>
+          } />
+
+          <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+
+          {/* Catch all route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+      <Footer />
+
+      {/* Conditionally render Network Status Indicator */}
+      {user && (
+        <div className={`network-status ${isOnline ? 'online' : 'offline'}`}>
+          <div className="network-indicator"></div>
+          <span>{isOnline ? 'Online' : 'Offline'}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+function App() {
+  return (
     <ErrorBoundary>
       <AuthProvider>
         <Router>
-          <div className="App">
-            <TrackPageViews />
-            <Navbar />
-
-            <main id="main-content" className="main-content">
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/how-it-works" element={<HowItWorks />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/investors" element={<Investors />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/Usage" element={<Usage />} />
-
-                {/* Password Reset Routes */}
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/verify-reset-token" element={<VerifyResetToken />} />
-                <Route path="/reset-password/:token?" element={<ResetPassword />} />
-
-                {/* Protected routes */}
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } />
-
-                <Route path="/profile" element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } />
-
-                <Route path="/change-password" element={
-                  <ProtectedRoute>
-                    <ChangePassword />
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/admin/*" element={
-                  <AdminProtectedRoute>
-                    <AdminRoutes />
-                  </AdminProtectedRoute>
-                } />
-
-                <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
-
-                {/* Catch all route */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
-
-            <Footer />
-
-            {/* Network Status Indicator */}
-            <div className={`network-status ${isOnline ? 'online' : 'offline'}`}>
-              <div className="network-indicator"></div>
-              <span>{isOnline ? 'Online' : 'Offline'}</span>
-            </div>
-          </div>
+          <AppContent />
         </Router>
       </AuthProvider>
     </ErrorBoundary>
