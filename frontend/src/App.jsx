@@ -9,6 +9,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AdminRoutes from './pages/AdminDashboard';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
+import TopUpPage from './pages/TopUp';
 
 // Pages
 import Home from './pages/Home';
@@ -30,6 +31,8 @@ import ResetPassword from './pages/ResetPassword';
 import VerifyResetToken from './pages/VerifyResetToken';
 import ChangePassword from './pages/ChangePassword';
 import History from './pages/History';
+import CheckoutPage from './pages/Checkout'; // <-- Import new page
+import PaymentStatusPage from './pages/PaymentStatus'; // <-- Import new page
 
 // Styles
 import './App.css';
@@ -42,14 +45,13 @@ import './styles/History.css';
 import './styles/AdminDashboard.css';
 import './styles/AdminOverview.css';
 import './styles/Modal.css';
+import './styles/SupportThread.css';
 
-// New component to access auth context
 const AppContent = () => {
-  const { user } = useAuth(); // Access the authenticated user
+  const { user } = useAuth();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    // Network status monitoring
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -71,7 +73,6 @@ const AppContent = () => {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/about" element={<About />} />
@@ -88,32 +89,37 @@ const AppContent = () => {
           <Route path="/reset-password/:token?" element={<ResetPassword />} />
 
           {/* Protected routes */}
-          <Route path="/dashboard" element={
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+
+          {/* --- NEW STRIPE ROUTES --- */}
+          <Route path="/checkout" element={
             <ProtectedRoute>
-              <Dashboard />
+              <CheckoutPage />
             </ProtectedRoute>
           } />
-
-          <Route path="/profile" element={
+          <Route path="/payment-status" element={
             <ProtectedRoute>
-              <Profile />
+              <PaymentStatusPage />
             </ProtectedRoute>
           } />
-
-          <Route path="/change-password" element={
-            <ProtectedRoute>
-              <ChangePassword />
-            </ProtectedRoute>
-          } />
-
-          {/* FIX: The path should be /admin/* to allow nested routes */}
+          {/* --- END NEW STRIPE ROUTES --- */}
+          
+          {/* Admin Routes */}
           <Route path="/admin/*" element={
             <AdminProtectedRoute>
               <AdminRoutes />
             </AdminProtectedRoute>
           } />
 
-          <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+          {/* Top Up Routes */}
+          <Route path="/top-up" element={
+            <ProtectedRoute>
+              <TopUpPage />
+            </ProtectedRoute>
+          } />
 
           {/* Catch all route */}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -121,7 +127,6 @@ const AppContent = () => {
       </main>
       <Footer />
 
-      {/* Conditionally render Network Status Indicator */}
       {user && (
         <div className={`network-status ${isOnline ? 'online' : 'offline'}`}>
           <div className="network-indicator"></div>

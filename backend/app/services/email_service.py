@@ -8,6 +8,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
 import logging
+from app.pdf_service import PDFService
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,77 @@ class EmailService:
         # This 'from_email' is your authenticated user, which MUST match the login credentials.
         self.from_email = os.getenv('FROM_EMAIL', self.smtp_username)
         self.from_name = os.getenv('FROM_NAME', 'InstantResumeAI')
+
+    # --- NEW: Method to send a welcome email ---
+    def send_welcome_email(self, to_email: str, user_name: str) -> bool:
+        """Sends a welcome email to a new user upon registration."""
+        try:
+            subject = "Welcome to InstantResumeAI!"
+            html_content = self._create_welcome_html(user_name, to_email)
+            text_content = self._create_welcome_text(user_name, to_email)
+            return self._send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
+                text_content=text_content
+            )
+        except Exception as e:
+            logger.error(f"Failed to send welcome email to {to_email}: {str(e)}")
+            return False
+
+    def send_payment_receipt_email(self, user, payment_details) -> bool:
+        """Generates a PDF receipt and sends it as an email attachment."""
+        try:
+            # 1. Generate the PDF
+            pdf_service = PDFService()
+            pdf_path = pdf_service.create_invoice_pdf(user, payment_details)
+            
+            # 2. Prepare Email Content
+            subject = f"Your InstantResumeAI Invoice ({payment_details['payment_intent_id'][-6:]})"
+            html_content = self._create_receipt_html(user.first_name or user.username, payment_details)
+            text_content = self._create_receipt_text(user.first_name or user.username, payment_details)
+
+            # 3. Send the email with the PDF attachment
+            success = self._send_email(
+                to_email=user.email,
+                subject=subject,
+                html_content=html_content,
+                text_content=text_content,
+                attachment_path=pdf_path
+            )
+            
+            # 4. Clean up the temporary PDF file
+            if os.path.exists(pdf_path):
+                os.remove(pdf_path)
+            
+            return success
+        except Exception as e:
+            logger.error(f"Failed to send payment receipt to {user.email}: {str(e)}")
+            return False
+
+    def _create_receipt_html(self, user_name: str, payment_details: dict) -> str:
+        return f"""
+        <p>Hi {user_name},</p>
+        <p>Thank you for your purchase. Your invoice is attached to this email as a PDF.</p>
+        <p><b>Summary:</b><br>
+        Item: {payment_details['credits_purchased']} x Enhancement Credits<br>
+        Total Paid: ${payment_details['amount_paid']:.2f} USD<br>
+        Payment Method: {payment_details['payment_method_info']}<br>
+        Transaction ID: {payment_details['payment_intent_id']}</p>
+        <p>Your new credit balance is now available on your dashboard.</p>
+        """
+
+
+    def _create_receipt_text(self, user_name: str, payment_details: dict) -> str:
+        return f"""
+        Hi {user_name},\n
+        Thank you for your purchase. Your invoice is attached.\n
+        Summary:\n
+        - Item: {payment_details['credits_purchased']} x Enhancement Credits\n
+        - Total Paid: ${payment_details['amount_paid']:.2f} USD\n
+        - Payment Method: {payment_details['payment_method_info']}\n
+        - Transaction ID: {payment_details['payment_intent_id']}
+        """
         
     def send_contact_inquiry(self, from_name: str, from_email: str, subject: str, message_body: str) -> bool:
         """
@@ -100,34 +172,31 @@ class EmailService:
             logger.error(f"Failed to send password change confirmation to {to_email}: {str(e)}")
             return False
     
-    def _send_email(self, to_email: str, subject: str, html_content: str, text_content: str, reply_to: str = None, from_name_override: str = None, from_email_override: str = None) -> bool:
-        """
-        Internal method updated to allow overriding the FROM address.
-        """
+    def _send_email(self, to_email: str, subject: str, html_content: str, text_content: str, attachment_path: str = None) -> bool:
         if not self.smtp_username or not self.smtp_password:
             logger.error("SMTP credentials not configured")
             return False
         
         try:
-            # Determine the display name and email for the "From" field
-            display_from_name = from_name_override if from_name_override else self.from_name
-            display_from_email = from_email_override if from_email_override else self.from_email
-
             msg = MIMEMultipart('alternative')
-            # THIS IS THE RISKY CHANGE: Sets the 'From' header to the user-provided email.
-            msg['From'] = f"{display_from_name} <{display_from_email}>"
+            msg['From'] = f"{self.from_name} <{self.from_email}>"
             msg['To'] = to_email
             msg['Subject'] = subject
             
-            # If the from address is spoofed, Reply-To is redundant but harmless.
-            if reply_to:
-                msg.add_header('Reply-To', reply_to)
-            
-            text_part = MIMEText(text_content, 'plain')
-            html_part = MIMEText(html_content, 'html')
-            
-            msg.attach(text_part)
-            msg.attach(html_part)
+            msg.attach(MIMEText(text_content, 'plain'))
+            msg.attach(MIMEText(html_content, 'html'))
+
+            # --- New Attachment Logic ---
+            if attachment_path and os.path.exists(attachment_path):
+                with open(attachment_path, "rb") as attachment:
+                    part = MIMEBase("application", "octet-stream")
+                    part.set_payload(attachment.read())
+                encoders.encode_base64(part)
+                part.add_header(
+                    "Content-Disposition",
+                    f"attachment; filename= {os.path.basename(attachment_path)}",
+                )
+                msg.attach(part)
             
             # The 'sendmail' method's 'from_addr' should be your authenticated user.
             # Sending with a different 'From' header in the message is the spoof itself.
@@ -149,6 +218,88 @@ class EmailService:
         except Exception as e:
             logger.error(f"SMTP error sending to {to_email}: {str(e)}")
             return False
+            
+    # --- NEW: Private method for welcome email HTML content ---
+    def _create_welcome_html(self, user_name: str, user_email: str) -> str:
+        """Create HTML content for the welcome email"""
+        # A simple, modern email template
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Welcome to InstantResumeAI</title>
+            <style>
+                body {{ font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 0; }}
+                .container {{ max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+                .header {{ background: linear-gradient(135deg, #e67e50 0%, #f4a261 100%); color: white; padding: 40px; text-align: center; }}
+                .content {{ padding: 30px; }}
+                .content p {{ margin-bottom: 20px; color: #555; }}
+                ul {{ list-style-type: '✓'; padding-left: 20px; margin-bottom: 20px; }}
+                li {{ margin-bottom: 10px; padding-left: 10px; color: #555; }}
+                .button-container {{ text-align: center; margin: 30px 0; }}
+                .button {{ display: inline-block; background-color: #e67e50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; }}
+                .footer {{ background-color: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #888; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Welcome to InstantResumeAI!</h1>
+                </div>
+                <div class="content">
+                    <p>Hi {user_name},</p>
+                    <p>You've taken the first step toward making your resume sharper, smarter, and more impactful.</p>
+                    <p>With InstantResumeAI, you can:</p>
+                    <ul>
+                        <li>Enhance your existing resume with AI-driven improvements.</li>
+                        <li>Optimize your resume for ATS (Applicant Tracking Systems).</li>
+                        <li>Tailor your resume to highlight your skills and achievements effectively.</li>
+                        <li>Download a polished version that's recruiter-ready.</li>
+                    </ul>
+                    <div class="button-container">
+                        <a href="http://localhost:3000/dashboard" class="button">🚀 Enhance My Resume Now</a>
+                    </div>
+                    <p>We're here to make sure your resume doesn't just get noticed — it gets remembered.</p>
+                    <p>If you didn't create this account, please ignore this email.</p>
+                    <p>Best regards,<br>The InstantResumeAI Team</p>
+                </div>
+                <div class="footer">
+                    <p>This email was sent to {user_email}.</p>
+                    <p>Need help? Contact us anytime at support@instantresumeai.com</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+    # --- NEW: Private method for welcome email plain text content ---
+    def _create_welcome_text(self, user_name: str, user_email: str) -> str:
+        """Create plain text content for the welcome email"""
+        return f"""
+        Hi {user_name},
+
+        Welcome to InstantResumeAI! You've taken the first step toward making your resume sharper, smarter, and more impactful.
+
+        With InstantResumeAI, you can:
+        - Enhance your existing resume with AI-driven improvements.
+        - Optimize your resume for ATS (Applicant Tracking Systems).
+        - Tailor your resume to highlight your skills and achievements effectively.
+        - Download a polished version that's recruiter-ready.
+
+        Enhance My Resume Now: http://instantresumeai.com/dashboard
+
+        We're here to make sure your resume doesn't just get noticed — it gets remembered.
+
+        If you didn't create this account, please ignore this email.
+
+        Best regards,
+        The InstantResumeAI Team
+
+        ---
+        This email was sent to {user_email}.
+        Need help? Contact us anytime at support@instantresumeai.com
+        """
     
     def _create_password_reset_html(self, reset_token: str, user_name: str = None) -> str:
         """Create HTML content for password reset email"""

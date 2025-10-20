@@ -14,7 +14,7 @@ from app.utils.validators import validate_email, validate_password, validate_use
 from app.models.resume import ResumeEnhancement
 from datetime import datetime, timedelta
 import re
-import uuid # --- FIX: Import uuid for session token generation
+import uuid
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -119,7 +119,6 @@ def login():
         
         user.last_login = datetime.utcnow()
         
-        # --- FIX START: Correct Session and Token Handling ---
         session_token = str(uuid.uuid4())
         
         new_session = UserSession(
@@ -141,13 +140,11 @@ def login():
         
         db.session.commit()
         
-        # Embed the database session token into the JWT
         access_token = create_access_token(
             identity=str(user.user_id), 
             additional_claims={'session_token': session_token}
         )
         refresh_token = create_refresh_token(identity=str(user.user_id))
-        # --- FIX END ---
 
         return jsonify({
             'message': 'Login successful',
@@ -169,14 +166,12 @@ def logout():
         claims = get_jwt()
         session_token = claims.get('session_token')
 
-        # --- FIX START: Invalidate the session on logout using session_token from JWT ---
         if session_token:
             session_to_invalidate = UserSession.query.filter_by(session_token=session_token).first()
             if session_to_invalidate and session_to_invalidate.user_id == int(current_user_id):
                 session_to_invalidate.is_active = False
                 session_to_invalidate.expires_at = datetime.utcnow()
                 db.session.commit()
-        # --- FIX END ---
 
         AuthService.log_activity(
             current_user_id, 
@@ -374,7 +369,10 @@ def update_profile():
 @jwt_required()
 def get_user_status():
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
+        
+        # Force a fresh query to get the most up-to-date data
+        db.session.expire_all()
         user_subscription = UserSubscription.query.filter_by(user_id=current_user_id).first()
         
         if not user_subscription:
@@ -384,31 +382,41 @@ def get_user_status():
         if not plan:
             return jsonify({'message': 'Subscription plan not found'}), 404
 
-        POLICY_START_DATE = datetime(2025, 8, 23)
-        enhancement_count = ResumeEnhancement.query.filter(
-            ResumeEnhancement.user_id == current_user_id,
-            ResumeEnhancement.created_at >= POLICY_START_DATE
-        ).count()
+        enhancement_count = ResumeEnhancement.query.filter_by(user_id=current_user_id).count()
+        purchased_credits = user_subscription.enhancement_credits or 0
         
-        remaining = "unlimited"
+        # --- START OF THE CORRECT CALCULATION LOGIC ---
+        remaining_enhancements = 0
         if plan.resume_limit is not None:
-            remaining = plan.resume_limit - enhancement_count
-            if remaining < 0:
-                remaining = 0
+            # For limited plans (like 'Free - 3 Enhancements')
+            # First, calculate how many free enhancements are left from the base plan. This cannot be negative.
+            enhancements_left_in_plan = max(0, plan.resume_limit - enhancement_count)
+            # The total remaining is the free ones left plus any purchased credits.
+            remaining_enhancements = enhancements_left_in_plan + purchased_credits
+        else:
+            # For unlimited plans, it's always 'unlimited'
+            remaining_enhancements = 'unlimited'
+        # --- END OF THE CORRECT CALCULATION LOGIC ---
+        
+        # This part correctly formats the plan name for display
+        display_plan_name = plan.plan_name
+        if purchased_credits > 0 and plan.plan_type == 'free':
+            display_plan_name = f"{plan.plan_name} + {purchased_credits} Credits"
 
         return jsonify({
             'message': 'User status retrieved successfully',
             'status': {
-                'plan_name': plan.plan_name,
+                'plan_name': display_plan_name,
                 'resume_limit': plan.resume_limit,
                 'enhancement_count': enhancement_count,
-                'remaining_enhancements': remaining
+                'remaining_enhancements': remaining_enhancements,
+                'purchased_credits': purchased_credits
             }
         }), 200
         
     except Exception as e:
         return jsonify({'message': 'Failed to retrieve user status', 'error': str(e)}), 500
-    
+
 @auth_bp.route('/stats', methods=['GET'])
 @jwt_required()
 def get_user_stats():
@@ -442,4 +450,3 @@ def cleanup_expired_tokens():
         return jsonify({'message': f'Cleaned up {cleaned_count} expired tokens', 'count': cleaned_count}), 200
     except Exception as e:
         return jsonify({'message': 'Failed to cleanup expired tokens', 'error': str(e)}), 500
-

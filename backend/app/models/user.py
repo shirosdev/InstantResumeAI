@@ -38,6 +38,7 @@ class User(db.Model):
     enhancements = relationship('ResumeEnhancement', back_populates='user', cascade='all, delete-orphan')
     support_tickets = relationship('SupportTicket', back_populates='user', cascade='all, delete-orphan')
     
+    
     def to_dict(self):
         """Convert user object to dictionary for JSON serialization"""
         return {

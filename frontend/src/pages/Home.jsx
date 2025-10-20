@@ -45,7 +45,6 @@ const EnhancementWorkbench = () => {
   const [error, setError] = useState('');
   const [enhancementResult, setEnhancementResult] = useState(null);
   const [isAutoProcessing, setIsAutoProcessing] = useState(false);
-  // --- NEW STATE FOR DISCLAIMER ---
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [hasAgreedToDisclaimer, setHasAgreedToDisclaimer] = useState(false);
 
@@ -64,12 +63,11 @@ const EnhancementWorkbench = () => {
         const parsedResult = JSON.parse(savedResult);
         setEnhancementResult(parsedResult);
         setCurrentStep(4);
-        // Also check if disclaimer was agreed to for this session
         const agreed = sessionStorage.getItem('disclaimerAgreed');
         if (agreed === parsedResult.enhanced_resume_id) {
           setHasAgreedToDisclaimer(true);
         } else {
-          setShowDisclaimer(true); // Show disclaimer if not agreed for this result
+          setShowDisclaimer(true);
         }
       } catch (e) {
         console.error("Failed to parse saved enhancement result", e);
@@ -108,20 +106,22 @@ const EnhancementWorkbench = () => {
     setError('');
     
     try {
-      const response = await resumeService.enhanceResume(
-        resumeFile, 
-        jobDescription,
-        userInstructions
-      );
+      const response = await resumeService.enhanceResume(resumeFile, jobDescription, userInstructions);
       if (response.data) {
         setEnhancementResult(response.data);
         sessionStorage.setItem('lastEnhancementResult', JSON.stringify(response.data));
         setCurrentStep(4);
-        setShowDisclaimer(true); // Show disclaimer on successful enhancement
-        fetchUserStatus();
+        setShowDisclaimer(true);
+        fetchUserStatus(); // Refresh user status to show decreased credits
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to enhance resume.');
+      const errorMessage = err.response?.data?.message || 'Failed to enhance resume.';
+      // Check for the specific limit reached flag from the backend
+      if (err.response?.data?.limit_reached) {
+          setError(errorMessage); // This will trigger the top-up display
+      } else {
+          setError(errorMessage);
+      }
       setIsAutoProcessing(false);
     } finally {
       setIsProcessing(false);
@@ -139,18 +139,10 @@ const EnhancementWorkbench = () => {
       setError('');
       await resumeService.downloadResume(enhancementResult.enhanced_resume_id);
     } catch (err) {
-      console.error('Download failed:', err);
-      if (err.message) {
-        setError(`Download failed: ${err.message}`);
-      } else if (err.response?.data?.message) {
-        setError(`Download failed: ${err.response.data.message}`);
-      } else {
-        setError('Failed to download resume. Please try again.');
-      }
+      setError(err.message || 'Failed to download resume. Please try again.');
     }
   };
   
-  // --- NEW FUNCTION TO HANDLE DISCLAIMER AGREEMENT ---
   const handleDisclaimerAgreement = async () => {
     try {
       await resumeService.logDisclaimerAgreement(enhancementResult.enhanced_resume_id);
@@ -164,7 +156,6 @@ const EnhancementWorkbench = () => {
 
   const handleReset = () => {
     fetchUserStatus();
-
     setCurrentStep(1);
     setResumeFile(null);
     setJobDescription('');
@@ -173,13 +164,10 @@ const EnhancementWorkbench = () => {
     setShowInstructionPrompt(false);
     setEnhancementResult(null);
     setError('');
-    // --- CLEAR ALL SESSION STORAGE ON RESET ---
     sessionStorage.removeItem('lastEnhancementResult');
     sessionStorage.removeItem('disclaimerAgreed');
-    
     setHasAgreedToDisclaimer(false);
     setShowDisclaimer(false);
-
     const fileInput = document.getElementById('resume-upload');
     if (fileInput) fileInput.value = '';
   };
@@ -193,8 +181,9 @@ const EnhancementWorkbench = () => {
       </div>
     );
   }
-  
-  const canEnhance = userStatus && (userStatus.resume_limit === null || userStatus.remaining_enhancements > 0);
+
+  // Determine if the user has hit their limit
+  const hasHitLimit = userStatus && userStatus.resume_limit !== null && userStatus.remaining_enhancements <= 0;
 
   return (
     <div className="page-container">
@@ -204,7 +193,23 @@ const EnhancementWorkbench = () => {
           <p className="page-subtitle">A guided experience to perfectly tailor your resume.</p>
         </div>
         
-        {canEnhance || currentStep === 4 ? (
+        {/* If the user has hit their limit OR the API returned a limit error, show the top-up panel */}
+        {hasHitLimit || error.includes('Please top-up to continue') ? (
+          <div className="workbench-content">
+            <div className="workbench-panel">
+              <h3>Enhancement Limit Reached</h3>
+              <p>You have used all available enhancements for your plan. Purchase more credits to continue optimizing your resume.</p>
+              <div className="panel-actions simplified">
+                <Link to="/top-up" className="submit-button">
+                  Purchase More Credits
+                </Link>
+                <Link to="/pricing" className="submit-button secondary">
+                  View Subscription Plans
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : (
           <>
             <Stepper currentStep={currentStep} />
             {error && <div className="error-message main-error">{error}</div>}
@@ -244,31 +249,18 @@ const EnhancementWorkbench = () => {
                   {showDisclaimer && (
                     <DisclaimerModal 
                       onAgree={handleDisclaimerAgreement}
-                      onClose={() => setShowDisclaimer(false)} // Or handle as needed
+                      onClose={() => setShowDisclaimer(false)}
                     />
                   )}
                   <ResultsStep
                     onDownload={handleDownload}
                     onReset={handleReset}
-                    isDownloadDisabled={!hasAgreedToDisclaimer} // Pass disable state
+                    isDownloadDisabled={!hasAgreedToDisclaimer}
                   />
                 </>
               )}
             </div>
           </>
-        ) : (
-          <div className="workbench-content">
-            <div className="workbench-panel">
-              <h3>Enhancement Limit Reached</h3>
-              <p>You have used all available enhancements for your current plan.</p>
-              <p>To continue optimizing your resume, please upgrade to a premium plan.</p>
-              <div className="panel-actions simplified">
-                <Link to="/pricing" className="submit-button">
-                  View Pricing Plans
-                </Link>
-              </div>
-            </div>
-          </div>
         )}
       </div>
     </div>

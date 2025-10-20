@@ -1,5 +1,4 @@
 # backend/app/__init__.py
-
 from flask import Flask,g , request
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
@@ -30,12 +29,14 @@ def create_app():
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
     
     # IMPORTANT: Add these JWT configurations
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
+    
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
     app.config['JWT_HEADER_NAME'] = 'Authorization'
     app.config['JWT_HEADER_TYPE'] = 'Bearer'
     app.config['JWT_ERROR_MESSAGE_KEY'] = 'message'
     
-    # Ensure JWT doesn't check for CSRF tokens
     app.config['JWT_COOKIE_CSRF_PROTECT'] = False
     
     # Database configuration
@@ -66,38 +67,27 @@ def create_app():
     )
     
     from app.models.user import User
+    from app.models.api_log import ApiLog
 
-    # --- START OF DEBUGGING CODE ---
     @jwt.additional_claims_loader
     def add_claims_to_jwt(identity):
-        print(f"--- DEBUG: Checking claims for identity: {identity} (type: {type(identity)}) ---")
-        try:
-            user = User.query.get(int(identity))
-            if user:
-                print(f"--- DEBUG: Found user '{user.username}', is_admin status: {user.is_admin} ---")
-                if user.is_admin:
-                    print("--- DEBUG: Returning {'is_admin': True} ---")
-                    return {'is_admin': True}
-            else:
-                print(f"--- DEBUG: User not found for identity: {identity} ---")
-        except Exception as e:
-            print(f"--- DEBUG: Error during user lookup: {e} ---")
-        
-        print("--- DEBUG: Returning {'is_admin': False} ---")
+        user = User.query.get(int(identity))
+        if user and user.is_admin:
+            return {'is_admin': True}
         return {'is_admin': False}
-    # --- END OF DEBUGGING CODE ---
 
     # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.resume import resume_bp
     from app.routes.contact import contact_bp
     from app.routes.admin import admin_bp
-    from app.models.api_log import ApiLog
+    from app.routes.billing import billing_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(resume_bp, url_prefix='/api/resume')
     app.register_blueprint(contact_bp, url_prefix='/api/contact')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(billing_bp, url_prefix='/api/billing')
     
     # JWT error handlers
     @jwt.invalid_token_loader
@@ -119,20 +109,18 @@ def create_app():
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):
         return False
-    
+
+    # Request logging logic
     @app.before_request
     def start_timer():
-        # Use Flask's global 'g' object to store start time
         if request.path.startswith('/api/'):
             g.start_time = time.time()
 
     @app.after_request
     def log_request(response):
         if hasattr(g, 'start_time'):
-            # Calculate response time in milliseconds
             response_time_ms = (time.time() - g.start_time) * 1000
             
-            # Create a new log entry
             api_log_entry = ApiLog(
                 endpoint=request.path,
                 method=request.method,
@@ -140,7 +128,6 @@ def create_app():
                 response_time_ms=response_time_ms
             )
             
-            # Use a separate session to avoid interfering with the request's transaction
             with app.app_context():
                 db.session.add(api_log_entry)
                 db.session.commit()

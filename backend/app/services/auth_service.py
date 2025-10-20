@@ -30,36 +30,45 @@ class AuthService:
     
     @staticmethod
     def assign_free_subscription(user_id):
-        """Assign free unlimited subscription to new user"""
+        """Assign free 3-enhancement plan to new user"""
         try:
-            # Find the free plan
-            free_plan = SubscriptionPlan.query.filter_by(plan_type='free').first()
+            # CRITICAL FIX: Explicitly select the limited free plan by name and limit.
+            free_plan = SubscriptionPlan.query.filter_by(
+                plan_name='Free - 3 Enhancements',
+                resume_limit=3 
+            ).first()
+
             if not free_plan:
-                print("Warning: Free plan not found in database")
+                print("CRITICAL ERROR: Could not find the 'Free - 3 Enhancements' plan in the database!")
                 return False
-            
-            # Create subscription
+
+            print(f"Assigning plan_id={free_plan.plan_id} ({free_plan.plan_name}) to user_id={user_id}")
+
+            # Create subscription with enhancement_credits explicitly set to 0
             subscription = UserSubscription(
                 user_id=user_id,
                 plan_id=free_plan.plan_id,
                 start_date=datetime.utcnow().date(),
-                end_date=None,  # Unlimited
+                end_date=None,
                 status='active',
-                auto_renew=False
+                auto_renew=False,
+                enhancement_credits=0  # Explicitly initialize to 0
             )
             db.session.add(subscription)
             db.session.commit()
-            
-            # Log the activity
+
             AuthService.log_activity(
-                user_id, 
-                'subscription_created', 
-                f'Free unlimited subscription assigned to user'
+                user_id,
+                'subscription_created',
+                f'Free - 3 Enhancements plan assigned to user (plan_id={free_plan.plan_id})'
             )
-            
+
+            print(f"Successfully assigned subscription to user_id={user_id}")
             return True
-            
+
         except Exception as e:
             print(f"Error assigning free subscription: {e}")
+            import traceback
+            print(traceback.format_exc())
             db.session.rollback()
             return False

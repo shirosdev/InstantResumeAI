@@ -38,6 +38,7 @@ class UserSubscription(db.Model):
     end_date = Column(Date, nullable=True)  # NULL for unlimited
     status = Column(Enum('active', 'expired', 'cancelled', 'pending'), default='active')
     auto_renew = Column(Boolean, default=False)
+    enhancement_credits = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

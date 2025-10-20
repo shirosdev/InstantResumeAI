@@ -87,86 +87,90 @@ def get_text_from_docx(filepath):
         print(f"Error extracting text from {filepath}: {e}")
         return ""
 
+
 @resume_bp.route('/enhance', methods=['POST'])
 @jwt_required()
 def enhance_resume():
     """Main enhancement endpoint with advanced processing"""
-    user_id_from_token = get_jwt_identity()
+    user_id_from_token = int(get_jwt_identity())
     user = User.query.get(user_id_from_token)
     
     if not user or not user.is_active:
         return jsonify({'message': 'User not found or is inactive'}), 401
 
-    # --- START: MODIFIED RESTRICTION LOGIC ---
+    # --- CREDIT CHECK LOGIC ---
     try:
+        # Force a fresh query to get the most up-to-date subscription data
+        db.session.expire_all()
         user_subscription = UserSubscription.query.filter_by(user_id=user_id_from_token).first()
         if not user_subscription:
             return jsonify({'message': 'User has no active subscription plan.'}), 403
 
         plan = SubscriptionPlan.query.get(user_subscription.plan_id)
-        if plan and plan.resume_limit is not None:
-            POLICY_START_DATE = datetime(2025, 8, 23)
-            
-            enhancement_count = ResumeEnhancement.query.filter(
-                ResumeEnhancement.user_id == user_id_from_token,
-                ResumeEnhancement.created_at >= POLICY_START_DATE
-            ).count()
+        if not plan:
+             return jsonify({'message': 'Could not verify subscription plan.'}), 500
 
-            # FIX 1: Changed > to >= to correctly handle the limit for free users
-            if enhancement_count >= plan.resume_limit:
-                return jsonify({'message': 'You have already used all your free enhancements.'}), 403
+        # Calculate total enhancements used and total available
+        enhancement_count = ResumeEnhancement.query.filter_by(user_id=user_id_from_token).count()
+        total_available = float('inf') if plan.resume_limit is None else plan.resume_limit + (user_subscription.enhancement_credits or 0)
+
+        print(f"[CREDIT CHECK] User {user_id_from_token}: Used={enhancement_count}, Available={total_available}")
+
+        # Block the user if they have no enhancements left
+        if enhancement_count >= total_available:
+            return jsonify({
+                'message': 'You have used all your free enhancements and credits. Please top-up to continue.',
+                'limit_reached': True
+            }), 403
+
     except Exception as e:
+        db.session.rollback()
+        print(f"Error in credit check: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         return jsonify({'message': 'Could not verify subscription status', 'error': str(e)}), 500
-    # Validate required fields
+        
+    # --- File Validation and Processing ---
     if 'resume' not in request.files or 'job_description' not in request.form:
         return jsonify({'message': 'Resume file (.docx) and job description are required'}), 400
-    
     
     resume_file = request.files['resume']
     job_description = request.form.get('job_description', '').strip()
     user_instructions = request.form.get('user_instructions', '').strip()
     
-    # Validate file
     if not resume_file.filename or not allowed_file(resume_file.filename):
         return jsonify({'message': 'Invalid file type. Please upload a .docx file'}), 400
     
     if not validate_file_size(resume_file):
         return jsonify({'message': 'File size exceeds 10MB limit'}), 400
     
-    # Validate job description
     if len(job_description) < 50:
         return jsonify({'message': 'Job description must be at least 50 characters'}), 400
     
-    # Validate user instructions if provided
     instructions_valid, instructions_error = validate_user_instructions(user_instructions)
     if not instructions_valid:
         return jsonify({'message': instructions_error}), 400
 
-    # Generate unique identifiers
     user_facing_filename = secure_filename(resume_file.filename)
     unique_id = str(uuid.uuid4())
     internal_filename = f"{unique_id}.docx"
     filepath = os.path.join(UPLOAD_FOLDER, 'resumes', internal_filename)
     
-    # Save uploaded file
     try:
         resume_file.save(filepath)
     except Exception as e:
         return jsonify({'message': 'Failed to save uploaded file', 'error': str(e)}), 500
 
-    # Process enhancement
+    # --- Main Enhancement and Database Update Logic ---
     try:
-        # Use the new Advanced Resume Service
         enhancement_service = IntegratedResumeService()
         enhanced_filename = f"enhanced_{unique_id}.docx"
         enhanced_filepath = os.path.join(UPLOAD_FOLDER, 'enhanced', enhanced_filename)
         
-        # Log the enhancement attempt
         print(f"Starting enhancement for user {user_id_from_token}")
         print(f"Job Description Length: {len(job_description)}")
         print(f"User Instructions: {'Yes' if user_instructions else 'No'}")
         
-        # Perform enhancement with advanced processor
         processing_result = enhancement_service.enhance_resume(
             original_file_path=filepath,
             job_description=job_description,
@@ -174,28 +178,15 @@ def enhance_resume():
             output_path=enhanced_filepath
         )
         
-        # Check if enhancement was successful
         if not processing_result.get('success'):
-            # Clean up uploaded file on failure
-            if os.path.exists(filepath):
-                os.remove(filepath)
-            
+            if os.path.exists(filepath): os.remove(filepath)
             error_detail = processing_result.get('error', 'Unknown processing error')
             print(f"Enhancement failed: {error_detail}")
-            
-            return jsonify({
-                'message': 'Failed to enhance resume', 
-                'error': error_detail
-            }), 500
+            return jsonify({'message': 'Failed to enhance resume', 'error': error_detail}), 500
         
-        # Validate enhancement quality
         validator = EnhancementValidator()
         original_text = get_text_from_docx(filepath)
         enhanced_text = get_text_from_docx(enhanced_filepath)
-        
-        # Basic validation - ensure content was actually enhanced
-        if len(enhanced_text) < len(original_text) * 0.8:
-            print("Warning: Enhanced text is significantly shorter than original")
         
         validation_results = validator.validate_enhancement(
             original_text=original_text,
@@ -203,10 +194,8 @@ def enhance_resume():
             job_description=job_description
         )
         
-        # Get file size for response
         final_file_size = os.path.getsize(enhanced_filepath)
         
-        # Store enhancement record (without user instructions)
         new_enhancement = ResumeEnhancement(
             user_id=user_id_from_token,
             original_filename=user_facing_filename,
@@ -220,29 +209,34 @@ def enhance_resume():
         )
         db.session.add(new_enhancement)
 
-        # Log activity
         activity_description = f'Enhanced resume: {user_facing_filename}'
         if user_instructions:
             activity_description += ' (with custom instructions)'
         
-        new_activity_log = ActivityLog(
-            user_id=user_id_from_token,
-            action='resume_enhanced',
-            description=activity_description
-        )
+        new_activity_log = ActivityLog(user_id=user_id_from_token, action='resume_enhanced', description=activity_description)
         db.session.add(new_activity_log)
         
-        # Commit database changes
+        # --- CORRECTED CREDIT DECREMENT LOGIC ---
+        # This now runs only AFTER the enhancement process is successful.
+        if plan.resume_limit is not None and enhancement_count >= plan.resume_limit:
+            print(f"User {user_id_from_token} is using a purchased credit. Attempting to decrement.")
+            
+            db.session.query(UserSubscription).filter(
+                UserSubscription.user_id == user_id_from_token,
+                UserSubscription.enhancement_credits > 0
+            ).update({
+                'enhancement_credits': UserSubscription.enhancement_credits - 1,
+                'updated_at': datetime.utcnow()
+            }, synchronize_session=False)
+        # --- END OF CORRECTION ---
+        
         db.session.commit()
 
-        # FIX 2: Pass the plan to the cleanup function to avoid deleting records for unlimited users
         cleanup_old_enhancements(user_id_from_token, plan)
 
-        # Prepare response
         response_data = {
             'message': 'Resume enhanced successfully',
             'enhanced_resume_id': unique_id,
-            'file_format': 'docx',
             'file_size': final_file_size,
             'custom_instructions_applied': bool(user_instructions),
             'enhancements_made': processing_result.get('enhancements_made', 0),
@@ -259,20 +253,14 @@ def enhance_resume():
         import traceback
         db.session.rollback()
         
-        # Clean up files on error
-        if os.path.exists(filepath):
-            os.remove(filepath)
-        if 'enhanced_filepath' in locals() and os.path.exists(enhanced_filepath):
-            os.remove(enhanced_filepath)
+        if os.path.exists(filepath): os.remove(filepath)
+        if 'enhanced_filepath' in locals() and os.path.exists(enhanced_filepath): os.remove(enhanced_filepath)
         
         error_trace = traceback.format_exc()
         print(f"Critical error during enhancement: {str(e)}")
         print(error_trace)
         
-        return jsonify({
-            'message': 'An unexpected error occurred during enhancement',
-            'error': str(e)
-        }), 500
+        return jsonify({'message': 'An unexpected error occurred during enhancement', 'error': str(e)}), 500
 
 # FIX 2: The function now accepts the plan object
 def cleanup_old_enhancements(user_id, plan):
@@ -404,7 +392,7 @@ def validate_enhancement_input():
             'valid': False,
             'message': f'Validation error: {str(e)}'
         }), 400
-    
+
 @resume_bp.route('/log-disclaimer-agreement', methods=['POST'])
 @jwt_required()
 def log_disclaimer_agreement():

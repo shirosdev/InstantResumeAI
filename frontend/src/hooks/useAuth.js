@@ -5,7 +5,6 @@ import authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
-// Helper function to get stored auth data from sessionStorage
 const getStoredAuth = () => {
   try {
     const token = sessionStorage.getItem('access_token');
@@ -28,19 +27,25 @@ export const AuthProvider = ({ children }) => {
   const [userStatus, setUserStatus] = useState(null);
 
   const fetchUserStatus = useCallback(async () => {
-    if (!sessionStorage.getItem('access_token')) return;
+    if (!sessionStorage.getItem('access_token')) {
+      console.log('No access token, skipping status fetch');
+      return null;
+    }
     try {
+      console.log('Fetching user status...');
       const statusResponse = await authService.getUserStatus();
       if (statusResponse.data?.status) {
+        console.log('User status fetched:', statusResponse.data.status);
         setUserStatus(statusResponse.data.status);
+        return statusResponse.data.status;
       }
     } catch (err) {
       console.error("Could not fetch user status:", err);
     }
+    return null;
   }, []);
 
   const performLogout = useCallback(async (isSilent = false) => {
-    // FIX START: Set loading state to true to prevent UI flicker
     setLoading(true);
 
     if (!isSilent) {
@@ -58,13 +63,12 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.removeItem('access_token');
     sessionStorage.removeItem('refresh_token');
     sessionStorage.removeItem('user_data');
-    sessionStorage.removeItem('lastEnhancementResult'); // Also clear enhancement result
+    sessionStorage.removeItem('lastEnhancementResult');
     
     setUser(null);
     setUserStatus(null);
     setError(null);
 
-    // FIX END: Set loading state to false after state is cleared
     setLoading(false);
   }, []);
 
@@ -80,8 +84,6 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       
-      // Since data is in sessionStorage, we can assume it's from an active session.
-      // A full refresh or new tab would clear it.
       if (mounted) {
           setUser(storedUser);
           await fetchUserStatus();
@@ -95,7 +97,6 @@ export const AuthProvider = ({ children }) => {
       mounted = false;
     };
   }, [fetchUserStatus]);
-
 
   const login = useCallback(async (loginIdentifier, password) => {
     setError(null);

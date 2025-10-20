@@ -41,6 +41,18 @@ const Dashboard = () => {
                 <p className="stat-description">Remaining</p>
               </div>
             </div>
+            {/* --- START OF NEW CODE --- */}
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+              <Link to="/top-up" style={{ 
+                  color: 'var(--bio-luminescent)', 
+                  textDecoration: 'none',
+                  fontWeight: '500',
+                  fontSize: '0.9rem'
+                }}>
+                Purchase More Credits
+              </Link>
+            </div>
+            {/* --- END OF NEW CODE --- */}
           </div>
           <div className="stat-card">
             <h3>Subscription Status</h3>
