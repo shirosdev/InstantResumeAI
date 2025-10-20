@@ -26,63 +26,79 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [userStatus, setUserStatus] = useState(null);
 
-  const fetchUserStatus = useCallback(async (force = false) => { // Add force parameter
+  // --- START REVISION ---
+  // Define performLogout first, as fetchUserStatus might depend on it.
+  const performLogout = useCallback(async (isSilent = false) => {
+    setLoading(true);
+    if (!isSilent) {
+      console.log('Logging out...');
+    }
+    try {
+      await authService.logout();
+    } catch (err) {
+      if (!isSilent) {
+        console.error('Logout API call failed:', err);
+      }
+    }
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('user_data');
+    sessionStorage.removeItem('lastEnhancementResult');
+    sessionStorage.removeItem('disclaimerAgreed'); // Ensure this is also cleared
+    setUser(null);
+    setUserStatus(null);
+    setError(null);
+    setLoading(false);
+  }, []); // performLogout has no dependencies on state within AuthProvider
+
+
+  // Now define fetchUserStatus
+  const fetchUserStatus = useCallback(async (force = false) => {
     const token = sessionStorage.getItem('access_token');
     if (!token) {
       console.log('[Auth] No access token, skipping status fetch');
-      return userStatus; // Return potentially cached status if not forcing
+      // Return the current state if available, otherwise null
+      return userStatus; // Return potentially cached status
     }
-    // If not forcing and status already exists, return cached version
+
+    // If not forcing and status already exists in state, return cached version
     if (!force && userStatus) {
         console.log('[Auth] Returning cached user status');
         return userStatus;
     }
+
     try {
       console.log(`[Auth] Fetching user status... (Force: ${force})`);
-      const statusResponse = await authService.getUserStatus();
-      if (statusResponse.data?.status) {
+      const statusResponse = await authService.getUserStatus(); // Call the service
+      
+      // Check if response has data and status before updating state
+      if (statusResponse?.data?.status) {
         console.log('[Auth] User status fetched:', statusResponse.data.status);
         setUserStatus(statusResponse.data.status); // Update state
-        return statusResponse.data.status; // Return fresh status
+        return statusResponse.data.status; // Return the fresh status
+      } else {
+        console.warn('[Auth] getUserStatus response did not contain expected data.');
+        // Optionally, handle this case, e.g., by clearing status or returning null
+        // setUserStatus(null); // Uncomment if you want to clear status on invalid response
+        return null;
       }
     } catch (err) {
       console.error("[Auth] Could not fetch user status:", err);
        // Handle potential 401/expired token during status fetch
        if (err.response && (err.response.status === 401 || err.response.status === 422)) {
            console.log('[Auth] Token expired during status fetch, logging out.');
+           // Use the already defined performLogout function
            performLogout(true); // Perform silent logout
        }
+       return null; // Return null on error
     }
-    return null; // Return null on error
-  }, [userStatus, performLogout]); // Add userStatus and performLogout dependencies
+  // Make sure dependencies are correct. performLogout is defined outside useCallback's scope.
+  // userStatus is included because we check it inside the function.
+  }, [userStatus, performLogout]); // Add performLogout as dependency
+  // --- END REVISION ---
 
-  const performLogout = useCallback(async (isSilent = false) => {
-    setLoading(true);
 
-    if (!isSilent) {
-        console.log('Logging out...');
-    }
-    
-    try {
-      await authService.logout();
-    } catch (err) {
-      if (!isSilent) {
-          console.error('Logout API call failed:', err);
-      }
-    }
-
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('refresh_token');
-    sessionStorage.removeItem('user_data');
-    sessionStorage.removeItem('lastEnhancementResult');
-    
-    setUser(null);
-    setUserStatus(null);
-    setError(null);
-
-    setLoading(false);
-  }, []);
-
+  // useEffect for initial auth check (remains mostly the same)
   useEffect(() => {
     let mounted = true;
 
@@ -94,11 +110,15 @@ export const AuthProvider = ({ children }) => {
         if (mounted) setLoading(false);
         return;
       }
-      
+
+      // Ensure user state is set BEFORE trying to fetch status if possible
       if (mounted) {
-          setUser(storedUser);
-          await fetchUserStatus();
-          setLoading(false);
+        setUser(storedUser);
+        // Fetch status *after* setting user, if needed immediately
+        // Consider if fetchUserStatus is truly needed during initial load
+        // It might be better fetched only when components need it.
+        await fetchUserStatus(); // Fetch initial status
+        setLoading(false);
       }
     };
 
@@ -107,10 +127,15 @@ export const AuthProvider = ({ children }) => {
     return () => {
       mounted = false;
     };
-  }, [fetchUserStatus]);
+  // Ensure fetchUserStatus is in the dependency array if initAuth depends on it.
+  }, [fetchUserStatus]); // Added fetchUserStatus dependency
+
+
+  // login, signup, logout callbacks remain the same, just ensure they use the correct dependencies
 
   const login = useCallback(async (loginIdentifier, password) => {
-    setError(null);
+    // ... (login logic remains the same, ensure it calls fetchUserStatus correctly) ...
+     setError(null);
     setLoading(true);
     try {
       const response = await authService.login({ login: loginIdentifier, password });
@@ -120,7 +145,7 @@ export const AuthProvider = ({ children }) => {
         sessionStorage.setItem('refresh_token', refresh_token || '');
         sessionStorage.setItem('user_data', JSON.stringify(loggedInUser));
         setUser(loggedInUser);
-        await fetchUserStatus();
+        await fetchUserStatus(); // Fetch status after successful login
         setLoading(false);
         return { success: true };
       } else {
@@ -129,13 +154,14 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Login failed';
       setError(errorMessage);
-      await performLogout(true);
+      await performLogout(true); // Use performLogout
       setLoading(false);
       return { success: false, error: errorMessage };
     }
-  }, [performLogout, fetchUserStatus]);
+  }, [performLogout, fetchUserStatus]); // Added dependencies
 
   const signup = useCallback(async (userData) => {
+    // ... (signup logic remains the same, ensure it calls fetchUserStatus correctly) ...
     setError(null);
     setLoading(true);
     try {
@@ -146,7 +172,7 @@ export const AuthProvider = ({ children }) => {
         sessionStorage.setItem('refresh_token', refresh_token || '');
         sessionStorage.setItem('user_data', JSON.stringify(signedUpUser));
         setUser(signedUpUser);
-        await fetchUserStatus();
+        await fetchUserStatus(); // Fetch status after successful signup
         setLoading(false);
         return { success: true };
       } else {
@@ -155,16 +181,24 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Registration failed';
       setError(errorMessage);
-      await performLogout(true);
+      await performLogout(true); // Use performLogout
       setLoading(false);
       return { success: false, error: errorMessage };
     }
-  }, [performLogout, fetchUserStatus]);
+  }, [performLogout, fetchUserStatus]); // Added dependencies
 
+  // logout uses performLogout, which is already defined with useCallback
   const logout = useCallback(() => {
-      performLogout();
-  }, [performLogout]);
+      performLogout(); // Call the stable performLogout function
+  }, [performLogout]); // Dependency is performLogout
 
+  // updateUserData remains simple state update
+  const updateUserData = useCallback((newUserData) => {
+      setUser(newUserData);
+      sessionStorage.setItem('user_data', JSON.stringify(newUserData));
+    }, []); // No dependencies needed here
+
+  // Memoize the context value
   const value = {
     user,
     loading,
@@ -174,10 +208,7 @@ export const AuthProvider = ({ children }) => {
     login,
     signup,
     logout,
-    updateUserData: (userData) => {
-      setUser(userData);
-      sessionStorage.setItem('user_data', JSON.stringify(userData));
-    }
+    updateUserData // Include the memoized update function
   };
 
   return (
@@ -187,6 +218,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// useAuth hook remains the same
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
