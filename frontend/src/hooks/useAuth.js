@@ -26,24 +26,35 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [userStatus, setUserStatus] = useState(null);
 
-  const fetchUserStatus = useCallback(async () => {
-    if (!sessionStorage.getItem('access_token')) {
-      console.log('No access token, skipping status fetch');
-      return null;
+  const fetchUserStatus = useCallback(async (force = false) => { // Add force parameter
+    const token = sessionStorage.getItem('access_token');
+    if (!token) {
+      console.log('[Auth] No access token, skipping status fetch');
+      return userStatus; // Return potentially cached status if not forcing
+    }
+    // If not forcing and status already exists, return cached version
+    if (!force && userStatus) {
+        console.log('[Auth] Returning cached user status');
+        return userStatus;
     }
     try {
-      console.log('Fetching user status...');
+      console.log(`[Auth] Fetching user status... (Force: ${force})`);
       const statusResponse = await authService.getUserStatus();
       if (statusResponse.data?.status) {
-        console.log('User status fetched:', statusResponse.data.status);
-        setUserStatus(statusResponse.data.status);
-        return statusResponse.data.status;
+        console.log('[Auth] User status fetched:', statusResponse.data.status);
+        setUserStatus(statusResponse.data.status); // Update state
+        return statusResponse.data.status; // Return fresh status
       }
     } catch (err) {
-      console.error("Could not fetch user status:", err);
+      console.error("[Auth] Could not fetch user status:", err);
+       // Handle potential 401/expired token during status fetch
+       if (err.response && (err.response.status === 401 || err.response.status === 422)) {
+           console.log('[Auth] Token expired during status fetch, logging out.');
+           performLogout(true); // Perform silent logout
+       }
     }
-    return null;
-  }, []);
+    return null; // Return null on error
+  }, [userStatus, performLogout]); // Add userStatus and performLogout dependencies
 
   const performLogout = useCallback(async (isSilent = false) => {
     setLoading(true);
