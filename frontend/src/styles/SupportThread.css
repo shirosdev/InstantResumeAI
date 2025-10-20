@@ -1,0 +1,128 @@
+/* src/styles/SupportThread.css */
+
+.ticket-thread-container {
+    margin-top: 1.5rem;
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 1rem;
+    background: #1a2332; /* --bg-primary */
+    border-radius: 8px;
+    border: 1px solid var(--border-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .thread-message {
+    padding: 0.8rem 1.2rem;
+    border-radius: 18px;
+    max-width: 80%;
+    width: fit-content;
+    word-wrap: break-word;
+  }
+  
+  .message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  
+  .message-header strong {
+    font-weight: 600;
+  }
+  
+  .message-body p {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    margin: 0;
+  }
+  
+  /* User's original message (left-aligned) */
+  .user-message {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-secondary);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .user-message .message-header strong {
+    color: var(--abyssal-purple);
+  }
+  .user-message .message-body {
+    color: var(--text-secondary);
+  }
+  
+  /* Replies from OTHER admins (left-aligned, different color) */
+  .admin-message.other {
+    background-color: #2d3748; /* Darker neutral color */
+    border: 1px solid var(--border-primary);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .admin-message.other .message-header strong {
+    color: var(--thermal-vent);
+  }
+  .admin-message.other .message-body {
+    color: var(--text-secondary);
+  }
+  
+  /* Replies from YOURSELF (right-aligned) */
+  .admin-message.self {
+    background-color: rgba(125, 211, 201, 0.15);
+    border: 1px solid var(--border-primary);
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .admin-message.self .message-header strong {
+    color: var(--bio-luminescent);
+  }
+  .admin-message.self .message-body {
+    color: var(--text-primary);
+  }
+  
+  
+  /* Reply form styles */
+  .reply-form {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-primary);
+  }
+  
+  .reply-form textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    background: #1a2332;
+    color: white;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 100px;
+    margin-bottom: 1rem;
+  }
+  .reply-form textarea:focus {
+    outline: none;
+    border-color: var(--bio-luminescent);
+    box-shadow: 0 0 0 3px rgba(125, 211, 201, 0.2);
+  }
+  
+  .reply-form .action-button {
+    display: block;
+    margin-left: auto;
+  }
+  
+  .ticket-closed-notice {
+    margin-top: 1.5rem;
+    padding: 1rem 1.5rem;
+    text-align: center;
+    background: rgba(229, 62, 62, 0.1);
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
