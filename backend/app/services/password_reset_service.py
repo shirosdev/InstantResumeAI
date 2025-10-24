@@ -10,6 +10,8 @@ from app.services.email_service import EmailService
 from app.services.auth_service import AuthService
 import logging
 import os
+from datetime import datetime, timezone
+from flask import request
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +66,7 @@ class PasswordResetService:
             
             # Generate reset token and expiry
             reset_token = self.generate_reset_token()
-            expiry_time = datetime.utcnow() + timedelta(minutes=self.token_expiry_minutes)
+            expiry_time = datetime.now(timezone.utc) + timedelta(minutes=self.token_expiry_minutes)
             
             # Update user record with reset token
             user.password_reset_token = reset_token
@@ -107,50 +109,53 @@ class PasswordResetService:
     def verify_reset_token(self, email: str, token: str) -> Tuple[bool, str, Optional[User]]:
         """
         Verify the reset token provided by user
-        
-        Args:
-            email: User's email address
-            token: 6-digit verification code
-            
-        Returns:
-            Tuple[bool, str, Optional[User]]: (success, message, user_object)
+        Args: email, token
+        Returns: Tuple[bool, str, Optional[User]]: (success, message, user_object)
         """
         try:
-            # Normalize inputs
             email = email.strip().lower()
             token = token.strip()
-            
-            # Validate token format
             if not token.isdigit() or len(token) != 6:
                 return False, "Invalid verification code format.", None
-            
-            # Find user with matching email and token
-            user = User.query.filter_by(
-                email=email,
-                password_reset_token=token
-            ).first()
-            
+            user = User.query.filter_by(email=email, password_reset_token=token).first()
             if not user:
                 logger.warning(f"Invalid reset token attempt for {email}")
+                # Log attempt - corrected missing arguments
+                self._log_reset_attempt(email=email, ip_address=request.remote_addr if request else None, success=False, token_used=token)
                 return False, "Invalid verification code or email address.", None
-            
-            # Check if token has expired
-            if user.password_reset_expires and user.password_reset_expires < datetime.utcnow():
-                # Clear expired token
-                user.password_reset_token = None
-                user.password_reset_expires = None
-                db.session.commit()
-                
-                logger.warning(f"Expired reset token used for {email}")
-                return False, "Verification code has expired. Please request a new one.", None
-            
-            # Check if user account is active
+
+            # --- START OF THE FIX ---
+            # 1. Get current UTC time, AWARE of its timezone
+            now_utc_aware = datetime.now(timezone.utc)
+            # 2. Get the expiry time from the user object
+            expires_aware_or_naive = user.password_reset_expires
+
+            if expires_aware_or_naive:
+                # 3. Make BOTH times consistently AWARE in UTC for comparison
+                if expires_aware_or_naive.tzinfo is None:
+                    # If expiry time from DB is naive, assume it's UTC
+                    expires_aware = expires_aware_or_naive.replace(tzinfo=timezone.utc)
+                else:
+                    # If expiry time from DB is already aware, ensure it's UTC
+                    expires_aware = expires_aware_or_naive.astimezone(timezone.utc)
+
+                # 4. Compare the two AWARE datetime objects
+                if expires_aware < now_utc_aware:
+            # --- END OF THE FIX ---
+                    user.password_reset_token = None
+                    user.password_reset_expires = None
+                    db.session.commit()
+                    logger.warning(f"Expired reset token used for {email}")
+                    # Log attempt - corrected missing arguments
+                    self._log_reset_attempt(email=email, ip_address=request.remote_addr if request else None, success=False, token_used=token, reason="Expired token")
+                    return False, "Verification code has expired. Please request a new one.", None
+
             if not user.is_active:
+                # Log attempt - corrected missing arguments
+                self._log_reset_attempt(email=email, ip_address=request.remote_addr if request else None, success=False, token_used=token, reason="Inactive account")
                 return False, "Account is not active. Please contact support.", None
-            
             logger.info(f"Reset token verified successfully for {email}")
             return True, "Verification code is valid.", user
-            
         except Exception as e:
             logger.error(f"Token verification failed for {email}: {str(e)}")
             return False, "An error occurred during verification.", None
@@ -271,7 +276,7 @@ class PasswordResetService:
             logger.error(f"Rate limiting check failed: {str(e)}")
             return False  # Fail open for availability
     
-    def _log_reset_attempt(self, email: str, ip_address: str = None, success: bool = False):
+    def _log_reset_attempt(self, email: str, ip_address: str = None, success: bool = False, token_used: str = None, reason: str = None):
         """
         Log password reset attempt for security monitoring
         

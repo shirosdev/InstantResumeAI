@@ -1,11 +1,9 @@
 # backend/app/services/email_service.py
-# note: this might change, remember when the time comes!
-import smtplib
+# --- UPDATED TO USE MAILGUN INSTEAD OF SMTP ---
+
+import requests  # Import requests
 import os
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
+from email.utils import formataddr # Used for formatting 'From' address
 from datetime import datetime
 import logging
 from app.pdf_service import PDFService
@@ -13,16 +11,19 @@ from app.pdf_service import PDFService
 logger = logging.getLogger(__name__)
 
 class EmailService:
-    """Service for sending emails including password reset and contact form notifications"""
+    """Service for sending emails via Mailgun API"""
     
     def __init__(self):
-        self.smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
-        self.smtp_port = int(os.getenv('SMTP_PORT', '587'))
-        self.smtp_username = os.getenv('SMTP_USERNAME')
-        self.smtp_password = os.getenv('SMTP_PASSWORD')
-        # This 'from_email' is your authenticated user, which MUST match the login credentials.
-        self.from_email = os.getenv('FROM_EMAIL', self.smtp_username)
+        # --- Mailgun Configuration ---
+        self.mailgun_domain = os.getenv('MAILGUN_DOMAIN')
+        self.mailgun_api_key = os.getenv('MAILGUN_API_KEY')
+        
+        # This 'from_email' MUST be a verified sender on your Mailgun domain
+        # e.g., 'noreply@mg.yourdomain.com' or 'support@yourdomain.com'
+        self.from_email = os.getenv('FROM_EMAIL', f'noreply@{self.mailgun_domain}')
         self.from_name = os.getenv('FROM_NAME', 'InstantResumeAI')
+        
+        self.api_base_url = f"https://api.mailgun.net/v3/{self.mailgun_domain}"
 
     # --- NEW: Method to send a welcome email ---
     def send_welcome_email(self, to_email: str, user_name: str) -> bool:
@@ -43,6 +44,7 @@ class EmailService:
 
     def send_payment_receipt_email(self, user, payment_details) -> bool:
         """Generates a PDF receipt and sends it as an email attachment."""
+        pdf_path = None # Ensure pdf_path is defined
         try:
             # 1. Generate the PDF
             pdf_service = PDFService()
@@ -62,16 +64,17 @@ class EmailService:
                 attachment_path=pdf_path
             )
             
-            # 4. Clean up the temporary PDF file
-            if os.path.exists(pdf_path):
-                os.remove(pdf_path)
-            
             return success
         except Exception as e:
             logger.error(f"Failed to send payment receipt to {user.email}: {str(e)}")
             return False
+        finally:
+            # 4. Clean up the temporary PDF file
+            if pdf_path and os.path.exists(pdf_path):
+                os.remove(pdf_path)
 
     def _create_receipt_html(self, user_name: str, payment_details: dict) -> str:
+        # This helper function remains unchanged
         return f"""
         <p>Hi {user_name},</p>
         <p>Thank you for your purchase. Your invoice is attached to this email as a PDF.</p>
@@ -85,6 +88,7 @@ class EmailService:
 
 
     def _create_receipt_text(self, user_name: str, payment_details: dict) -> str:
+        # This helper function remains unchanged
         return f"""
         Hi {user_name},\n
         Thank you for your purchase. Your invoice is attached.\n
@@ -98,13 +102,13 @@ class EmailService:
     def send_contact_inquiry(self, from_name: str, from_email: str, subject: str, message_body: str) -> bool:
         """
         Sends the contact form submission. 
-        WARNING: This version spoofs the 'From' address and is not reliable.
+        Now correctly uses Mailgun's 'Reply-To' feature.
         """
         try:
             to_email = self.from_email  # Sending to yourself
             email_subject = f"New Contact Inquiry: {subject}"
             
-            # UPDATED: The user's email is now a clickable mailto link
+            # This HTML content remains the same
             html_content = f"""
             <h3>You have a new contact form submission:</h3>
             <p><strong>From:</strong> {from_name}</p>
@@ -115,7 +119,7 @@ class EmailService:
             <p>{message_body.replace('\n', '<br>')}</p>
             """
             
-            # The plain text version remains the same
+            # This text content remains the same
             text_content = f"""
             You have a new contact form submission:
             
@@ -127,14 +131,14 @@ class EmailService:
             {message_body}
             """
 
-            # This call now includes the from_email_override
+            # This call now passes the reply-to information to the Mailgun sender
             return self._send_email(
                 to_email=to_email,
                 subject=email_subject,
                 html_content=html_content,
                 text_content=text_content,
-                from_name_override=from_name,
-                from_email_override=from_email
+                reply_to_email=from_email, # Set the Reply-To email
+                reply_to_name=from_name   # Set the Reply-To name
             )
         except Exception as e:
             logger.error(f"Failed to send contact inquiry from {from_email}: {str(e)}")
@@ -172,57 +176,82 @@ class EmailService:
             logger.error(f"Failed to send password change confirmation to {to_email}: {str(e)}")
             return False
     
-    def _send_email(self, to_email: str, subject: str, html_content: str, text_content: str, attachment_path: str = None) -> bool:
-        if not self.smtp_username or not self.smtp_password:
-            logger.error("SMTP credentials not configured")
+    # --- THIS IS THE REBUILT MAILGUN SENDING METHOD ---
+    def _send_email(self, 
+                    to_email: str, 
+                    subject: str, 
+                    html_content: str, 
+                    text_content: str, 
+                    attachment_path: str = None,
+                    reply_to_email: str = None,
+                    reply_to_name: str = None) -> bool:
+        """
+        Sends an email using the Mailgun API.
+        - Handles attachments.
+        - Handles 'Reply-To' for the contact form.
+        """
+        if not self.mailgun_api_key or not self.mailgun_domain:
+            logger.error("Mailgun credentials (API_KEY, DOMAIN) not configured")
             return False
         
+        # Format the "From" address
+        from_address = formataddr((self.from_name, self.from_email))
+        
+        # --- Build the Mailgun API payload ---
+        data = {
+            "from": from_address,
+            "to": to_email,
+            "subject": subject,
+            "text": text_content,
+            "html": html_content
+        }
+        
+        # Add Reply-To header if provided (for contact form)
+        if reply_to_email:
+            reply_to_name = reply_to_name or reply_to_email
+            data["h:Reply-To"] = formataddr((reply_to_name, reply_to_email))
+            
+        # Prepare files dictionary for attachment
+        files = None
+        if attachment_path and os.path.exists(attachment_path):
+            # Mailgun expects a list of tuples for files
+            # ('attachment', ('filename.pdf', file_binary_data, 'application/pdf'))
+            try:
+                with open(attachment_path, "rb") as attachment_file:
+                    file_data = attachment_file.read()
+                    file_name = os.path.basename(attachment_path)
+                    files = [("attachment", (file_name, file_data))]
+            except Exception as e:
+                logger.error(f"Error reading attachment {attachment_path}: {e}")
+                return False # Fail if attachment can't be read
+        
+        # --- Send the request to Mailgun ---
         try:
-            msg = MIMEMultipart('alternative')
-            msg['From'] = f"{self.from_name} <{self.from_email}>"
-            msg['To'] = to_email
-            msg['Subject'] = subject
+            response = requests.post(
+                f"{self.api_base_url}/messages",
+                auth=("api", self.mailgun_api_key),
+                data=data,
+                files=files # requests handles multipart/form-data encoding
+            )
             
-            msg.attach(MIMEText(text_content, 'plain'))
-            msg.attach(MIMEText(html_content, 'html'))
-
-            # --- New Attachment Logic ---
-            if attachment_path and os.path.exists(attachment_path):
-                with open(attachment_path, "rb") as attachment:
-                    part = MIMEBase("application", "octet-stream")
-                    part.set_payload(attachment.read())
-                encoders.encode_base64(part)
-                part.add_header(
-                    "Content-Disposition",
-                    f"attachment; filename= {os.path.basename(attachment_path)}",
-                )
-                msg.attach(part)
-            
-            # The 'sendmail' method's 'from_addr' should be your authenticated user.
-            # Sending with a different 'From' header in the message is the spoof itself.
-            auth_user_email = self.from_email
-
-            if self.smtp_port == 465:
-                with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
-                    server.login(self.smtp_username, self.smtp_password)
-                    server.sendmail(auth_user_email, to_email, msg.as_string())
+            if response.status_code == 200:
+                logger.info(f"Mailgun email sent successfully to {to_email}")
+                return True
             else:
-                with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                    server.starttls()
-                    server.login(self.smtp_username, self.smtp_password)
-                    server.sendmail(auth_user_email, to_email, msg.as_string())
+                logger.error(f"Mailgun error sending to {to_email}. Status: {response.status_code}, Response: {response.text}")
+                return False
             
-            logger.info(f"Email sent successfully to {to_email}")
-            return True
-            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Requests error sending to {to_email}: {str(e)}")
+            return False
         except Exception as e:
-            logger.error(f"SMTP error sending to {to_email}: {str(e)}")
+            logger.error(f"Unexpected error in Mailgun _send_email: {str(e)}")
             return False
             
-    # --- NEW: Private method for welcome email HTML content ---
+    # --- All HTML/Text creation helper methods remain unchanged ---
+    
     def _create_welcome_html(self, user_name: str, user_email: str) -> str:
-        """Create HTML content for the welcome email"""
-        # A simple, modern email template
+        # This helper function remains unchanged
         return f"""
         <!DOCTYPE html>
         <html>
@@ -273,9 +302,8 @@ class EmailService:
         </html>
         """
 
-    # --- NEW: Private method for welcome email plain text content ---
     def _create_welcome_text(self, user_name: str, user_email: str) -> str:
-        """Create plain text content for the welcome email"""
+        # This helper function remains unchanged
         return f"""
         Hi {user_name},
 
@@ -302,7 +330,7 @@ class EmailService:
         """
     
     def _create_password_reset_html(self, reset_token: str, user_name: str = None) -> str:
-        """Create HTML content for password reset email"""
+        # This helper function remains unchanged
         greeting = f"Hello {user_name}," if user_name else "Hello,"
         
         return f"""
@@ -359,7 +387,7 @@ class EmailService:
         """
     
     def _create_password_reset_text(self, reset_token: str, user_name: str = None) -> str:
-        """Create plain text content for password reset email"""
+        # This helper function remains unchanged
         greeting = f"Hello {user_name}," if user_name else "Hello,"
         
         return f"""
@@ -382,7 +410,7 @@ The InstantResumeAI Team
         """
     
     def _create_password_changed_html(self, user_name: str = None) -> str:
-        """Create HTML content for password change confirmation"""
+        # This helper function remains unchanged
         greeting = f"Hello {user_name}," if user_name else "Hello,"
         
         return f"""
@@ -438,7 +466,7 @@ The InstantResumeAI Team
         """
     
     def _create_password_changed_text(self, user_name: str = None) -> str:
-        """Create plain text content for password change confirmation"""
+        # This helper function remains unchanged
         greeting = f"Hello {user_name}," if user_name else "Hello,"
         
         return f"""
