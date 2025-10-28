@@ -47,8 +47,7 @@ const StatusComponent = () => {
                     
                     try {
                         const response = await api.get(
-                            `/billing/verify-payment/${paymentIntent.id}`, 
-                            { params: { initial_credits: initialCreditsRef.current } }
+                            `/billing/verify-payment/${paymentIntent.id}`
                         );
 
                         if (response.data.success) {
