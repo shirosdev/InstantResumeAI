@@ -4,15 +4,15 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import stripe
 import os
+import traceback
+import time
+from datetime import datetime, date
+
 from app import db
-# Make sure all these models are imported
-from app.models.subscription import UserSubscription, SubscriptionPlan
-from app.models.resume import ResumeEnhancement
-from app.services.email_service import EmailService
 from app.models.user import User
-from datetime import datetime, date # Import date
-import json
-import traceback # Import traceback
+from app.models.subscription import UserSubscription, SubscriptionPlan
+from app.models.transactions import Transaction
+from app.services.email_service import EmailService
 
 billing_bp = Blueprint('billing', __name__)
 
@@ -20,27 +20,20 @@ billing_bp = Blueprint('billing', __name__)
 @jwt_required()
 def create_payment():
     stripe.api_key = current_app.config['STRIPE_SECRET_KEY']
-
     if not stripe.api_key:
-        print("FATAL: Stripe secret key is NOT configured in the application.")
-        return jsonify(error="The server is not configured for payments. Please contact support."), 500
+        print("FATAL: Stripe secret key is NOT configured.")
+        return jsonify(error="Server is not configured for payments."), 500
 
     try:
         data = request.get_json()
         quantity = data.get('quantity', 5)
         user_id = get_jwt_identity()
 
-        if not quantity or not isinstance(quantity, int) or quantity <= 0:
+        if not isinstance(quantity, int) or quantity <= 0:
             return jsonify(error="Invalid quantity provided."), 400
 
         amount = quantity * 100
-
-        print(f"\n{'='*60}")
-        print(f"CREATING PAYMENT INTENT")
-        print(f"{'='*60}")
-        print(f"User ID: {user_id}")
-        print(f"Quantity: {quantity} credits")
-        print(f"Amount: ${amount/100:.2f} USD")
+        print(f"CREATING PAYMENT INTENT for user {user_id}: {quantity} credits for ${amount/100:.2f} USD")
 
         intent = stripe.PaymentIntent.create(
             amount=amount,
@@ -48,39 +41,21 @@ def create_payment():
             automatic_payment_methods={'enabled': True},
             metadata={
                 'user_id': str(user_id),
-                'credits_purchased': str(quantity),
-                'timestamp': datetime.utcnow().isoformat()
+                'credits_purchased': str(quantity)
             }
         )
-
-        print(f"PaymentIntent created: {intent.id}")
-        print(f"{'='*60}\n")
-
-        return jsonify({
-            'clientSecret': intent.client_secret,
-            'paymentIntentId': intent.id
-        })
+        return jsonify({'clientSecret': intent.client_secret})
 
     except Exception as e:
         print(f"Error creating PaymentIntent: {e}")
-        import traceback
-        print(traceback.format_exc())
         return jsonify(error=str(e)), 500
-
-
-
 
 @billing_bp.route('/webhook', methods=['POST'])
 def webhook():
-    """
-    Handles Stripe webhooks to update user credits and include payment method details.
-    """
-    print(f"\n{'='*80}\nWEBHOOK ENDPOINT HIT at {datetime.utcnow().isoformat()}\n{'='*80}")
-
     endpoint_secret = current_app.config.get('STRIPE_WEBHOOK_SECRET')
     if not endpoint_secret:
-        print("CRITICAL ERROR: STRIPE_WEBHOOK_SECRET is not set in the environment!")
-        return jsonify(error='Webhook secret not configured on the server.'), 500
+        print("CRITICAL ERROR: STRIPE_WEBHOOK_SECRET is not set!")
+        return jsonify(error='Webhook secret not configured.'), 500
 
     payload = request.get_data()
     sig_header = request.headers.get('Stripe-Signature')
@@ -89,99 +64,103 @@ def webhook():
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
         print(f"Webhook signature VERIFIED. Event ID: {event['id']}, Type: {event['type']}")
-    except stripe.SignatureVerificationError as e:
-        print(f"ERROR: Signature verification failed - {e}")
-        return jsonify(error='Invalid signature'), 400
-    except ValueError as e:
-        print(f"ERROR: Invalid payload - {e}")
-        return jsonify(error='Invalid payload'), 400
-    except Exception as e:
-        print(f"ERROR: Unexpected error during webhook construction - {e}")
-        return jsonify(error='Webhook error'), 400
+    except (ValueError, stripe.SignatureVerificationError) as e:
+        print(f"ERROR: Webhook signature/payload error - {e}")
+        return jsonify(error=str(e)), 400
 
     if event['type'] == 'payment_intent.succeeded':
         payment_intent = event['data']['object']
         metadata = payment_intent.get('metadata', {})
-
-        print(f"\n--- Handling 'payment_intent.succeeded' for PI_ID: {payment_intent['id']} ---")
+        print(f"--- Handling 'payment_intent.succeeded' for PI_ID: {payment_intent['id']} ---")
 
         try:
             user_id = int(metadata.get('user_id'))
             credits_purchased = int(metadata.get('credits_purchased'))
-        except (ValueError, TypeError, TypeError) as e:
-            print(f"ERROR: Cannot parse metadata into integers - {e}")
+        except (ValueError, TypeError):
+            print("ERROR: Could not parse metadata into integers.")
             return jsonify(error='Invalid metadata format'), 400
-
-        # --- UPDATED LOGIC TO FETCH PAYMENT BRAND ---
-        payment_method_info = "Not available"
-        payment_method_brand = None
+        
         try:
-            pi_with_pm = stripe.PaymentIntent.retrieve(
-                payment_intent['id'], expand=['payment_method']
-            )
+            # --- START OF CORRECTED LOGIC ---
+            payment_method_info = "Stripe"
+            payment_method_for_db = "stripe" # Default valid ENUM value
+
+            pi_with_pm = stripe.PaymentIntent.retrieve(payment_intent['id'], expand=['payment_method'])
             if pi_with_pm.payment_method:
                 pm_details = pi_with_pm.payment_method
                 if pm_details.type == 'card':
-                    card = pm_details.card
-                    payment_method_info = f"{card.brand.title()} ending in {card.last4}"
-                    payment_method_brand = card.brand.lower() # e.g., 'visa'
-                elif pm_details.type in ['cashapp', 'amazon_pay']:
-                    payment_method_info = pm_details.type.replace('_', ' ').title()
-                    payment_method_brand = pm_details.type.lower() # e.g., 'cashapp'
-        except Exception as e:
-            print(f"WARNING: Could not expand payment_method. Error: {e}")
+                    payment_method_info = f"{pm_details.card.brand.title()} ending in {pm_details.card.last4}"
+                    payment_method_for_db = 'credit_card'
+                elif pm_details.type in ['paypal', 'stripe']: # Check if it's a valid enum
+                    payment_method_info = pm_details.type.title()
+                    payment_method_for_db = pm_details.type
 
-        try:
-            updated_rows = db.session.query(UserSubscription).filter_by(user_id=user_id).update({
-                'enhancement_credits': UserSubscription.enhancement_credits + credits_purchased,
-                'updated_at': datetime.utcnow()
-            }, synchronize_session=False)
-
-            if updated_rows == 0:
+            user_subscription = UserSubscription.query.filter_by(user_id=user_id).first()
+            if not user_subscription:
+                 # Create a subscription if it doesn't exist
                 free_plan = SubscriptionPlan.query.filter_by(plan_name='Free - 3 Enhancements').first()
-                if not free_plan:
-                    print("CRITICAL DATABASE ERROR: The 'Free - 3 Enhancements' plan is not defined.")
-                    return jsonify(error='Server configuration error: Default plan not found.'), 500
+                if not free_plan: raise Exception("Default 'Free - 3 Enhancements' plan not found.")
+                user_subscription = UserSubscription(user_id=user_id, plan_id=free_plan.plan_id, start_date=date.today(), status='active')
+                db.session.add(user_subscription)
 
-                new_subscription = UserSubscription(
-                    user_id=user_id,
-                    plan_id=free_plan.plan_id,
-                    start_date=datetime.utcnow().date(),
-                    status='active',
-                    enhancement_credits=credits_purchased
-                )
-                db.session.add(new_subscription)
-
+            user_subscription.enhancement_credits = (user_subscription.enhancement_credits or 0) + credits_purchased
+            
+            new_transaction = Transaction(
+                user_id=user_id,
+                amount=payment_intent.get('amount', 0) / 100.0,
+                currency='usd',
+                payment_method=payment_method_for_db,
+                payment_gateway_id=payment_intent.get('id'),
+                status='completed',
+                description=f'{credits_purchased} enhancement credits'
+            )
+            db.session.add(new_transaction)
             db.session.commit()
             print("SUCCESS: Database commit successful.")
-
-            try:
-                user = User.query.get(user_id)
-                if user:
-                    payment_details = {
-                        "credits_purchased": credits_purchased,
-                        "amount_paid": payment_intent.get('amount', 0) / 100.0,
-                        "payment_intent_id": payment_intent.get('id'),
-                        "payment_method_info": payment_method_info,
-                        "payment_method_brand": payment_method_brand
-                    }
-                    email_service = EmailService()
-                    email_service.send_payment_receipt_email(user=user, payment_details=payment_details)
-                    print(f"Payment receipt email queued for {user.email} with payment method info.")
-            except Exception as email_error:
-                print(f"WARNING: Failed to send receipt email for user {user_id}. Error: {email_error}")
-
-            return jsonify({'success': True}), 200
-
+            
+            # Send receipt email AFTER committing to DB
+            user = User.query.get(user_id)
+            if user:
+                payment_details = {
+                    "credits_purchased": credits_purchased,
+                    "amount_paid": new_transaction.amount,
+                    "payment_intent_id": new_transaction.payment_gateway_id,
+                    "payment_method_info": payment_method_info
+                }
+                email_service = EmailService()
+                email_service.send_payment_receipt_email(user=user, payment_details=payment_details)
+                print(f"Receipt email queued for {user.email}.")
+        
         except Exception as e:
-            print(f"\n--- DATABASE ERROR ---\n{traceback.format_exc()}")
+            print(f"\n--- DATABASE OR EMAIL ERROR during webhook processing ---\n{traceback.format_exc()}")
             db.session.rollback()
-            return jsonify(error=f'Database update failed: {str(e)}'), 500
-
-    else:
-        print(f"Received unhandled event type: {event['type']}")
+            return jsonify(error=f'Webhook processing failed: {str(e)}'), 500
+            # --- END OF CORRECTED LOGIC ---
 
     return jsonify(success=True), 200
+
+@billing_bp.route('/verify-payment/<string:payment_intent_id>', methods=['GET'])
+@jwt_required()
+def verify_payment(payment_intent_id):
+    user_id = int(get_jwt_identity())
+    
+    # Wait up to 10 seconds, checking every 2 seconds for the transaction record
+    for _ in range(5):
+        transaction = Transaction.query.filter_by(
+            user_id=user_id,
+            payment_gateway_id=payment_intent_id,
+            status='completed'
+        ).first()
+
+        if transaction:
+            print(f"Verification successful for user {user_id}, PI_ID: {payment_intent_id}")
+            return jsonify({'success': True, 'message': 'Credits updated successfully.'}), 200
+
+        print(f"Verification attempt failed for user {user_id}. Waiting...")
+        time.sleep(2)
+
+    print(f"Verification timed out for user {user_id}, PI_ID: {payment_intent_id}")
+    return jsonify({'success': False, 'message': 'Could not confirm credit update in time.'}), 408
 
 
 @billing_bp.route('/webhook-test', methods=['GET', 'POST'])
@@ -204,7 +183,7 @@ def webhook_test():
     }), 200
 
 
-@billing_bp.route('/verify-credits', methods=['GET'])
+@billing_bp.route('/verify-credits', methods=['GET'], endpoint='verify_credits_status')
 @jwt_required()
 def verify_user_credits():
     """
