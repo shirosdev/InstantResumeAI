@@ -44,7 +44,13 @@ const adminService = {
   resolveSupportTicket: (ticketId) => {
     return api.put(`/admin/support-tickets/${ticketId}/resolve`);
   },
+  getTicketDetails: (ticketId) => {
+    return api.get(`/admin/support-tickets/${ticketId}`);
+  },
 
+  postTicketReply: (ticketId, replyMessage) => {
+    return api.post(`/admin/support-tickets/${ticketId}/reply`, { reply_message: replyMessage });
+  },
 
   deleteUser: (userId) => {
     return api.delete(`/admin/users/${userId}`);

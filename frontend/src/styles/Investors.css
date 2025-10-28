@@ -1,153 +1,174 @@
-/* frontend/src/styles/Investors.css */
+/* frontend/src/styles/Investors.css - UPDATED FOR LIGHT THEME */
 
 .investors-page-wrapper {
-    width: 100%;
-  }
-  
-  .investors-hero {
-    padding: clamp(3rem, 8vh, 5rem) 0;
-    background: var(--gradient-abyss);
-    text-align: center;
-    color: var(--text-primary);
-  }
-  
-  .investors-hero h1 {
-    font-size: clamp(2rem, 6vw, 3.2rem);
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: var(--bio-luminescent);
-  }
-  
-  .investors-hero .hero-subtext {
-    font-size: clamp(1rem, 2.5vw, 1.2rem);
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-    color: var(--text-secondary);
-    line-height: 1.6;
-  }
-  
-  .page-content.container {
-      padding-top: 3rem;
-      padding-bottom: 3rem;
-  }
-  
-  .investors-section {
-    padding: clamp(2rem, 5vw, 3rem) 0;
-    margin-bottom: 2rem;
-    text-align: center;
-  }
-  
-  .investors-section h2 {
-    font-size: clamp(1.8rem, 5vw, 2.5rem);
-    color: var(--coral-primary);
-    margin-bottom: 2.5rem;
-    font-weight: 600;
-  }
-  
-  .investors-section p {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-    line-height: 1.7;
-    max-width: 850px;
-    margin: 0 auto 1rem auto;
-  }
-  
-  
-  /* --- Styles for Numbered Feature List --- */
-  
-  .standout-section {
-    text-align: left;
-  }
-  
-  /* Added this rule to center the heading */
-  .standout-section h2 {
-    text-align: center;
-  }
-  
-  .numbered-feature-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1.75rem;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-  
-  .numbered-feature-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 1.5rem;
-    padding-bottom: 1.75rem;
-    border-bottom: 1px solid var(--border-primary);
-  }
-  
-  .numbered-feature-item:last-child {
-    border-bottom: none;
-  }
-  
-  .feature-number {
-    font-size: clamp(2.5rem, 6vw, 3.2rem);
-    font-weight: 600;
-    color: var(--bg-tertiary);
-    line-height: 1;
-    margin-top: -0.25rem;
-  }
-  
-  .feature-text h3 {
-    font-size: clamp(1.2rem, 3vw, 1.4rem);
-    color: var(--bio-luminescent);
-    font-weight: 500;
-    margin-bottom: 0.75rem;
-  }
-  
-  .feature-text p {
-    font-size: 1rem;
-    color: var(--text-muted);
-    line-height: 1.6;
-    text-align: left;
-    margin: 0;
-  }
-  
-  /* --- End of Section --- */
-  
-  
-  .contact-section {
-    background: var(--gradient-soft);
-    color: var(--deep-ocean);
-    border-radius: 12px;
-    padding: clamp(2rem, 5vw, 3.5rem);
-    text-align: center;
-  }
-  
-  .contact-section h2,
-  .contact-section p {
-    color: var(--deep-ocean);
-  }
-  
-  .contact-investors {
-    margin: 1.5rem 0;
-  }
-  
-  .investor-email-link {
-    display: inline-block;
-    background: var(--deep-ocean);
-    color: white;
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 1.1rem;
-    transition: background 0.3s ease, transform 0.3s ease;
-    margin-bottom: 1rem;
-  }
-  
-  .investor-email-link:hover {
-    background: #000;
-    transform: translateY(-3px);
-  }
-  
-  .invest-cta {
-    font-weight: 600;
-    font-size: 1.2rem;
-    margin-top: 1rem;
-  }
+  width: 100%;
+  background-color: var(--bg-secondary); /* Use light secondary background for the page */
+  padding-bottom: 4rem; /* Add padding at the bottom */
+  padding-top: var(--navbar-height); /* Add space for navbar */
+}
+
+.investors-hero {
+  padding: clamp(3rem, 8vh, 5rem) 0;
+  background: var(--gradient-hero); /* Use light hero gradient */
+  text-align: center;
+  color: var(--text-primary); /* Dark text */
+  border-bottom: 1px solid var(--border-primary); /* Add subtle separator */
+}
+
+.investors-hero h1 {
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary); /* Dark text */
+}
+
+.investors-hero .hero-subtext {
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  color: var(--text-secondary); /* Medium gray text */
+  line-height: 1.6;
+}
+
+.page-content.container {
+  padding-top: 4rem; /* Increased top padding */
+  padding-bottom: 3rem;
+}
+
+.investors-section {
+  padding: clamp(2rem, 5vw, 3rem) 0;
+  margin-bottom: 3rem; /* Increased spacing */
+  text-align: center;
+}
+
+.investors-section h2 {
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  color: var(--text-accent); /* Red accent */
+  margin-bottom: 2.5rem;
+  font-weight: 600;
+}
+
+.investors-section p {
+  color: var(--text-secondary); /* Medium gray text */
+  font-size: 1.1rem;
+  line-height: 1.7;
+  max-width: 850px;
+  margin: 0 auto 1.5rem auto; /* Increased bottom margin */
+}
+
+
+/* Styles for Numbered Feature List */
+.standout-section {
+  text-align: left;
+  background: var(--bg-primary); /* White background for this section */
+  padding: 3rem 2rem; /* Add padding */
+  border-radius: var(--border-radius-2xl); /* Add rounding */
+  border: 1px solid var(--border-primary); /* Add border */
+  box-shadow: var(--shadow-xl); /* Add shadow */
+  margin-bottom: 4rem; /* Increase spacing */
+}
+
+/* Center the heading within the standout section */
+.standout-section h2 {
+  text-align: center;
+}
+
+.numbered-feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem; /* Increased gap */
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.numbered-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding-bottom: 2rem; /* Increased padding */
+  border-bottom: 1px solid var(--border-primary); /* Light border */
+}
+
+.numbered-feature-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0; /* Remove bottom padding for last item */
+}
+
+.feature-number {
+  font-size: clamp(2.5rem, 6vw, 3.2rem);
+  font-weight: 600;
+  color: var(--border-primary); /* Light gray, less prominent */
+  line-height: 1;
+  margin-top: -0.25rem;
+}
+
+.feature-text h3 {
+  font-size: clamp(1.2rem, 3vw, 1.4rem);
+  color: var(--text-primary); /* Dark text */
+  font-weight: 600; /* Bolder */
+  margin-bottom: 0.75rem;
+}
+
+.feature-text p {
+  font-size: 1rem;
+  color: var(--text-secondary); /* Medium gray text */
+  line-height: 1.6;
+  text-align: left;
+  margin: 0;
+}
+
+
+/* Contact Section (Light Theme) */
+.contact-section {
+  background: var(--bg-primary); /* White background */
+  color: var(--text-primary); /* Dark text */
+  border-radius: var(--border-radius-2xl); /* Rounded */
+  padding: clamp(2rem, 5vw, 3.5rem);
+  text-align: center;
+  border: 1px solid var(--border-primary); /* Add border */
+  box-shadow: var(--shadow-xl); /* Add shadow */
+}
+
+.contact-section h2,
+.contact-section p {
+  color: var(--text-primary); /* Ensure dark text */
+}
+.contact-section p { /* Slightly adjust paragraph text */
+  color: var(--text-secondary);
+}
+
+.contact-investors {
+  margin: 2rem 0; /* Increased margin */
+}
+
+/* Use primary button style */
+.investor-email-link {
+  display: inline-flex; /* Use flex for icon alignment */
+  align-items: center;
+  gap: 0.5rem; /* Space between icon and text */
+  background-image: var(--gradient-button); /* Red gradient */
+  background-color: var(--primary-red-medium); /* Fallback color */
+  color: var(--text-on-gradient); /* White text */
+  padding: 0.9rem 1.8rem; /* Adjusted padding */
+  border-radius: var(--border-radius-full); /* Pill shape */
+  text-decoration: none;
+  font-weight: 600; /* Bolder */
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem; /* Increased margin */
+  box-shadow: var(--shadow-lg);
+}
+
+.investor-email-link:hover {
+  box-shadow: var(--shadow-button-hover); /* Reddish hover shadow */
+  transform: scale(1.03); /* Slight scale */
+  /* Gradient remains the same on hover */
+}
+
+.invest-cta {
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin-top: 1.5rem; /* Increased margin */
+  color: var(--text-primary); /* Dark text */
+}

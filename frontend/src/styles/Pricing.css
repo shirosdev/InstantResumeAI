@@ -1,83 +1,78 @@
-/* Pricing.css - Inherit global variables from App.css, remove redundant variable definitions, and use --navbar-height where needed */
+/* Pricing.css - UPDATED FOR LIGHT THEME */
 
 .pricing-container {
   min-height: calc(100vh - var(--navbar-height)); /* Use global navbar height */
   padding-top: var(--navbar-height);
-  padding: 2rem 0 3rem;
-  background: linear-gradient(
-    to bottom,
-    var(--navbar-bg) 0%,
-    rgba(247, 250, 252, 0.9) 5%,
-    var(--gradient-abyss) 15%,
-    var(--gradient-abyss) 100%
-  );
+  padding: 4rem 1rem 4rem; /* Increased vertical padding */
+  /* Use the light theme hero gradient */
+  background: var(--gradient-hero);
 }
 
-.container {
-  max-width: 1000px;
+.container { /* This container class seems reused, assuming it's defined globally */
+  max-width: 1100px; /* Wider container for 3 cards */
   margin: 0 auto;
   padding: 0 1rem;
 }
 
 .pricing-title {
   text-align: center;
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--bio-luminescent); /* Use global variable */
-  margin-bottom: 0.5rem;
+  font-size: 2.5rem; /* Slightly larger */
+  font-weight: 700; /* Bolder */
+  color: var(--text-primary); /* Dark text */
+  margin-bottom: 1rem; /* Increased spacing */
   line-height: 1.2;
 }
 
 .pricing-subtitle {
   text-align: center;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1rem;
-  margin-bottom: 2rem;
-  font-weight: 300;
-  max-width: 500px;
+  color: var(--text-secondary); /* Medium gray */
+  font-size: 1.15rem; /* Slightly larger */
+  margin-bottom: 3rem; /* Increased spacing */
+  font-weight: 400; /* Regular weight */
+  max-width: 600px; /* Consistent width */
   margin-left: auto;
   margin-right: auto;
-  line-height: 1.4;
+  line-height: 1.5; /* Improved line spacing */
 }
 
-/* Updated: Compact pricing cards grid */
+/* Pricing cards grid */
 .pricing-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  gap: 2rem; /* Increased gap */
   margin-bottom: 1.5rem;
-  align-items: start;
+  align-items: stretch; /* Make cards equal height if needed */
 }
 
-/* Updated: Natural height pricing card structure */
+/* Pricing card structure */
 .pricing-card {
-  background: var(--bg-overlay);
-  border: 2px solid var(--border-primary);
-  border-radius: 16px;
+  background: var(--bg-primary); /* White background */
+  border: 1px solid var(--border-primary); /* Light gray border */
+  border-radius: var(--border-radius-2xl); /* More rounded */
   overflow: hidden;
   transition: all 0.3s ease;
   position: relative;
   display: flex;
   flex-direction: column;
   height: auto;
-  min-height: fit-content;
+  box-shadow: var(--shadow-lg); /* Add base shadow */
 }
 
 .pricing-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 30px var(--shadow-primary);
-  border-color: var(--bio-luminescent);
+  box-shadow: var(--shadow-xl); /* Increase shadow on hover */
+  border-color: var(--text-accent); /* Red border on hover */
 }
 
 .pricing-card.featured {
-  border: 2px solid var(--thermal-vent);
+  border: 2px solid var(--text-accent); /* Red border for featured */
   transform: scale(1.02);
-  background: var(--bg-overlay);
+  background: var(--bg-primary); /* Keep white background */
 }
 
 .pricing-card.featured:hover {
   transform: scale(1.02) translateY(-5px);
-  box-shadow: 0 15px 35px var(--shadow-accent);
+  box-shadow: 0 15px 35px rgba(220, 38, 38, 0.2); /* Reddish shadow */
 }
 
 .pricing-card.featured::before {
@@ -86,101 +81,113 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: var(--gradient-thermal);
+  height: 4px; /* Thicker top border */
+  background: var(--gradient-button); /* Red gradient */
 }
 
-/* Updated: Flexible card header */
+/* Card header */
 .card-header {
-  padding: 2rem 2rem 1.5rem;
+  padding: 2rem 1.5rem 1.5rem; /* Adjusted padding */
   text-align: center;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-primary); /* Light gray border */
   position: relative;
+  background-color: var(--bg-secondary); /* Light gray header bg */
 }
 
 .plan-badge {
   display: inline-block;
   padding: 0.4rem 1rem;
-  border-radius: 12px;
+  border-radius: var(--border-radius-full); /* Pill shape */
   font-size: 0.75rem;
   font-weight: 600;
   margin-bottom: 1rem;
-  background-color: rgba(125, 211, 201, 0.15);
-  color: var(--bio-luminescent);
+  background-color: var(--bg-accent-light); /* Light red tint */
+  color: var(--primary-red-dark); /* Darker red text */
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .pricing-card.featured .plan-badge {
-  background: var(--gradient-thermal);
+  background: var(--gradient-button); /* Red gradient */
   color: white;
 }
 
 .card-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--bio-luminescent);
+  font-size: 1.6rem; /* Larger */
+  font-weight: 700; /* Bolder */
+  color: var(--text-primary); /* Dark text */
   margin-bottom: 0.8rem;
   line-height: 1.2;
 }
 
 .plan-description {
-  color: var(--text-secondary);
+  color: var(--text-secondary); /* Medium gray */
   font-size: 0.95rem;
   margin-bottom: 1.5rem;
   line-height: 1.5;
-  min-height: auto;
+  min-height: 3em; /* Ensure space even if description is short */
 }
 
-/* Updated: Natural pricing display */
+/* Pricing display */
 .plan-price {
   margin: 1.5rem 0;
 }
 
 .plan-price .amount {
-  font-size: 2.2rem;
+  font-size: 2.5rem; /* Larger */
   font-weight: 700;
-  color: var(--thermal-vent);
+  color: var(--text-accent); /* Red price */
   line-height: 1;
 }
 
 .plan-price .period {
-  color: var(--text-muted);
-  font-size: 0.9rem;
+  color: var(--text-secondary); /* Medium gray */
+  font-size: 1rem; /* Slightly larger */
   font-weight: 400;
   margin-left: 0.3rem;
 }
 
-/* Updated: Standard plan button */
+/* Plan button (use primary auth style) */
 .plan-button {
   display: inline-block;
   width: 100%;
   padding: 0.9rem 1.5rem;
-  border-radius: 12px;
+  border-radius: var(--border-radius-full); /* Pill shape */
   font-weight: 600;
   font-size: 1rem;
   text-decoration: none;
   text-align: center;
-  background: var(--gradient-thermal);
+  background-image: var(--gradient-button); /* Red gradient */
+  background-color: var(--primary-red-medium); /* Fallback */
   color: white;
   transition: all 0.3s ease;
   border: none;
   cursor: pointer;
+  box-shadow: var(--shadow-lg);
 }
 
 .plan-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px var(--shadow-accent);
+  box-shadow: var(--shadow-button-hover); /* Reddish hover shadow */
 }
 
 .plan-button.active {
-  background: linear-gradient(135deg, var(--bio-luminescent), #2dd4bf);
+  background-image: none; /* Remove gradient */
+  background-color: var(--success-color); /* Green for active */
+  color: white;
+  cursor: default;
+  box-shadow: none;
+}
+.plan-button.active:hover {
+  transform: none;
+  box-shadow: none;
 }
 
-/* Updated: Natural height card features */
+
+/* Card features section */
 .card-features {
-  padding: 2rem;
-  flex: 1;
+  padding: 1.5rem 2rem 2rem; /* Adjusted padding */
+  flex: 1; /* Allow features to fill space */
   display: flex;
   flex-direction: column;
 }
@@ -197,8 +204,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.8rem 0;
-  border-bottom: 1px solid var(--border-light);
-  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border-primary); /* Light border */
+  font-size: 0.95rem; /* Larger font */
 }
 
 .card-features li:last-child {
@@ -207,120 +214,67 @@
 }
 
 .feature-name {
-  color: var(--text-secondary);
+  color: var(--text-primary); /* Darker text */
   font-weight: 500;
-  flex: 1;
+  flex-basis: 60%; /* Give name more space */
   text-align: left;
-  padding-right: 1.5rem;
+  padding-right: 1rem;
   line-height: 1.4;
 }
 
 .feature-value {
-  background: rgba(125, 211, 201, 0.15);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  padding: 0.4rem 0.8rem;
-  color: var(--bio-luminescent);
-  font-weight: 600;
-  font-size: 0.8rem;
-  text-align: center;
+  color: var(--text-secondary); /* Medium gray value */
+  font-weight: 400; /* Regular weight */
+  font-size: 0.9rem;
+  text-align: right;
   white-space: nowrap;
-  min-width: fit-content;
   flex-shrink: 0;
+  /* Remove background/border from value */
+  background: none;
+  border: none;
+  padding: 0;
 }
 
-.pricing-card.featured .feature-value {
-  background: rgba(230, 126, 80, 0.15);
-  border-color: var(--border-accent);
-  color: var(--thermal-vent);
+/* Specific styling for ticks/crosses if needed */
+/* Example:
+.feature-value.yes::before { content: '✓ '; color: var(--success-color); }
+.feature-value.no::before { content: '✕ '; color: var(--error-color); }
+*/
+
+/* Responsive Design */
+@media (max-width: 992px) { /* Adjust breakpoint if needed */
+  .pricing-cards {
+     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+     gap: 1.5rem;
+  }
 }
 
-/* Updated: Responsive Design for Natural Layout */
 @media (max-width: 768px) {
   .pricing-container {
-    padding: 2rem 0;
-    padding-top: 2.5rem;
+    padding: 3rem 1rem; /* Adjust padding */
+    padding-top: var(--navbar-height);
   }
-  
+
   .pricing-cards {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
     max-width: 400px;
     margin: 0 auto;
   }
-  
-  .pricing-card.featured {
-    transform: none;
-  }
-  
-  .pricing-card.featured:hover {
-    transform: translateY(-5px);
-  }
-  
-  .pricing-title {
-    font-size: 1.8rem;
-  }
-  
-  .pricing-subtitle {
-    font-size: 1rem;
-    margin-bottom: 2rem;
-  }
-  
-  .card-header {
-    padding: 1.5rem 1.5rem 1.2rem;
-  }
-  
-  .card-features {
-    padding: 1.5rem;
-  }
-  
-  .card-features li {
-    padding: 0.7rem 0;
-  }
-  
-  .plan-price .amount {
-    font-size: 2rem;
-  }
+
+  .pricing-card.featured { transform: none; }
+  .pricing-card.featured:hover { transform: translateY(-5px); }
+  .pricing-title { font-size: 2rem; }
+  .pricing-subtitle { font-size: 1.1rem; margin-bottom: 2.5rem; }
+  .card-header, .card-features { padding: 1.5rem; }
+  .plan-price .amount { font-size: 2.2rem; }
 }
 
 @media (max-width: 480px) {
-  .pricing-container .container {
-    padding: 0 1rem;
-  }
-  
-  .pricing-cards {
-    max-width: 100%;
-  }
-  
-  .card-header {
-    padding: 1.2rem 1.2rem 1rem;
-  }
-  
-  .card-features {
-    padding: 1.2rem;
-  }
-  
-  .pricing-title {
-    font-size: 1.6rem;
-  }
-  
-  .plan-price .amount {
-    font-size: 1.8rem;
-  }
-  
-  .plan-button {
-    padding: 0.8rem 1.2rem;
-    font-size: 0.9rem;
-  }
-  
-  .card-features li {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    padding: 0.8rem 0;
-  }
-  
-  .feature-value {
-    align-self: flex-end;
-  }
+  .pricing-container .container { padding: 0 1rem; }
+  .pricing-cards { max-width: 100%; }
+  .card-header, .card-features { padding: 1.2rem; }
+  .pricing-title { font-size: 1.8rem; }
+  .plan-price .amount { font-size: 2rem; }
+  .plan-button { padding: 0.8rem 1.2rem; font-size: 0.95rem; }
+  .card-features li { padding: 0.7rem 0; font-size: 0.9rem; }
 }

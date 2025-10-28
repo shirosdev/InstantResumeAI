@@ -11,6 +11,7 @@ import App from './App';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 // Render WITHOUT StrictMode to avoid double-rendering issues
+
 root.render(
   <App />
 );

@@ -1,350 +1,420 @@
-/* frontend/src/styles/AdminDashboard.css */
+/* frontend/src/styles/AdminDashboard.css - UPDATED FOR LIGHT THEME */
+
+/* Root variables (assuming light theme variables are defined in App.css or :root) */
 
 .admin-layout {
-    display: flex;
-    min-height: calc(100vh - var(--navbar-height)); /* Full height minus navbar */
-  }
-  
-  .admin-sidebar {
-    width: 260px;
-    flex-shrink: 0;
-    background: var(--bg-secondary);
-    border-right: 1px solid var(--border-primary);
-    padding: 2rem 0;
-    overflow-y: auto;
-  }
-  
-  .admin-content {
-    flex-grow: 1;
-    padding: 2rem 2.5rem; /* Reduced padding */
-    overflow-y: auto;
-  }
-  
-  /* Sidebar Section Styling */
-  .sidebar-section {
-    margin-bottom: 1.5rem; /* Reduced margin */
-  }
-  
-  .sidebar-title {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 0 1.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  .sidebar-links {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .sidebar-links a {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.85rem 1.5rem; /* Adjusted padding */
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-size: 1rem; /* Slightly larger font */
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border-left: 3px solid transparent;
-  }
-  
-  .sidebar-links a:hover {
-    background: rgba(125, 211, 201, 0.05);
-    color: var(--text-primary);
-  }
-  
-  .sidebar-links a.active {
-    background: rgba(125, 211, 201, 0.1);
-    color: var(--bio-luminescent);
-    border-left-color: var(--bio-luminescent);
-    font-weight: 600;
-  }
-  
-  .sidebar-links a svg {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-  }
-  
-  
-  /* --- NEW: Sub-menu Navigation Bar Styles --- */
-  .admin-submenu {
-    display: flex;
-    gap: 1rem;
-    border-bottom: 1px solid var(--border-primary);
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-  }
-  
-  .admin-submenu a {
-    text-decoration: none;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-  }
-  
-  .admin-submenu a:hover {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-  }
-  
-  .admin-submenu a.active {
-    background: var(--gradient-thermal);
-    color: white;
-    box-shadow: 0 4px 15px rgba(230, 126, 80, 0.3);
-  }
-  /* --- END NEW STYLES --- */
-  
-  
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .admin-layout {
-      flex-direction: column;
-    }
-    .admin-sidebar {
-      width: 100%;
-      border-right: none;
-      border-bottom: 1px solid var(--border-primary);
-      padding: 1rem 0;
-    }
-    .admin-content {
-      padding: 1.5rem;
-    }
-    .admin-submenu {
-      flex-wrap: wrap; /* Allow submenu items to wrap on small screens */
-    }
-  }
-  .admin-stats {
-    grid-template-columns: repeat(3, 1fr); /* Always 3 columns */
-    margin-bottom: 2.5rem; /* Reduced margin */
-    gap: 1.5rem; /* Reduced gap */
-  }
+  display: flex;
+  min-height: calc(100vh - var(--navbar-height)); /* Full height minus navbar */
+  background-color: var(--bg-secondary); /* Use light secondary background */
+}
 
-  /* Compact stat cards for admin view */
-  .admin-stats .stat-card {
-    padding: 1.2rem;
-    min-height: auto;
-  }
-  .admin-stats .stat-card h3 {
-    font-size: 0.9rem;
-    margin-bottom: 0.75rem;
-  }
-  .admin-stats .stat-card .stat-number {
-    font-size: 2rem;
-  }
-  
-  
-  /* --- NEW: User Table Styles --- */
-  .admin-table-container {
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 1.5rem; /* Reduced padding */
-    border: 1px solid var(--border-primary);
-  }
-  
-  .admin-table-container h3 {
-    color: var(--text-primary);
-    font-size: 1.25rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .admin-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  .admin-table th, .admin-table td {
-    padding: 0.8rem 1rem; /* Reduced padding */
-    text-align: left;
-    border-bottom: 1px solid var(--border-primary);
-  }
-  
-  .admin-table th {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  
-  .admin-table td {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-  }
-  
-  .admin-table tbody tr:last-child td {
-    border-bottom: none;
-  }
-  
-  .admin-table tbody tr:hover {
-    background-color: rgba(125, 211, 201, 0.05);
-  }
-  
-  .status-badge {
-    padding: 0.3rem 0.7rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: capitalize;
-  }
-  
-  .status-badge.active {
-    background: rgba(72, 187, 120, 0.1);
-    color: var(--success-color);
-  }
-  
-  .status-badge.inactive {
-    background: rgba(229, 62, 62, 0.1);
-    color: var(--error-color);
-  }
-  
-  /* Compact action button for the table */
-  .admin-table .action-button {
-    background: var(--bg-tertiary);
-    color: var(--text-secondary);
-    border: none;
-    padding: 0.4rem 0.8rem; /* Reduced padding */
-    font-size: 0.8rem; /* Reduced font size */
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .admin-table .action-button:hover {
-    background: var(--bio-luminescent);
-    color: var(--deep-ocean);
-  }
-  .pagination-container {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-primary);
-  }
-  
-  .pagination-button {
-    background: var(--bg-tertiary);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-primary);
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .pagination-button:hover:not(:disabled) {
-    background: var(--bio-luminescent);
-    color: var(--deep-ocean);
-    border-color: var(--bio-luminescent);
-  }
-  
-  .pagination-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .pagination-info {
-    margin: 0 1rem;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-  }
-  .table-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
-  
-  .table-header h3 {
-    margin: 0;
-  }
-  
-  .search-bar input {
-    padding: 0.5rem 0.8rem;
-    border: 1px solid var(--border-primary);
-    border-radius: 6px;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    width: 250px;
-  }
-  .usage-tracking-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-  }
-  
-  @media (max-width: 992px) {
-    .usage-tracking-grid {
-      grid-template-columns: 1fr;
-    }
-  }
+.admin-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--bg-primary); /* Use light primary background (white) */
+  border-right: 1px solid var(--border-primary); /* Light border */
+  padding: 2rem 0;
+  overflow-y: auto;
+}
 
-  .stat-card-combined {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    padding: 0.8rem 1.2rem; /* Adjusted padding */
-  }
-  
-  .combined-item {
-    text-align: center;
-  }
-  
-  .combined-item:first-child {
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-primary);
-  }
-  
-  .combined-item:last-child {
-    padding-top: 0.5rem;
-  }
-  
-  .combined-item h3 {
-    font-size: 0.85rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .combined-item .stat-number {
-    font-size: 1.8rem;
-  }
-  
-  .stat-card-link {
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: var(--bg-tertiary); /* Different background to indicate it's a link */
-  }
-  
-  .stat-card-link h3 {
-    color: var(--bio-luminescent);
-    font-size: 1.1rem;
-  }
-  
-  .stat-card-link .stat-description {
-    margin-top: 0.5rem;
-  }
-  
-  .stat-card-link:hover {
-    border-color: var(--thermal-vent);
-    box-shadow: 0 8px 25px var(--shadow-accent);
-  }
-/* Add these styles to the end of src/styles/AdminDashboard.css */
+.admin-content {
+  flex-grow: 1;
+  padding: 2rem 2.5rem;
+  overflow-y: auto;
+  background-color: var(--bg-secondary); /* Ensure content area also has light bg */
+}
 
-.text-muted {
+/* Sidebar Section Styling */
+.sidebar-section {
+  margin-bottom: 1.5rem;
+}
+
+.sidebar-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary); /* Use medium gray for muted text */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.sidebar-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-links a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.5rem;
+  color: var(--text-secondary); /* Medium gray */
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.sidebar-links a:hover {
+  background: var(--bg-accent-light); /* Light red tint */
+  color: var(--text-primary); /* Dark text */
+}
+
+.sidebar-links a.active {
+  background: var(--bg-accent-light); /* Light red tint */
+  color: var(--text-accent); /* Red text */
+  border-left-color: var(--text-accent); /* Red border */
+  font-weight: 600;
+}
+
+.sidebar-links a svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: currentColor; /* Inherit color from link */
+}
+
+
+/* Sub-menu Navigation Bar Styles */
+.admin-submenu {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-primary); /* Light border */
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  background-color: var(--bg-primary); /* Add white background for contrast */
+  padding: 1rem 1.5rem; /* Add some padding */
+  border-radius: var(--border-radius-lg); /* Add rounding */
+  margin-top: -1rem; /* Pull up slightly */
+  box-shadow: var(--shadow-lg); /* Add subtle shadow */
+}
+
+.admin-submenu a {
+  text-decoration: none;
+  color: var(--text-secondary); /* Medium gray */
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-lg); /* Consistent rounding */
+  transition: all 0.2s ease;
+}
+
+.admin-submenu a:hover {
+  background: var(--bg-secondary); /* Very light gray */
+  color: var(--text-primary); /* Dark text */
+}
+
+.admin-submenu a.active {
+  background: var(--gradient-button); /* Red gradient */
+  color: var(--text-on-gradient); /* White text */
+  box-shadow: var(--shadow-button-hover); /* Reddish hover shadow */
+}
+
+
+/* Admin Stats (ensure light theme compatibility) */
+.admin-stats {
+  display: grid; /* Added display grid */
+  grid-template-columns: repeat(3, 1fr); /* Always 3 columns */
+  margin-bottom: 2.5rem;
+  gap: 1.5rem;
+}
+
+.admin-stats .stat-card {
+  padding: 1.2rem;
+  min-height: auto;
+  background: var(--bg-primary); /* Ensure white background */
+  border: 1px solid var(--border-primary); /* Light border */
+  box-shadow: var(--shadow-lg); /* Add shadow */
+  color: var(--text-primary); /* Dark text */
+}
+.admin-stats .stat-card:hover { /* Add hover effect consistent with other cards */
+  transform: translateY(-5px);
+  border-color: var(--text-accent);
+  box-shadow: var(--shadow-xl);
+}
+
+.admin-stats .stat-card h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary); /* Medium gray heading */
+}
+.admin-stats .stat-card .stat-number {
+  font-size: 2rem;
+  color: var(--text-accent); /* Red number */
+}
+
+
+/* User Table Styles (Light Theme) */
+.admin-table-container {
+  background: var(--bg-primary); /* White */
+  border-radius: var(--border-radius-xl); /* Adjusted rounding */
+  padding: 1.5rem;
+  border: 1px solid var(--border-primary); /* Light border */
+  box-shadow: var(--shadow-xl); /* Add shadow */
+}
+
+.admin-table-container h3 {
+  color: var(--text-primary); /* Dark text */
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th, .admin-table td {
+  padding: 0.8rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-primary); /* Light border */
+}
+
+.admin-table th {
+  color: var(--text-secondary); /* Medium gray header text */
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: var(--bg-secondary); /* Light gray background for header */
+}
+
+.admin-table td {
+  color: var(--text-secondary); /* Medium gray text */
+  font-size: 0.95rem;
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tbody tr:hover {
+  background-color: var(--bg-accent-light); /* Light red tint on hover */
+}
+
+.status-badge {
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--border-radius-full); /* Pill shape */
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-badge.active {
+  background: var(--success-bg-light); /* Light green */
+  color: var(--success-color); /* Green text */
+}
+
+.status-badge.inactive {
+  background: var(--error-bg-light); /* Light red */
+  color: var(--error-color); /* Red text */
+}
+
+/* Action button for the table (Light Theme) */
+.admin-table .action-button {
+  background: var(--bg-secondary); /* Very light gray */
+  color: var(--text-secondary); /* Medium gray text */
+  border: 1px solid var(--border-primary); /* Light border */
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: var(--border-radius-lg); /* Consistent rounding */
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-table .action-button:hover {
+  background: var(--text-accent); /* Red background */
+  color: var(--text-on-gradient); /* White text */
+  border-color: var(--text-accent); /* Red border */
+}
+
+/* Success variation for action buttons */
+.admin-table .action-button.success {
+  background: var(--success-bg-light);
+  color: var(--success-color);
+  border-color: var(--success-color);
+}
+.admin-table .action-button.success:hover {
+  background: var(--success-color);
+  color: white;
+}
+
+/* Danger variation for action buttons */
+.admin-table .action-button.danger {
+  background: var(--error-bg-light);
+  color: var(--error-color);
+  border-color: var(--error-color);
+}
+.admin-table .action-button.danger:hover {
+  background: var(--error-color);
+  color: white;
+}
+
+
+/* Pagination (Light Theme) */
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-primary); /* Light border */
+}
+
+.pagination-button {
+  background: var(--bg-secondary); /* Very light gray */
+  color: var(--text-secondary); /* Medium gray text */
+  border: 1px solid var(--border-primary); /* Light border */
+  padding: 0.5rem 1rem;
   font-size: 0.85rem;
-  color: var(--text-muted);
+  border-radius: var(--border-radius-lg); /* Consistent rounding */
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background: var(--text-accent); /* Red background */
+  color: var(--text-on-gradient); /* White text */
+  border-color: var(--text-accent); /* Red border */
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--border-primary); /* Use border color for disabled bg */
+  border-color: var(--border-primary);
+}
+
+.pagination-info {
+  margin: 0 1rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary); /* Medium gray text */
+}
+
+/* Table Header */
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.table-header h3 {
+  margin: 0;
+  color: var(--text-primary); /* Dark text */
+}
+
+.search-bar input {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--border-primary); /* Light border */
+  border-radius: var(--border-radius-lg); /* Consistent rounding */
+  background-color: var(--bg-secondary); /* Very light gray */
+  color: var(--text-primary); /* Dark text */
+  width: 250px;
+}
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+  background-color: var(--bg-primary); /* White on focus */
+}
+
+/* Usage Tracking Grid */
+.usage-tracking-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 992px) {
+  .usage-tracking-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Combined Stat Card (Light Theme) */
+.stat-card-combined {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 0.8rem 1.2rem;
+  background: var(--bg-primary); /* White */
+  border: 1px solid var(--border-primary); /* Light border */
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+}
+.stat-card-combined:hover { /* Add hover */
+  transform: translateY(-5px);
+  border-color: var(--text-accent);
+  box-shadow: var(--shadow-xl);
+}
+
+.combined-item {
+  text-align: center;
+}
+
+.combined-item:first-child {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-primary); /* Light border */
+}
+
+.combined-item:last-child {
+  padding-top: 0.5rem;
+}
+
+.combined-item h3 {
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary); /* Medium gray */
+}
+
+.combined-item .stat-number {
+  font-size: 1.8rem;
+  color: var(--text-accent); /* Red number */
+}
+
+/* Link Card (Light Theme) */
+.stat-card-link {
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg-accent-light); /* Light red tint */
+  border: 1px solid var(--border-accent); /* Light red border */
+  border-radius: var(--border-radius-xl);
+  padding: 1.8rem;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+  color: var(--text-primary); /* Dark text */
+}
+
+.stat-card-link h3 {
+  color: var(--text-accent); /* Red text */
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card-link .stat-description {
+  margin-top: 0.5rem;
+  color: var(--text-secondary); /* Medium gray text */
+  font-size: 0.85rem;
+}
+
+.stat-card-link:hover {
+  border-color: var(--primary-red-medium); /* Medium red border */
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-5px);
+  background: white; /* White on hover */
+}
+
+/* Security Details Modal Additions (Light Theme) */
+.text-muted { /* Re-using existing class name */
+  font-size: 0.85rem;
+  color: var(--text-secondary); /* Medium gray text */
 }
 
 .modal-content.large {
@@ -359,17 +429,18 @@
 
 .detail-section h4 {
   font-size: 1.1rem;
-  color: var(--bio-luminescent);
+  color: var(--text-accent); /* Red text */
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--border-primary); /* Light border */
 }
 
 .table-wrapper {
   max-height: 250px;
   overflow-y: auto;
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border: 1px solid var(--border-primary); /* Light border */
+  border-radius: var(--border-radius-lg); /* Consistent rounding */
+  background-color: var(--bg-secondary); /* Light gray background */
 }
 
 .mini-table {
@@ -380,23 +451,40 @@
 .mini-table th, .mini-table td {
   padding: 0.6rem 0.8rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--border-primary); /* Light border */
   font-size: 0.9rem;
 }
 
 .mini-table th {
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary); /* Dark text for header */
   position: sticky;
   top: 0;
-  background: var(--bg-secondary);
+  background: var(--bg-secondary); /* Light gray header background */
 }
 
 .mini-table tbody tr:last-child td {
   border-bottom: none;
 }
+.mini-table td {
+  color: var(--text-secondary); /* Medium gray text */
+}
 
 .mini-table tr.suspicious {
-  background-color: rgba(229, 62, 62, 0.1);
-  color: var(--error-color);
+  background-color: var(--error-bg-light); /* Light red background */
+  color: var(--error-color); /* Red text */
+}
+.mini-table tr.suspicious td {
+  color: var(--error-color); /* Ensure text color overrides default */
+}
+
+
+/* Responsive Adjustments (Simplified) */
+@media (max-width: 768px) {
+  .admin-layout { flex-direction: column; }
+  .admin-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-primary); padding: 1rem 0; }
+  .admin-content { padding: 1.5rem; }
+  .admin-submenu { flex-wrap: wrap; }
+  .admin-stats { grid-template-columns: 1fr; } /* Stack stats */
+  .usage-tracking-grid { grid-template-columns: 1fr; }
 }

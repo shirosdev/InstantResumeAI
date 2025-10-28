@@ -49,7 +49,7 @@ const Profile = () => {
     await logout();
     navigate('/');
   };
-  
+
   const handleEditClick = () => {
     setIsEditing(true);
     setError('');
@@ -108,19 +108,18 @@ const Profile = () => {
           )}
         </div>
 
-        {/* The statistics section has been removed from here */}
-
         <div className="auth-card profile-form-container" style={{ maxWidth: '680px', margin: '2rem auto' }}>
           <h2>Profile Information</h2>
           <form onSubmit={handleSubmit}>
             {error && <p className="error-message">{error}</p>}
             {success && <p className="success-message">{success}</p>}
-            
+
+            {/* --- Form Fields --- */}
             <div className="form-grid">
               <div className="form-group">
                 <label>First Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleChange}
@@ -129,8 +128,8 @@ const Profile = () => {
               </div>
               <div className="form-group">
                 <label>Last Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleChange}
@@ -138,7 +137,7 @@ const Profile = () => {
                 />
               </div>
             </div>
-            
+
             <div className="form-grid">
                 <div className="form-group">
                   <label>Email</label>
@@ -153,8 +152,8 @@ const Profile = () => {
             <div className="form-grid">
               <div className="form-group">
                 <label>Phone Number</label>
-                <input 
-                  type="tel" 
+                <input
+                  type="tel"
                   name="phone_number"
                   value={formData.phone_number}
                   onChange={handleChange}
@@ -164,8 +163,8 @@ const Profile = () => {
               </div>
               <div className="form-group">
                 <label>Profession</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="profession"
                   value={formData.profession}
                   onChange={handleChange}
@@ -174,11 +173,11 @@ const Profile = () => {
                 />
               </div>
             </div>
-            
+
             <div className="form-group">
               <label>Location</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
@@ -186,10 +185,10 @@ const Profile = () => {
                 placeholder="City, State/Country"
               />
             </div>
-            
+
             <div className="form-group">
               <label>Bio</label>
-              <textarea 
+              <textarea
                 name="bio"
                 value={formData.bio}
                 onChange={handleChange}
@@ -198,38 +197,41 @@ const Profile = () => {
                 rows="3"
               />
             </div>
+            {/* --- End Form Fields --- */}
 
             <div className="profile-actions">
               {isEditing ? (
                 <>
-                  <button 
-                    type="button" 
-                    className="auth-button secondary"
+                  <button
+                    type="button"
+                    className="auth-button secondary" /* Still uses auth-button style */
                     onClick={handleCancelClick}
                     disabled={isLoading}
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="auth-button" disabled={isLoading}>
+                  <button type="submit" className="auth-button" disabled={isLoading}> {/* Primary auth-button style */}
                     {isLoading ? 'Saving...' : 'Save Changes'}
                   </button>
                 </>
               ) : (
                 <>
-                  <button 
-                    type="button" 
-                    className="auth-button"
+                  <button
+                    type="button"
+                    className="auth-button" /* Primary auth-button style */
                     onClick={handleEditClick}
                   >
                     Edit Profile
                   </button>
-                  <button 
+                  {/* --- THE ONLY CHANGE IS HERE --- */}
+                  <button
                     type="button"
-                    className="auth-button danger"
+                    className="profile-logout-button" /* Use ONLY the unique class */
                     onClick={handleLogout}
                   >
                     Logout
                   </button>
+                  {/* --- END CHANGE --- */}
                 </>
               )}
             </div>

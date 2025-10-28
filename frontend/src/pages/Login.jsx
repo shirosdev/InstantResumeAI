@@ -176,19 +176,10 @@ const Login = () => {
         </div>
         
         {/* Additional help section */}
-        <div className="login-help" style={{
-          marginTop: '2rem',
-          padding: '1rem',
-          background: 'rgba(125, 211, 201, 0.05)',
-          border: '1px solid rgba(125, 211, 201, 0.2)',
-          borderRadius: '8px',
-          fontSize: '0.85rem',
-          color: 'rgba(255, 255, 255, 0.7)',
-          textAlign: 'center'
-        }}>
+        <div className="login-help"> {/* style prop removed */}
           <p><strong>Need Help?</strong></p>
           <p>
-            You can sign in with either your <strong>email address</strong> or <strong>username</strong>. 
+            You can sign in with either your <strong>email address</strong> or <strong>username</strong>.
             If you've forgotten your password, use the "Forgot Password?" link above.
           </p>
         </div>

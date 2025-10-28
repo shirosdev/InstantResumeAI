@@ -1,158 +1,241 @@
-/* frontend/src/styles/Profile.css */
+/* frontend/src/styles/Profile.css - FINAL VERSION (with stronger button alignment fix) */
 
-/* --- Further adjustments for a more compact card --- */
+.profile-page-header {
+  position: relative;
+  text-align: center;
+  margin-bottom: 2rem;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.profile-page-header h1 {
+  display: inline-block;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* Admin Panel Button Styling */
+.admin-header-button {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  background: transparent;
+  border: 1px solid var(--border-primary);
+  color: var(--text-accent);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--border-radius-lg);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+.admin-header-button:hover {
+  background: var(--bg-accent-light);
+  border-color: var(--text-accent);
+  color: var(--text-accent);
+  transform: translateY(-50%) scale(1.03);
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.1);
+}
+.admin-header-button svg {
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+}
+
+/* Profile Form Container */
 .profile-form-container {
-    padding: 1.8rem 2.2rem !important; /* Further reduced padding */
-  }
-  
-  .profile-form-container h2 {
-      margin-bottom: 1.5rem; /* Add some space below the title */
-  }
-  
-  .profile-form-container .form-group {
-    margin-bottom: 1rem !important; /* Further reduced space between fields */
-  }
-  
-  /* NEW: Style for two-column grid layout */
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-  .profile-page-header {
-    position: relative;
-    text-align: center;
-    margin-bottom: 2rem;
-    max-width: 900px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .profile-page-header h1 {
-    display: inline-block;
-    margin: 0;
-  }
-  
-  .admin-header-button {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    
-    /* Layout */
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    
-    /* Style */
-    text-decoration: none;
-    background: transparent;
-    border: 1px solid var(--border-primary);
-    color: var(--bio-luminescent);
-    font-size: 0.9rem;
-    font-weight: 500;
-    padding: 0.6rem 1.2rem;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-  }
-  
-  .admin-header-button:hover {
-    background: rgba(125, 211, 201, 0.1); /* --bio-luminescent with alpha */
-    border-color: var(--bio-luminescent);
-    color: var(--bio-luminescent);
-    transform: translateY(-50%) scale(1.05);
-    box-shadow: 0 4px 20px rgba(125, 211, 201, 0.2); /* Glow effect */
-  }
-  .admin-header-button svg {
-    width: 16px;
-    height: 16px;
-  }
-  
-  /* NEW: Styles for the action buttons container */
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--border-radius-3xl);
+  padding: 1.8rem 2.2rem;
+  width: 100%;
+  max-width: 680px;
+  margin: 2rem auto;
+  box-shadow: var(--shadow-2xl);
+  position: relative;
+  overflow: hidden;
+}
+.profile-form-container h2 {
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  text-align: center;
+  font-weight: 600;
+}
+.profile-form-container .form-group {
+  margin-bottom: 1rem;
+}
+
+/* Form Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 500px) {
+  .form-grid { grid-template-columns: 1fr; gap: 0; }
+  .form-grid .form-group { margin-bottom: 1rem; }
+}
+
+/* Form Elements */
+.profile-form-container .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.profile-form-container .form-group input,
+.profile-form-container .form-group textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.profile-form-container .form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+.profile-form-container .form-group input:focus,
+.profile-form-container .form-group textarea:focus {
+  outline: none;
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+  background: var(--bg-primary);
+}
+.profile-form-container .form-group input:disabled,
+.profile-form-container .form-group textarea:disabled {
+  background: var(--border-primary) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-primary) !important;
+  cursor: not-allowed !important;
+  opacity: 0.8 !important;
+}
+
+/* --- Profile Action Buttons Container --- */
+.profile-actions {
+  display: flex;
+  gap: 1rem;
+  /* CHANGE THIS LINE: */
+  justify-content: center; /* Align buttons to the CENTER */
+  /* Was: justify-content: flex-end; */
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-primary);
+  width: 100%;
+}
+
+/* Base styles FOR ALL BUTTONS INSIDE .profile-actions */
+/* Increased Specificity and Explicit Display Type */
+div.profile-actions > button.auth-button,
+div.profile-actions > button.profile-logout-button {
+  /* Override width from Auth.css and ensure it acts as a flex item */
+  width: auto !important; /* Force override */
+  display: inline-flex !important; /* Ensure it behaves correctly in flex */
+  /* Consistent styles */
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--border-radius-full);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  text-align: center;
+  text-decoration: none;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0; /* Override margin-top from .auth-button if present */
+}
+
+/* Style PRIMARY auth-button WITHIN profile-actions (Edit Profile / Save Changes) */
+div.profile-actions > button.auth-button:not(.secondary) {
+  background-image: var(--gradient-button);
+  background-color: var(--primary-red-medium);
+  color: var(--text-on-gradient);
+  border: none;
+  box-shadow: var(--shadow-lg);
+}
+div.profile-actions > button.auth-button:not(.secondary):hover:not(:disabled) {
+  box-shadow: var(--shadow-button-hover);
+  transform: scale(1.03);
+}
+
+/* Style SECONDARY auth-button WITHIN profile-actions (Cancel) */
+div.profile-actions > button.auth-button.secondary {
+  background: transparent !important;
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+div.profile-actions > button.auth-button.secondary:hover:not(:disabled) {
+  background: var(--bg-secondary) !important;
+  border-color: var(--text-secondary);
+  box-shadow: var(--shadow-lg);
+  transform: scale(1.03);
+}
+
+/* Specific Style ONLY for Profile Logout Button */
+div.profile-actions > button.profile-logout-button {
+  background: var(--error-color); /* Red background */
+  color: white; /* White text */
+  border: none; /* No border */
+}
+div.profile-actions > button.profile-logout-button:hover:not(:disabled) {
+  background: var(--primary-red-dark); /* Darker red on hover */
+  box-shadow: var(--shadow-lg);
+  transform: scale(1.03);
+}
+
+/* Disabled state for ALL buttons inside profile-actions */
+div.profile-actions > button.auth-button:disabled,
+div.profile-actions > button.profile-logout-button:disabled {
+  background: var(--border-primary) !important; /* Use background property */
+  background-image: none !important; /* Remove gradient */
+  color: var(--text-secondary) !important;
+  border-color: var(--border-primary) !important;
+  cursor: not-allowed;
+  opacity: 0.8;
+  box-shadow: none;
+  transform: none;
+}
+
+
+/* Profile messages */
+.profile-form-container .error-message,
+.profile-form-container .success-message {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-form-container { padding: 1.5rem !important; }
+}
+@media (max-width: 500px) {
   .profile-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end; /* This should be flex-end */
-    align-items: center;
-    margin-top: 1.5rem;
+    flex-direction: column-reverse; /* Stack buttons */
+    align-items: center; /* Center items horizontally */
   }
-  
-  
-  .profile-actions .auth-button.admin-button {
-    background: transparent;
-    border: 1px solid var(--text-muted);
-    color: var(--text-secondary);
-    text-decoration: none; 
+  /* Target ALL direct button children */
+  .profile-actions > button {
+    width: 100%; /* Ensure full width */
+    max-width: 300px; /* Limit max width on mobile */
   }
-  .profile-actions .auth-button.admin-button:hover {
-    background: var(--bg-secondary);
-    border-color: var(--text-primary);
-    color: var(--text-primary);
-    box-shadow: none;
+  .profile-page-header { padding: 0 0.5rem; }
+  .admin-header-button {
+      position: static; transform: none; margin-top: 1rem; display: block;
+      margin-left: auto; margin-right: auto; max-width: 200px;
   }
-  
-  /* NEW: Specific styles for secondary and danger buttons */
-  .profile-actions .auth-button.secondary {
-    background: transparent;
-    border: 1px solid var(--text-muted);
-    color: var(--text-secondary);
-  }
-  .profile-actions .auth-button.secondary:hover {
-    background: var(--bg-secondary);
-    border-color: var(--text-primary);
-  }
-  
-  .profile-actions .auth-button.danger {
-    background: var(--coral-primary);
-  }
-  .profile-actions .auth-button.danger:hover {
-    background: #e53e3e; /* A darker red for hover */
-  }
-  
-  
-  /* Base styles for profile form elements */
-  .profile-form-container .form-group input,
-  .profile-form-container .form-group textarea {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    display: block !important;
-    padding: 0.8rem 1rem;
-    border: 1px solid rgba(144, 241, 239, 0.3);
-    border-radius: 8px; /* Slightly smaller radius */
-    background: rgba(0, 18, 32, 0.8);
-    color: white;
-    font-size: 0.95rem; /* Slightly smaller font */
-    transition: all 0.3s ease;
-    font-family: inherit;
-    box-sizing: border-box;
-    resize: vertical;
-  }
-  
-  .profile-form-container .form-group input:disabled,
-  .profile-form-container .form-group textarea:disabled {
-    background: rgba(0, 18, 32, 0.4) !important;
-    color: rgba(255, 255, 255, 0.6) !important;
-    border-color: rgba(144, 241, 239, 0.2) !important;
-    cursor: not-allowed !important;
-    opacity: 0.7 !important;
-  }
-  
-  .profile-form-container .form-group input:not(:disabled):focus,
-  .profile-form-container .form-group textarea:not(:disabled):focus {
-    outline: none;
-    border-color: var(--coral-primary);
-    box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.2);
-    background: rgba(0, 18, 32, 0.9);
-  }
-  
-  /* Mobile responsive adjustments */
-  @media (max-width: 768px) {
-    .profile-form-container {
-      padding: 1.5rem !important;
-    }
-    .form-grid {
-      grid-template-columns: 1fr; /* Stack grid items on smaller screens */
-      gap: 0;
-    }
-  }
+}
