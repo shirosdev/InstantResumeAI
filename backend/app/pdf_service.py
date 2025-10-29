@@ -22,9 +22,17 @@ class PDFService:
                 self.rect(0, 0, self.w, self.header_height, 'F')
 
                 try:
-                    logo_path = os.path.join(os.path.dirname(__file__), '..', '..', 'backend', 'assets', 'logo.png')
+                    # Corrected Path Calculation:
+                    # os.path.dirname(__file__) -> backend/app
+                    # os.path.dirname(os.path.dirname(__file__)) -> backend
+                    backend_root = os.path.dirname(os.path.dirname(__file__))
+                    logo_path = os.path.join(backend_root, 'assets', 'logo.png')
+
+                    print(f"DEBUG: Calculated logo path: {logo_path}") # Keep for debugging
                     if os.path.exists(logo_path):
                         self.image(logo_path, x=15, y=12, h=18)
+                    else:
+                        print(f"WARNING: Logo file NOT FOUND at calculated path: {logo_path}") # Keep for debugging
                 except Exception as e:
                     print(f"WARNING: Could not load logo for PDF. Error: {e}")
 
