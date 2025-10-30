@@ -8,7 +8,14 @@ import '../styles/LandingPage.css';
 import '../styles/ResumeEnhancement.css';
 import { Link } from 'react-router-dom';
 
+// --- NEW IMPORTS ---
+import EnhancementProgress from '../components/EnhancementProgress'; // Import the new component
+import '../styles/EnhancementProgress.css'; // Import the new CSS
+// --- END NEW IMPORTS ---
+
+
 const Home = () => {
+  // ... (Home component remains the same)
   const { user } = useAuth();
   if (user) {
     return <EnhancementWorkbench />;
@@ -17,6 +24,7 @@ const Home = () => {
 };
 
 const Stepper = ({ currentStep }) => {
+  // ... (Stepper component remains the same)
   const steps = ["Upload Resume", "Add Job Description", "Customize Instructions", "Download Enhanced Resume"];
   return (
     <div className="stepper-container">
@@ -33,6 +41,20 @@ const Stepper = ({ currentStep }) => {
   );
 };
 
+// --- These are the backend steps for simulation ---
+const PROGRESS_STEPS_SIMULATION = [
+  { step: 1, description: "Analyzing resume structure and sections" },
+  { step: 2, description: "Identifying key information to preserve" },
+  { step: 3, description: "Generating new content based on instructions (if any)" },
+  { step: 4, description: "Preparing content chunks for AI enhancement" },
+  { step: 5, description: "Enhancing resume content with AI (processing chunks)" },
+  { step: 6, description: "Applying enhancements while preserving formatting" },
+  { step: 7, description: "Integrating newly generated content" },
+  { step: 8, description: "Finalizing document and saving" },
+];
+const TOTAL_STEPS = PROGRESS_STEPS_SIMULATION.length;
+
+
 const EnhancementWorkbench = () => {
   const { userStatus, loading: authLoading, fetchUserStatus } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
@@ -48,6 +70,11 @@ const EnhancementWorkbench = () => {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [hasAgreedToDisclaimer, setHasAgreedToDisclaimer] = useState(false);
 
+  // --- NEW STATE FOR PROGRESS ---
+  const [progressStep, setProgressStep] = useState(0);
+  const [progressDescription, setProgressDescription] = useState('');
+  // --- END NEW STATE ---
+
   useEffect(() => {
     fetchUserStatus();
   }, [fetchUserStatus]);
@@ -57,6 +84,7 @@ const EnhancementWorkbench = () => {
   }, [currentStep]);
 
   useEffect(() => {
+    // ... (This logic for loading saved results is unchanged)
     const savedResult = sessionStorage.getItem('lastEnhancementResult');
     if (savedResult) {
       try {
@@ -76,6 +104,39 @@ const EnhancementWorkbench = () => {
       }
     }
   }, []);
+
+  // --- NEW: USEEFFECT FOR SIMULATING PROGRESS ---
+  useEffect(() => {
+    let timer;
+    if (isProcessing) {
+      // Set initial progress
+      setProgressStep(1);
+      setProgressDescription(PROGRESS_STEPS_SIMULATION[0].description);
+
+      // Function to advance the step
+      const advanceStep = (step) => {
+        if (step > TOTAL_STEPS) {
+          // Simulation finished, but we'll let the actual API call handle the final state change
+          return;
+        }
+        
+        // Update state
+        setProgressStep(step);
+        setProgressDescription(PROGRESS_STEPS_SIMULATION[step - 1].description);
+        
+        // Set timer for next step (e.g., 1.5 seconds per step)
+        timer = setTimeout(() => advanceStep(step + 1), 1500);
+      };
+
+      // Start the simulation after a brief delay
+      timer = setTimeout(() => advanceStep(2), 1500);
+    }
+
+    // Cleanup timer on unmount or if processing stops
+    return () => clearTimeout(timer);
+  }, [isProcessing]);
+  // --- END NEW USEEFFECT ---
+
 
   const handleResumeUpload = (file) => {
     setResumeFile(file);
@@ -102,8 +163,12 @@ const EnhancementWorkbench = () => {
   };
 
   const handleEnhance = async () => {
-    setIsProcessing(true);
+    setIsProcessing(true); // This will now trigger the progress simulation
     setError('');
+    
+    // Note: The simulation will run *in parallel* with the actual API call.
+    // In a real implementation, the simulation would be replaced by
+    // WebSocket/SSE listeners that update the progress state.
     
     try {
       const response = await resumeService.enhanceResume(resumeFile, jobDescription, userInstructions);
@@ -112,24 +177,28 @@ const EnhancementWorkbench = () => {
         sessionStorage.setItem('lastEnhancementResult', JSON.stringify(response.data));
         setCurrentStep(4);
         setShowDisclaimer(true);
-        fetchUserStatus(); // Refresh user status to show decreased credits
+        fetchUserStatus(); // Refresh user status
       }
     } catch (err) {
+      // ... (error handling remains the same)
       const errorMessage = err.response?.data?.message || 'Failed to enhance resume.';
-      // Check for the specific limit reached flag from the backend
       if (err.response?.data?.limit_reached) {
-          setError(errorMessage); // This will trigger the top-up display
+          setError(errorMessage);
       } else {
           setError(errorMessage);
       }
       setIsAutoProcessing(false);
     } finally {
-      setIsProcessing(false);
+      setIsProcessing(false); // This will stop the simulation (or it will have finished)
       setIsAutoProcessing(false);
+      // Reset progress for next run
+      setProgressStep(0);
+      setProgressDescription('');
     }
   };
 
   const handleDownload = async () => {
+    // ... (This function remains the same)
     if (!enhancementResult?.enhanced_resume_id) {
       setError('No enhanced resume ID available');
       return;
@@ -144,6 +213,7 @@ const EnhancementWorkbench = () => {
   };
   
   const handleDisclaimerAgreement = async () => {
+    // ... (This function remains the same)
     try {
       await resumeService.logDisclaimerAgreement(enhancementResult.enhanced_resume_id);
       setHasAgreedToDisclaimer(true);
@@ -155,6 +225,7 @@ const EnhancementWorkbench = () => {
   };
 
   const handleReset = () => {
+    // ... (This function remains the same, but add progress reset)
     fetchUserStatus();
     setCurrentStep(1);
     setResumeFile(null);
@@ -168,11 +239,20 @@ const EnhancementWorkbench = () => {
     sessionStorage.removeItem('disclaimerAgreed');
     setHasAgreedToDisclaimer(false);
     setShowDisclaimer(false);
+    
+    // --- RESET PROGRESS STATE ---
+    setIsProcessing(false);
+    setIsAutoProcessing(false);
+    setProgressStep(0);
+    setProgressDescription('');
+    // --- END RESET ---
+    
     const fileInput = document.getElementById('resume-upload');
     if (fileInput) fileInput.value = '';
   };
 
   if (authLoading) {
+    // ... (This remains the same)
     return (
       <div className="page-container">
         <div className="container">
@@ -182,19 +262,19 @@ const EnhancementWorkbench = () => {
     );
   }
 
-  // Determine if the user has hit their limit
   const hasHitLimit = userStatus && userStatus.resume_limit !== null && userStatus.remaining_enhancements <= 0;
 
   return (
     <div className="page-container">
       <div className="container">
+        {/* ... (Header remains the same) */}
         <div className="workbench-header">
           <h1>Resume Enhancement Workbench</h1>
           <p className="page-subtitle">A guided experience to perfectly tailor your resume.</p>
         </div>
         
-        {/* If the user has hit their limit OR the API returned a limit error, show the top-up panel */}
         {hasHitLimit || error.includes('Please top-up to continue') ? (
+          // ... (Limit panel remains the same)
           <div className="workbench-content">
             <div className="workbench-panel">
               <h3>Enhancement Limit Reached</h3>
@@ -215,6 +295,7 @@ const EnhancementWorkbench = () => {
             {error && <div className="error-message main-error">{error}</div>}
             <div className="workbench-content">
               {currentStep === 1 && <ResumeUploadStep onUpload={handleResumeUpload} />}
+              
               {currentStep === 2 && (
                 <JobDescriptionStep
                   resumeFile={resumeFile}
@@ -224,26 +305,40 @@ const EnhancementWorkbench = () => {
                   onBack={() => setCurrentStep(1)}
                 />
               )}
+
+              {/* --- MODIFIED STEP 3 RENDER LOGIC --- */}
               {currentStep === 3 && (
                 <>
                   {showInstructionPrompt && (
                     <InstructionPromptModal onChoice={handleInstructionChoice} />
                   )}
-                  {isAutoProcessing && <AutoProcessingStep />}
-                  {wantsToAddInstructions && !showInstructionPrompt && !isAutoProcessing && (
-                    <UserInstructionsStep
-                      userInstructions={userInstructions}
-                      setUserInstructions={setUserInstructions}
-                      onEnhance={handleEnhance}
-                      isProcessing={isProcessing}
-                      onBack={() => {
-                        setCurrentStep(2);
-                        setWantsToAddInstructions(null);
-                      }}
+                  
+                  {/* If processing (auto or manual), show the progress component */}
+                  {(isProcessing || isAutoProcessing) ? (
+                    <EnhancementProgress 
+                      currentStep={progressStep}
+                      totalSteps={TOTAL_STEPS}
+                      description={progressDescription}
                     />
+                  ) : (
+                    /* Otherwise, show the instructions step if 'Yes' was clicked */
+                    wantsToAddInstructions && !showInstructionPrompt && (
+                      <UserInstructionsStep
+                        userInstructions={userInstructions}
+                        setUserInstructions={setUserInstructions}
+                        onEnhance={handleEnhance}
+                        isProcessing={isProcessing}
+                        onBack={() => {
+                          setCurrentStep(2);
+                          setWantsToAddInstructions(null);
+                        }}
+                      />
+                    )
                   )}
                 </>
               )}
+              {/* --- END MODIFIED STEP 3 RENDER LOGIC --- */}
+              
               {currentStep === 4 && (
                 <>
                   {showDisclaimer && (
@@ -267,9 +362,13 @@ const EnhancementWorkbench = () => {
   );
 };
 
-const DisclaimerModal = ({ onAgree }) => {
-  const [isChecked, setIsChecked] = useState(false);
+// ... (DisclaimerModal, InstructionPromptModal, UserInstructionsStep, AutoProcessingStep, JobDescriptionStep, ResumeUploadStep, ResultsStep components remain the same)
+// Note: I'm including UserInstructionsStep and AutoProcessingStep below just in case,
+// but they are unchanged from the previous version you provided.
 
+const DisclaimerModal = ({ onAgree }) => {
+  // ... (This component is unchanged)
+  const [isChecked, setIsChecked] = useState(false);
   return (
     <div className="modal-overlay">
       <div className="modal-content disclaimer-modal-content">
@@ -309,6 +408,7 @@ const DisclaimerModal = ({ onAgree }) => {
 };
 
 const InstructionPromptModal = ({ onChoice }) => {
+  // ... (This component is unchanged)
   return (
     <div className="modal-overlay">
       <div className="modal-content instruction-prompt">
@@ -343,6 +443,7 @@ const InstructionPromptModal = ({ onChoice }) => {
 };
 
 const UserInstructionsStep = ({ userInstructions, setUserInstructions, onEnhance, isProcessing, onBack }) => {
+  // ... (This component is unchanged)
   const [showExamples, setShowExamples] = useState(false);
   const exampleInstructions = [
     "Emphasize leadership and team management experience over technical implementation details",
@@ -352,7 +453,6 @@ const UserInstructionsStep = ({ userInstructions, setUserInstructions, onEnhance
     "Focus heavily on quantifiable achievements and ROI metrics",
     "Address the 2-year gap by emphasizing continuous learning and certifications"
   ];
-
   return (
     <div className="workbench-panel">
       <h3>Step 3: Add Your Custom Instructions</h3>
@@ -374,7 +474,7 @@ const UserInstructionsStep = ({ userInstructions, setUserInstructions, onEnhance
         </button>
         {showExamples && (
           <div className="examples-list">
-            {exampleInstructions.map((index, example) => (
+            {exampleInstructions.map((example, index) => ( // Corrected .map usage
               <div 
                 key={index} 
                 className="example-item"
@@ -417,45 +517,55 @@ const UserInstructionsStep = ({ userInstructions, setUserInstructions, onEnhance
   );
 };
 
-const AutoProcessingStep = () => (
-  <div className="workbench-panel">
-    <h3>Step 3: Standard Enhancement in Progress</h3>
-    <p>You've selected the standard enhancement. The AI is now processing your resume.</p>
-    <div className="processing-placeholder">
-      <div className="spinner-large"></div>
-      <p>Please wait, this may take a moment...</p>
+const AutoProcessingStep = () => {
+  // ... (This component is unchanged but won't be used if isProcessing shows the new component)
+  // We'll keep it for now, but the new logic in EnhancementWorkbench's render
+  // effectively replaces this.
+  return (
+    <div className="workbench-panel">
+      <h3>Step 3: Standard Enhancement in Progress</h3>
+      <p>You've selected the standard enhancement. The AI is now processing your resume.</p>
+      <div className="processing-placeholder">
+        <div className="spinner-large"></div>
+        <p>Please wait, this may take a moment...</p>
+      </div>
+      <textarea className="instructions-textarea" placeholder="Processing, please wait..." rows="8" disabled={true} />
+      <div className="character-count">...</div>
+      <div className="panel-actions">
+        <button className="submit-button secondary" disabled={true}>Back</button>
+        <button className="submit-button" disabled={true}><span className="spinner"></span>Enhancing...</button>
+      </div>
     </div>
-    <textarea className="instructions-textarea" placeholder="Processing, please wait..." rows="8" disabled={true} />
-    <div className="character-count">...</div>
-    <div className="panel-actions">
-      <button className="submit-button secondary" disabled={true}>Back</button>
-      <button className="submit-button" disabled={true}><span className="spinner"></span>Enhancing...</button>
-    </div>
-  </div>
-);
+  );
+};
 
-const JobDescriptionStep = ({ resumeFile, jobDescription, setJobDescription, onNext, onBack }) => (
-  <div className="workbench-panel">
-    <h3>Step 2: Add the Job Description</h3>
-    <p>Paste the description for your target role below.</p>
-    <div className="resume-preview-card">
-      <strong>Selected Resume:</strong> {resumeFile.name}
+
+const JobDescriptionStep = ({ resumeFile, jobDescription, setJobDescription, onNext, onBack }) => {
+  // ... (This component is unchanged)
+  return (
+    <div className="workbench-panel">
+      <h3>Step 2: Add the Job Description</h3>
+      <p>Paste the description for your target role below.</p>
+      <div className="resume-preview-card">
+        <strong>Selected Resume:</strong> {resumeFile.name}
+      </div>
+      <textarea
+        className="jd-textarea"
+        value={jobDescription}
+        onChange={(e) => setJobDescription(e.target.value)}
+        placeholder="Paste the job description here..."
+        rows="12"
+      />
+      <div className="panel-actions">
+        <button className="submit-button secondary" onClick={onBack}>Back</button>
+        <button className="submit-button" onClick={onNext} disabled={jobDescription.length < 50}>Next</button>
+      </div>
     </div>
-    <textarea
-      className="jd-textarea"
-      value={jobDescription}
-      onChange={(e) => setJobDescription(e.target.value)}
-      placeholder="Paste the job description here..."
-      rows="12"
-    />
-    <div className="panel-actions">
-      <button className="submit-button secondary" onClick={onBack}>Back</button>
-      <button className="submit-button" onClick={onNext} disabled={jobDescription.length < 50}>Next</button>
-    </div>
-  </div>
-);
+  );
+};
 
 const ResumeUploadStep = ({ onUpload }) => {
+  // ... (This component is unchanged)
   const [error, setError] = useState('');
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -466,7 +576,6 @@ const ResumeUploadStep = ({ onUpload }) => {
       onUpload(file);
     }
   };
-
   return (
     <div className="workbench-panel">
       <h3>Step 1: Upload Your Resume</h3>
@@ -484,19 +593,22 @@ const ResumeUploadStep = ({ onUpload }) => {
   );
 };
 
-const ResultsStep = ({ onDownload, onReset, isDownloadDisabled }) => (
-  <div className="workbench-panel results-panel">
-    <div className="results-icon">✓</div>
-    <h3>Enhancement Complete!</h3>
-    <p>Your AI-powered resume is ready for download.</p>
-    <p>Kindly note that the downloaded resume will include a detailed summary of all enhancements at the end</p>
-    <div className="panel-actions simplified">
-      <button className="submit-button secondary" onClick={onReset}>Enhance Another</button>
-      <button className="submit-button" onClick={onDownload} disabled={isDownloadDisabled}>
-        {isDownloadDisabled ? 'Agree to Terms to Download' : 'Download Your Resume'}
-      </button>
+const ResultsStep = ({ onDownload, onReset, isDownloadDisabled }) => {
+  // ... (This component is unchanged)
+  return (
+    <div className="workbench-panel results-panel">
+      <div className="results-icon">✓</div>
+      <h3>Enhancement Complete!</h3>
+      <p>Your AI-powered resume is ready for download.</p>
+      <p>Kindly note that the downloaded resume will include a detailed summary of all enhancements at the end</p>
+      <div className="panel-actions simplified">
+        <button className="submit-button secondary" onClick={onReset}>Enhance Another</button>
+        <button className="submit-button" onClick={onDownload} disabled={isDownloadDisabled}>
+          {isDownloadDisabled ? 'Agree to Terms to Download' : 'Download Your Resume'}
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default Home;

@@ -535,5 +535,3 @@ Example for a NEW JOB entry:
         
         print("\n--- DIAGNOSTIC LOG END ---\n")
         return new_count
-
-    
