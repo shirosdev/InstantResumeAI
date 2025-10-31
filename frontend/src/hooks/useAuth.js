@@ -26,25 +26,6 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [userStatus, setUserStatus] = useState(null);
 
-  const fetchUserStatus = useCallback(async () => {
-    if (!sessionStorage.getItem('access_token')) {
-      console.log('No access token, skipping status fetch');
-      return null;
-    }
-    try {
-      console.log('Fetching user status...');
-      const statusResponse = await authService.getUserStatus();
-      if (statusResponse.data?.status) {
-        console.log('User status fetched:', statusResponse.data.status);
-        setUserStatus(statusResponse.data.status);
-        return statusResponse.data.status;
-      }
-    } catch (err) {
-      console.error("Could not fetch user status:", err);
-    }
-    return null;
-  }, []);
-
   const performLogout = useCallback(async (isSilent = false) => {
     setLoading(true);
 
@@ -71,6 +52,33 @@ export const AuthProvider = ({ children }) => {
 
     setLoading(false);
   }, []);
+
+  const fetchUserStatus = useCallback(async () => {
+    if (!sessionStorage.getItem('access_token')) {
+      console.log('No access token, skipping status fetch');
+      return null;
+    }
+    try {
+      console.log('Fetching user status...');
+      const statusResponse = await authService.getUserStatus();
+      if (statusResponse.data?.status) {
+        console.log('User status fetched:', statusResponse.data.status);
+        setUserStatus(statusResponse.data.status);
+        return statusResponse.data.status;
+      }
+    } catch (err) {
+      console.error("Could not fetch user status:", err);
+      
+      // --- START OF FIX ---
+      // If we get a 401 (Unauthorized), the token is bad. Log the user out.
+      if (err.response && err.response.status === 401) {
+        console.log("Token expired or invalid. Logging out silently.");
+        performLogout(true); // 'true' for a silent logout
+      }
+      // --- END OF FIX ---
+    }
+    return null;
+  }, [performLogout]); // <-- MODIFIED: Added performLogout dependency
 
   useEffect(() => {
     let mounted = true;

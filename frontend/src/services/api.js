@@ -26,13 +26,41 @@ api.interceptors.request.use(
   }
 );
 
-// Simplified response interceptor - NO automatic refresh
+// --- MODIFIED RESPONSE INTERCEPTOR ---
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // If we get a 401, just reject it - let the calling code handle it
+    const { config, response } = error;
+    const originalRequest = config;
+
+    // Check for 401 Unauthorized
+    if (response && response.status === 401) {
+      
+      // Prevent redirect loop if the failed request was already to login/register
+      if (originalRequest.url.endsWith('/auth/login') || originalRequest.url.endsWith('/auth/register')) {
+        return Promise.reject(error);
+      }
+
+      // Set the expiration message for the login page to pick up
+      sessionStorage.setItem('session_expired_message', 'Your session has expired. Please log in again.');
+
+      // Clear all session data
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
+      sessionStorage.removeItem('user_data');
+      sessionStorage.removeItem('lastEnhancementResult'); // Also clear app-specific data
+      sessionStorage.removeItem('disclaimerAgreed'); // Clear app-specific data
+
+      // Force redirect to login page. Check to avoid redundant navigation.
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    
+    // For all other errors, just reject them
     return Promise.reject(error);
   }
 );
+// --- END OF MODIFICATION ---
 
-export default api; 
+export default api;

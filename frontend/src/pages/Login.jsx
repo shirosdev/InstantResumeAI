@@ -20,22 +20,41 @@ const Login = () => {
   const [locationMessageType, setLocationMessageType] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Handle messages from password reset flow
+  // --- MODIFIED useEffect TO HANDLE SESSION EXPIRATION ---
   useEffect(() => {
-    if (location.state?.message) {
-      setLocationMessage(location.state.message);
-      setLocationMessageType(location.state.messageType || 'info');
-      
+    let message = '';
+    let type = 'info';
+
+    // 1. Check for the session expired message from the API interceptor
+    const sessionExpiredMsg = sessionStorage.getItem('session_expired_message');
+    if (sessionExpiredMsg) {
+      message = sessionExpiredMsg;
+      type = 'error'; // Show it as an error
+      sessionStorage.removeItem('session_expired_message'); // Clear it immediately
+    } 
+    // 2. Check for messages passed from other pages (like password reset)
+    else if (location.state?.message) {
+      message = location.state.message;
+      type = location.state.messageType || 'info';
       // Clear the location state to prevent message persistence
       window.history.replaceState({}, document.title);
-      
-      // Auto-clear message after 5 seconds
-      setTimeout(() => {
+    }
+
+    // If we found any message, display it and set a timer to clear it
+    if (message) {
+      setLocationMessage(message);
+      setLocationMessageType(type);
+
+      const timer = setTimeout(() => {
         setLocationMessage('');
         setLocationMessageType('');
-      }, 5000);
+      }, 5000); // Clear message after 5 seconds
+
+      // Cleanup timer if component unmounts
+      return () => clearTimeout(timer);
     }
-  }, [location.state]);
+  }, [location.state]); // Re-run if location.state changes
+  // --- END OF MODIFICATION ---
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -83,14 +102,14 @@ const Login = () => {
           Sign in to continue enhancing your resume with AI-powered optimization
         </p>
         
-        {/* Location-based messages (from password reset flow) */}
+        {/* Location-based messages (from password reset OR session expiration) */}
         {locationMessage && (
           <div className={locationMessageType === 'success' ? 'success-message' : 'auth-error'}>
             {locationMessage}
           </div>
         )}
         
-        {/* Standard error messages */}
+        {/* Standard error messages (only show if no location message) */}
         {(error || authError) && !locationMessage && (
           <div className="auth-error">
             {error || authError}
