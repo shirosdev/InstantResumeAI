@@ -33,7 +33,9 @@ const Footer = () => {
             <h3>Contact Us</h3>
             <p>Email: info@instantresumeai.com</p>
             <p>Phone: (800) 971-8013</p>
-            <p>support: support@instantresumeai.com</p>
+            <p>support: info@instantresumeai.com</p>
+            <p>address: 5080 Spectrum Drive,</p>
+            <p>Suite 575E, Addison TX 75001</p>
           </div>
         </div>
         <div className="footer-bottom">
