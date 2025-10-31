@@ -34,6 +34,8 @@ import History from './pages/History';
 import CheckoutPage from './pages/Checkout'; // <-- Import new page
 import PaymentStatusPage from './pages/PaymentStatus'; // <-- Import new page
 
+import AnalyticsTracker from './components/AnalyticsTracker';
+
 // Styles
 import './App.css';
 import './styles/Pages.css';
@@ -68,6 +70,8 @@ const AppContent = () => {
     <div className="App">
       <Navbar />
       <main id="main-content" className="main-content">
+      <AnalyticsTracker />
+      
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
