@@ -22,6 +22,7 @@ class SupportTicket(db.Model):
     
     user_id = Column(Integer, ForeignKey('users.user_id', ondelete='SET NULL'), nullable=True)
     user = relationship('User', back_populates='support_tickets')
+    replies = relationship('TicketReply', back_populates='ticket', lazy='dynamic', cascade='all, delete-orphan')
 
     def to_dict(self):
         """Convert ticket object to a dictionary."""
