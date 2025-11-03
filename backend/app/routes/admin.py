@@ -14,6 +14,9 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 from app.models.api_log import ApiLog
 from app.models.support_ticket import SupportTicket
+from app.models.ticket_reply import TicketReply
+from flask_jwt_extended import get_jwt_identity
+from app.services.email_service import EmailService
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -374,7 +377,8 @@ def get_system_stats():
 
     except Exception as e:
         return jsonify(message="Failed to retrieve system monitoring stats", error=str(e)), 500
-    
+
+
 @admin_bp.route('/support-tickets', methods=['GET'])
 @admin_required()
 def get_support_tickets():
@@ -405,3 +409,95 @@ def resolve_support_ticket(ticket_id):
     except Exception as e:
         db.session.rollback()
         return jsonify(message="Failed to update ticket status", error=str(e)), 500
+
+@admin_bp.route('/support-tickets/<int:ticket_id>', methods=['GET'])
+@admin_required()
+def get_ticket_details(ticket_id):
+    """Fetches a single support ticket along with its full reply thread."""
+    try:
+        ticket = SupportTicket.query.get(ticket_id)
+        if not ticket:
+            return jsonify(message="Ticket not found"), 404
+        
+        ticket_data = ticket.to_dict()
+        ticket_data['replies'] = [reply.to_dict() for reply in ticket.replies.order_by(TicketReply.sent_at.asc())]
+        
+        return jsonify(ticket_data), 200
+    except Exception as e:
+        return jsonify(message="Failed to retrieve ticket details", error=str(e)), 500
+
+@admin_bp.route('/support-tickets/<int:ticket_id>/reply', methods=['POST'])
+@admin_required()
+def post_ticket_reply(ticket_id):
+    """Adds a new reply from an admin to a support ticket."""
+    try:
+        admin_id = get_jwt_identity()
+        data = request.get_json()
+        reply_message = data.get('reply_message')
+
+        if not reply_message or not reply_message.strip():
+            return jsonify(message="Reply message cannot be empty"), 400
+
+        ticket = SupportTicket.query.get(ticket_id)
+        if not ticket:
+            return jsonify(message="Ticket not found"), 404
+
+        new_reply = TicketReply(
+            ticket_id=ticket_id,
+            user_id=admin_id,
+            reply_message=reply_message.strip()
+        )
+        db.session.add(new_reply)
+        db.session.commit()
+        
+        # Here you would also add logic to email the user with the reply
+        # email_service = EmailService()
+        # email_service.send_ticket_reply(to_email=ticket.email, subject=ticket.subject, message=reply_message)
+
+        return jsonify(new_reply.to_dict()), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(message="Failed to post reply", error=str(e)), 500
+
+@admin_bp.route('/broadcast-email', methods=['POST'])
+@admin_required()
+def broadcast_email():
+    """Sends a broadcast email to all active users."""
+    data = request.get_json()
+    subject = data.get('subject')
+    message = data.get('message') # This will be the HTML content
+
+    if not subject or not message:
+        return jsonify(success=False, message="Subject and message are required."), 400
+
+    try:
+        # Get all active users
+        active_users = User.query.filter_by(is_active=True).all()
+        if not active_users:
+            return jsonify(success=False, message="No active users found."), 404
+
+        email_service = EmailService()
+        sent_count = 0
+        failed_count = 0
+
+        # Loop and send (for a large user base, this should be a background task)
+        for user in active_users:
+            success = email_service.send_broadcast_email(
+                to_email=user.email,
+                user_name=user.first_name or user.username,
+                subject=subject,
+                html_message=message
+            )
+            if success:
+                sent_count += 1
+            else:
+                failed_count += 1
+        
+        return jsonify(
+            success=True,
+            message=f"Broadcast sent. {sent_count} emails successful, {failed_count} failed."
+        ), 200
+
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 500

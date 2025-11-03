@@ -42,6 +42,31 @@ class EmailService:
             logger.error(f"Failed to send welcome email to {to_email}: {str(e)}")
             return False
 
+    def send_broadcast_email(self, to_email: str, user_name: str, subject: str, html_message: str) -> bool:
+        """Sends a generic broadcast email to a user."""
+        try:
+            # Create a simple wrapper for the broadcast message
+            full_html_content = f"""
+            <p>Hi {user_name},</p>
+            {html_message}
+            <br>
+            <p>Best regards,<br>The InstantResumeAI Team</p>
+            """
+            
+            # Create a plain text version
+            # This is a simple conversion; a more complex one would strip HTML tags
+            text_content = f"Hi {user_name},\n\n{html_message.replace('<br>', '\n').replace('<p>', '').replace('</p>', '\n')}\n\nBest regards,\nThe InstantResumeAI Team"
+
+            return self._send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=full_html_content,
+                text_content=text_content
+            )
+        except Exception as e:
+            logger.error(f"Failed to send BROADCAST email to {to_email}: {str(e)}")
+            return False
+
     def send_payment_receipt_email(self, user, payment_details) -> bool:
         """Generates a PDF receipt and sends it as an email attachment."""
         pdf_path = None # Ensure pdf_path is defined

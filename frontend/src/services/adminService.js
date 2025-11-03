@@ -55,6 +55,27 @@ const adminService = {
   deleteUser: (userId) => {
     return api.delete(`/admin/users/${userId}`);
   },
+
+  manualAddCredits: (userId, credits, reason) => {
+    return api.post('/billing/manual-add-credits', {
+      user_id: parseInt(userId, 10),
+      credits: parseInt(credits, 10),
+      reason: reason
+    });
+  },
+
+  cleanupExpiredTokens: () => {
+    
+    return api.post('/auth/cleanup-expired-tokens');
+  },
+  checkWebhook: () => {
+    // This endpoint exists in your app/routes/billing.py
+    return api.get('/billing/webhook-test');
+  },
+  sendBroadcastEmail: (subject, message) => {
+    return api.post('/admin/broadcast-email', { subject, message });
+  },
+
 };
 
 export default adminService;

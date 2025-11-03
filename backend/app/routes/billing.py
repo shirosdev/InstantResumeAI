@@ -258,13 +258,27 @@ def manual_add_credits():
 
         data = request.get_json()
         target_user_id = data.get('user_id')
-        credits_to_add = data.get('credits', 0)
-        reason = data.get('reason', 'Manual credit addition')
 
-        if not target_user_id or credits_to_add <= 0:
+        try:
+            # Try to cast the 'credits' value to an integer
+            credits_to_add = int(data.get('credits', 0))
+        except (ValueError, TypeError):
+            # This catches decimals like "1.5" or text like "abc"
             return jsonify({
                 'success': False,
-                'message': 'user_id and credits (>0) are required'
+                'message': 'Credits must be a whole number.'
+            }), 400
+        
+        reason = data.get('reason', 'Manual credit addition')
+
+        try:
+            # Try to cast the 'credits' value to an integer
+            credits_to_add = int(data.get('credits', 0))
+        except (ValueError, TypeError):
+            # This catches decimals like "1.5" or text like "abc"
+            return jsonify({
+                'success': False,
+                'message': 'Credits must be a whole number.'
             }), 400
 
         user_subscription = UserSubscription.query.filter_by(user_id=target_user_id).first()

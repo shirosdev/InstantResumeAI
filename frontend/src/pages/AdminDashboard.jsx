@@ -12,6 +12,7 @@ import AdminOverview from './admin/AdminOverview';
 import UsageTracking from './admin/UsageTracking';
 import SecurityCompliance from './admin/SecurityCompliance';
 import Support from './admin/Support';
+import AdminActions from './admin/AdminActions';
 
 const AdminPlaceholder = ({ title }) => (
   <div>
@@ -88,7 +89,7 @@ const AdminRoutes = () => {
                 {/* FIX: Removed the duplicate route for "monitoring" */}
                 <Route path="monitoring" element={<SystemMonitoring />} />
                 <Route path="support" element={<Support />} />
-                <Route path="actions" element={<AdminPlaceholder title="Admin Actions" />} />
+                <Route path="actions" element={<AdminActions />} />
             </Route>
         </Routes>
     )
