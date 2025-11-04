@@ -600,7 +600,7 @@ const ResultsStep = ({ onDownload, onReset, isDownloadDisabled }) => {
       <div className="results-icon">✓</div>
       <h3>Enhancement Complete!</h3>
       <p>Your AI-powered resume is ready for download.</p>
-      <p>Kindly note that the downloaded resume will include a detailed summary of all enhancements at the end</p>
+      <p>Please download your resume now. Download links are temporary and will expire in 10 minutes. We recommend saving all files immediately</p>
       <div className="panel-actions simplified">
         <button className="submit-button secondary" onClick={onReset}>Enhance Another</button>
         <button className="submit-button" onClick={onDownload} disabled={isDownloadDisabled}>
