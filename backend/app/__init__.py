@@ -32,6 +32,7 @@ def create_app():
     # Configuration
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
     app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key')
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=10)
     # ... (rest of the config remains the same) ...
 
     # Database configuration
