@@ -115,7 +115,7 @@ const EnhancementWorkbench = () => {
 
       // Function to advance the step
       const advanceStep = (step) => {
-        if (step > TOTAL_STEPS) {
+        if (step > TOTAL_STEPS -1 ) {
           // Simulation finished, but we'll let the actual API call handle the final state change
           return;
         }
@@ -291,7 +291,7 @@ const EnhancementWorkbench = () => {
           </div>
         ) : (
           <>
-            <Stepper currentStep={currentStep} />
+            {!(isProcessing || isAutoProcessing) && <Stepper currentStep={currentStep} />}
             {error && <div className="error-message main-error">{error}</div>}
             <div className="workbench-content">
               {currentStep === 1 && <ResumeUploadStep onUpload={handleResumeUpload} />}
@@ -342,8 +342,8 @@ const EnhancementWorkbench = () => {
               {currentStep === 4 && (
                 <>
                   {showDisclaimer && (
-                    <DisclaimerModal 
-                      userStatus={userStatus}
+                    <DisclaimerModal
+                      userStatus={userStatus} 
                       onAgree={handleDisclaimerAgreement}
                       onClose={() => setShowDisclaimer(false)}
                     />
@@ -391,7 +391,7 @@ const DisclaimerModal = ({ onAgree,userStatus }) => {
             </p>
           </div>
         )}
-        
+
         <div className="disclaimer-agreement">
           <input 
             type="checkbox" 
