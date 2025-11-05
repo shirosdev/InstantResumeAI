@@ -343,6 +343,7 @@ const EnhancementWorkbench = () => {
                 <>
                   {showDisclaimer && (
                     <DisclaimerModal 
+                      userStatus={userStatus}
                       onAgree={handleDisclaimerAgreement}
                       onClose={() => setShowDisclaimer(false)}
                     />
@@ -366,7 +367,7 @@ const EnhancementWorkbench = () => {
 // Note: I'm including UserInstructionsStep and AutoProcessingStep below just in case,
 // but they are unchanged from the previous version you provided.
 
-const DisclaimerModal = ({ onAgree }) => {
+const DisclaimerModal = ({ onAgree,userStatus }) => {
   // ... (This component is unchanged)
   const [isChecked, setIsChecked] = useState(false);
   return (
@@ -379,6 +380,18 @@ const DisclaimerModal = ({ onAgree }) => {
         <div className="disclaimer-text">
           I understand and agree that the resume generated/enhanced by InstantResumeAI is AI-assisted content. I am solely responsible for reviewing, verifying, and using the final document, and InstantResumeAI is not liable for any inaccuracies, misrepresentations, and/or outcomes resulting from its use.
         </div>
+
+        {userStatus && (
+          <div className="credit-usage-notification">
+            <p>
+              <strong>1 credit has been used.</strong>
+            </p>
+            <p>
+              You have <strong>{userStatus.remaining_enhancements === 'unlimited' ? 'unlimited' : userStatus.remaining_enhancements}</strong> credits remaining.
+            </p>
+          </div>
+        )}
+        
         <div className="disclaimer-agreement">
           <input 
             type="checkbox" 

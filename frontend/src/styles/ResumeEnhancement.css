@@ -797,3 +797,20 @@
   box-shadow: none;
   transform: none;
 }
+.credit-usage-notification {
+  padding: 1rem;
+  background: var(--bg-secondary); /* Light gray */
+  border: 1px solid var(--border-primary);
+  border-radius: var(--border-radius-lg);
+  margin: 1.5rem 0;
+  text-align: center;
+}
+.credit-usage-notification p {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.credit-usage-notification p strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
