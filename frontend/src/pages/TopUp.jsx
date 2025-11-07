@@ -1,5 +1,5 @@
 // frontend/src/pages/TopUp.jsx
-// RECTIFIED: Merged dropdown from previous code with checkbox from updated code.
+// --- COMPLETE UPDATED FILE ---
 
 import React, { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
@@ -7,26 +7,21 @@ import { Elements } from '@stripe/react-stripe-js';
 import PaymentForm from '../components/PaymentForm';
 import billingService from '../services/billingService';
 import '../styles/ResumeEnhancement.css'; // For button styles
-import '../styles/Pricing.css'; // For layout
+import '../styles/Pricing.css'; // For layout and new top-up styles
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 const TopUpPage = () => {
-  // State from your previous code
   const [quantity, setQuantity] = useState(5); // Default to 5 credits
-  
-  // State from the updated code
   const [clientSecret, setClientSecret] = useState("");
   const [error, setError] = useState("");
-  const [isInitializing, setIsInitializing] = useState(false); // Renamed for clarity
+  const [isInitializing, setIsInitializing] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  // This function is now updated to send 'agreedToTerms'
   const handleCreatePaymentIntent = async () => {
     setIsInitializing(true);
     setError("");
 
-    // Check for agreement first
     if (!agreedToTerms) {
       setError('You must agree to the non-refundable terms to proceed.');
       setIsInitializing(false);
@@ -34,7 +29,6 @@ const TopUpPage = () => {
     }
 
     try {
-      // Use the corrected service call that sends both quantity and agreement
       const res = await billingService.createTopUpPaymentIntent(quantity, agreedToTerms);
       
       if (res.data.clientSecret) {
@@ -54,65 +48,52 @@ const TopUpPage = () => {
     appearance: { theme: 'stripe' },
   };
 
-  // Calculate price based on quantity ($1 per enhancement assumed)
-  const price = quantity; // Simple calculation assuming $1 each
+  const price = quantity; // $1 per credit
 
   return (
-    <div className="page-container">
+    <div className="page-container billing-page">
       <div className="container">
-        {/* Using workbench-panel for the card style */}
-        <div className="workbench-panel" style={{ maxWidth: '600px', margin: '2rem auto' }}>
+        {/* Use the new modern card style */}
+        <div className="billing-card-modern top-up-panel">
+          
           {!clientSecret ? (
+            /* --- STEP 1: Amount Selection --- */
             <>
               <h3>Top-Up Your Enhancements</h3>
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '2rem' }}>
                 Purchase more credits to continue optimizing your resume.
               </p>
+              
               {error && <div className="error-message main-error">{error}</div>}
               
-              {/* This is the dropdown UI from your previous code */}
-              <div className="form-group" style={{maxWidth: '300px', margin: '2rem auto'}}>
-                <label 
-                  htmlFor="quantity-select"
-                  style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', marginBottom: '1rem' }}
-                >
+              <div className="top-up-form-group">
+                <label htmlFor="quantity-select">
                   Select Number of Credits
                 </label>
                 <select
                   id="quantity-select"
-                  className="jd-textarea" // Re-using a style that works for select
+                  className="top-up-quantity-select" // Use new custom class
                   value={quantity}
                   onChange={(e) => setQuantity(parseInt(e.target.value))}
-                  style={{ fontSize: '1.1rem', textAlign: 'center', padding: '0.8rem' }}
                 >
-                  <option value={1}>1 Credits ($1.00)</option>
+                  <option value={1}>1 Credit ($1.00)</option>
                   <option value={5}>5 Credits ($5.00)</option>
                   <option value={10}>10 Credits ($10.00)</option>
                 </select>
               </div>
               
-              {/* This is the checkbox from the updated code */}
-              <div className="payment-terms-agreement" style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                gap: '0.75rem', 
-                margin: '2rem 0 1.5rem 0', 
-                color: 'var(--text-primary)' 
-              }}>
+              <div className="payment-terms-agreement">
                 <input
                   type="checkbox"
                   id="terms-agree"
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  style={{ width: '18px', height: '18px', accentColor: 'var(--text-accent)' }}
                 />
-                <label htmlFor="terms-agree" style={{ margin: 0, fontWeight: 500, cursor: 'pointer' }}>
+                <label htmlFor="terms-agree">
                   I understand and agree that this purchase is non-refundable.
                 </label>
               </div>
 
-              {/* This button checks for agreement */}
               <div className="panel-actions simplified">
                 <button
                   className="submit-button"
@@ -124,17 +105,21 @@ const TopUpPage = () => {
               </div>
             </>
           ) : (
-            // This is the payment form section
+            /* --- STEP 2: Payment Form --- */
             <>
               <h3>Complete Your Payment</h3>
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
                 You are purchasing: <strong>{quantity} Credits (${price.toFixed(2)})</strong>
               </p>
+              
               <Elements options={options} stripe={stripePromise}>
-                {/* Pass the agreement props to PaymentForm */}
-                <PaymentForm agreedToTerms={agreedToTerms} setAgreedToTerms={setAgreedToTerms} />
+                <PaymentForm 
+                  agreedToTerms={agreedToTerms} 
+                  setAgreedToTerms={setAgreedToTerms} 
+                />
               </Elements>
-              <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+              
+              <div className="panel-actions simplified" style={{marginTop: '2rem', borderTop: '1px solid var(--border-primary)', paddingTop: '2rem'}}>
                 <button 
                   onClick={() => { setClientSecret(''); setError(''); }} 
                   className="submit-button secondary"

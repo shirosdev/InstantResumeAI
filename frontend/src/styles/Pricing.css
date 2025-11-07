@@ -278,3 +278,82 @@
   .plan-button { padding: 0.8rem 1.2rem; font-size: 0.95rem; }
   .card-features li { padding: 0.7rem 0; font-size: 0.9rem; }
 }
+.top-up-panel {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2.5rem; /* Use same padding as modern card */
+}
+
+/* Style for the form group */
+.top-up-form-group {
+  max-width: 350px;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+.top-up-form-group label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 1.25rem;
+  font-size: 1.1rem;
+}
+
+/* Style for the dropdown */
+.top-up-quantity-select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  text-align: center;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  appearance: none; /* Remove default arrow */
+  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236C757D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1em;
+  cursor: pointer;
+}
+
+.top-up-quantity-select:focus {
+  outline: none;
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+  background-color: var(--bg-primary);
+}
+
+/* Style for the terms checkbox */
+.payment-terms-agreement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 2.5rem 0 2rem 0;
+  color: var(--text-primary);
+}
+
+.payment-terms-agreement input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--text-accent); /* Red checkbox */
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: -2px; /* Align with text */
+}
+
+.payment-terms-agreement label {
+  margin: 0;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-secondary); /* Medium gray */
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.payment-terms-agreement label:hover {
+  color: var(--text-primary);
+}
