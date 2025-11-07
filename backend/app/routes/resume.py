@@ -1,4 +1,6 @@
-# backend/app/routes/resume.py - Updated with Advanced Processor
+# backend/app/routes/resume.py
+# --- FULL RECTIFIED FILE ---
+
 from flask import Blueprint, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 import os
@@ -31,6 +33,11 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_FOLDER, 'resumes'), exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_FOLDER, 'enhanced'), exist_ok=True)
 
+def print_progress(step, total_steps, description):
+    """A simple callback function to print progress to the console."""
+    percentage = int((step / total_steps) * 100)
+    print(f"[PROGRESS {percentage}%] Step {step}/{total_steps}: {description}")
+
 def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -50,7 +57,6 @@ def validate_user_instructions(instructions):
     if len(instructions) > MAX_INSTRUCTION_LENGTH:
         return False, f"Instructions must be less than {MAX_INSTRUCTION_LENGTH} characters"
     
-    # Only block explicitly harmful instructions
     harmful_patterns = [
         (r'\b(?:create|invent|fabricate)\s+(?:fake|false|fictitious)\s+\w+', 
          "Instructions must be based on truthful information"),
@@ -69,19 +75,14 @@ def get_text_from_docx(filepath):
     try:
         doc = docx.Document(filepath)
         full_text = []
-        
-        # Extract from paragraphs
         for para in doc.paragraphs:
             if para.text.strip():
                 full_text.append(para.text)
-        
-        # Extract from tables
         for table in doc.tables:
             for row in table.rows:
                 for cell in row.cells:
                     if cell.text.strip():
                         full_text.append(cell.text)
-        
         return '\n'.join(full_text)
     except Exception as e:
         print(f"Error extracting text from {filepath}: {e}")
@@ -100,7 +101,6 @@ def enhance_resume():
 
     # --- CREDIT CHECK LOGIC ---
     try:
-        # Force a fresh query to get the most up-to-date subscription data
         db.session.expire_all()
         user_subscription = UserSubscription.query.filter_by(user_id=user_id_from_token).first()
         if not user_subscription:
@@ -110,13 +110,16 @@ def enhance_resume():
         if not plan:
              return jsonify({'message': 'Could not verify subscription plan.'}), 500
 
-        # Calculate total enhancements used and total available
         enhancement_count = ResumeEnhancement.query.filter_by(user_id=user_id_from_token).count()
-        total_available = float('inf') if plan.resume_limit is None else plan.resume_limit + (user_subscription.enhancement_credits or 0)
+        
+        total_available = 0
+        if plan.resume_limit is not None:
+            total_available = plan.resume_limit + (user_subscription.enhancement_credits or 0)
+        else:
+            total_available = float('inf') 
 
         print(f"[CREDIT CHECK] User {user_id_from_token}: Used={enhancement_count}, Available={total_available}")
 
-        # Block the user if they have no enhancements left
         if enhancement_count >= total_available:
             return jsonify({
                 'message': 'You have used all your free enhancements and credits. Please top-up to continue.',
@@ -175,7 +178,8 @@ def enhance_resume():
             original_file_path=filepath,
             job_description=job_description,
             user_instructions=user_instructions if user_instructions else None,
-            output_path=enhanced_filepath
+            output_path=enhanced_filepath,
+            progress_callback=print_progress
         )
         
         if not processing_result.get('success'):
@@ -216,8 +220,6 @@ def enhance_resume():
         new_activity_log = ActivityLog(user_id=user_id_from_token, action='resume_enhanced', description=activity_description)
         db.session.add(new_activity_log)
         
-        # --- CORRECTED CREDIT DECREMENT LOGIC ---
-        # This now runs only AFTER the enhancement process is successful.
         if plan.resume_limit is not None and enhancement_count >= plan.resume_limit:
             print(f"User {user_id_from_token} is using a purchased credit. Attempting to decrement.")
             
@@ -228,7 +230,6 @@ def enhance_resume():
                 'enhancement_credits': UserSubscription.enhancement_credits - 1,
                 'updated_at': datetime.utcnow()
             }, synchronize_session=False)
-        # --- END OF CORRECTION ---
         
         db.session.commit()
 
@@ -262,10 +263,8 @@ def enhance_resume():
         
         return jsonify({'message': 'An unexpected error occurred during enhancement', 'error': str(e)}), 500
 
-# FIX 2: The function now accepts the plan object
 def cleanup_old_enhancements(user_id, plan):
     """Clean up old enhancement records and files, but only for users with a limit."""
-    # If the plan has no limit, do nothing.
     if plan and plan.resume_limit is None:
         print(f"Skipping cleanup for user {user_id} on unlimited plan.")
         return
@@ -278,18 +277,15 @@ def cleanup_old_enhancements(user_id, plan):
             records_to_delete = all_enhancements[:-5]
             
             for record in records_to_delete:
-                # Delete enhanced file
                 enhanced_file = os.path.join(UPLOAD_FOLDER, 'enhanced', record.enhanced_filename)
                 if os.path.exists(enhanced_file):
                     os.remove(enhanced_file)
                 
-                # Delete original file
                 original_file_id = record.enhanced_filename.replace('enhanced_', '').replace('.docx', '')
                 original_file = os.path.join(UPLOAD_FOLDER, 'resumes', f"{original_file_id}.docx")
                 if os.path.exists(original_file):
                     os.remove(original_file)
                 
-                # Delete database record
                 db.session.delete(record)
             
             db.session.commit()
@@ -313,7 +309,6 @@ def get_enhancement_history():
         history_list = []
         for record in history_records:
             record_dict = record.to_dict()
-            # Add file existence check
             enhanced_file = os.path.join(UPLOAD_FOLDER, 'enhanced', record.enhanced_filename)
             record_dict['file_available'] = os.path.exists(enhanced_file)
             history_list.append(record_dict)
@@ -324,26 +319,24 @@ def get_enhancement_history():
         print(f"Error fetching history: {str(e)}")
         return jsonify({'message': 'Failed to retrieve enhancement history'}), 500
 
-@resume_bp.route('/download/<resume_id>', methods=['GET'])
+# --- ADD 'OPTIONS' TO THE METHODS LIST ---
+@resume_bp.route('/download/<resume_id>', methods=['GET', 'OPTIONS'])
 @jwt_required()
 def download_enhanced_resume(resume_id):
     """Download enhanced resume file"""
     
-    # Validate resume ID format
     if not re.match(r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$', resume_id):
         return jsonify({'message': 'Invalid resume ID format'}), 400
     
     enhanced_filename = f"enhanced_{resume_id}.docx"
     filepath = os.path.join(UPLOAD_FOLDER, 'enhanced', enhanced_filename)
     
-    # Check if file exists
     if not os.path.exists(filepath):
         print(f"File not found: {filepath}")
         return jsonify({
             'message': 'File not found. The download link may have expired.'
         }), 404
     
-    # Generate download filename with timestamp
     download_name = f'Enhanced_Resume_{datetime.now().strftime("%Y%m%d_%H%M")}.docx'
     
     try:
@@ -364,7 +357,6 @@ def validate_enhancement_input():
     try:
         data = request.get_json()
         
-        # Validate job description
         job_description = data.get('job_description', '').strip()
         if len(job_description) < 50:
             return jsonify({
@@ -372,7 +364,6 @@ def validate_enhancement_input():
                 'message': 'Job description must be at least 50 characters'
             }), 400
         
-        # Validate user instructions if provided
         user_instructions = data.get('user_instructions', '').strip()
         if user_instructions:
             instructions_valid, instructions_error = validate_user_instructions(user_instructions)
@@ -405,7 +396,6 @@ def log_disclaimer_agreement():
         if not enhancement_id:
             return jsonify({'message': 'Enhancement ID is required'}), 400
 
-        # Create a permanent record of the agreement
         AuthService.log_activity(
             user_id=current_user_id,
             action='disclaimer_accepted',

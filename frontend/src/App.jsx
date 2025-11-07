@@ -31,10 +31,10 @@ import ResetPassword from './pages/ResetPassword';
 import VerifyResetToken from './pages/VerifyResetToken';
 import ChangePassword from './pages/ChangePassword';
 import History from './pages/History';
-import CheckoutPage from './pages/Checkout'; // <-- Import new page
-import PaymentStatusPage from './pages/PaymentStatus'; // <-- Import new page
-
+import CheckoutPage from './pages/Checkout'; 
+import PaymentStatusPage from './pages/PaymentStatus'; 
 import AnalyticsTracker from './components/AnalyticsTracker';
+import Billing from './pages/Billing';
 
 // Styles
 import './App.css';
@@ -48,6 +48,7 @@ import './styles/AdminDashboard.css';
 import './styles/AdminOverview.css';
 import './styles/Modal.css';
 import './styles/SupportThread.css';
+import './styles/Billing.css';
 
 const AppContent = () => {
   const { user } = useAuth();
@@ -70,6 +71,7 @@ const AppContent = () => {
     <div className="App">
       <Navbar />
       <main id="main-content" className="main-content">
+
       <AnalyticsTracker />
       
         <Routes>
@@ -97,6 +99,7 @@ const AppContent = () => {
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+          <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
 
           {/* --- NEW STRIPE ROUTES --- */}
           <Route path="/checkout" element={

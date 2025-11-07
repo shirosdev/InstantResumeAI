@@ -41,10 +41,9 @@ const Dashboard = () => {
                 <p className="stat-description">Remaining</p>
               </div>
             </div>
-            {/* --- START OF NEW CODE --- */}
             <div style={{ marginTop: '1rem', textAlign: 'center' }}>
               <Link to="/top-up" style={{ 
-                  color: 'var(--bio-luminescent)', 
+                  color: 'var(--text-accent)', // Use light-theme accent
                   textDecoration: 'none',
                   fontWeight: '500',
                   fontSize: '0.9rem'
@@ -52,7 +51,6 @@ const Dashboard = () => {
                 Purchase More Credits
               </Link>
             </div>
-            {/* --- END OF NEW CODE --- */}
           </div>
           <div className="stat-card">
             <h3>Subscription Status</h3>
@@ -68,6 +66,7 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* --- RECTIFIED ACTION CARDS --- */}
         <div className="dashboard-actions">
           <div className="action-card">
             <h2>View History</h2>
@@ -83,14 +82,18 @@ const Dashboard = () => {
               Start Enhancing
             </Link>
           </div>
+          
+          {/* This card now correctly replaces the "Account Settings" card */}
           <div className="action-card">
-            <h2>Account Settings</h2>
-            <p>Update your profile information and preferences</p>
-            <Link to="/profile" className="action-button secondary">
-              Manage Profile
+            <h2>Billing Info</h2>
+            <p>Review your current plan and download invoices.</p>
+            <Link to="/billing" className="action-button secondary">
+              Manage Billing
             </Link>
           </div>
         </div>
+        {/* --- END OF RECTIFICATION --- */}
+
       </div>
     </div>
   );
