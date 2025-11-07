@@ -346,14 +346,12 @@ def download_receipt():
         print(traceback.format_exc())
         return jsonify(message="An error occurred while generating the receipt", error=str(e)), 500
 
-# --- THIS IS THE RECTIFIED FUNCTION ---
 @billing_bp.route('/download-invoice', methods=['GET'])
 @jwt_required()
 def download_invoice():
     """
-    Generates and sends the user's latest invoice.
-    It will generate an INVOICE-style PDF (like Invoice 6.pdf) for 
-    EITHER a subscription OR a top-up.
+    Generates and sends the user's LATEST invoice, whether it's
+    for a subscription or a top-up.
     """
     pdf_service = PDFService()
     pdf_path = None
@@ -363,50 +361,43 @@ def download_invoice():
         if not user:
             return jsonify(message="User not found"), 404
 
-        # 1. Try to find the latest SUBSCRIPTION invoice first
+        # 1. Find the MOST RECENT completed transaction of ANY type
         transaction = Transaction.query.filter(
             Transaction.user_id == user_id,
-            Transaction.status == 'completed',
-            Transaction.subscription_id != None
+            Transaction.status == 'completed'
         ).order_by(Transaction.created_at.desc()).first()
 
+        # 2. If no transaction at all, return 404
+        if not transaction:
+             return jsonify(message="No invoice history found"), 404
+
+        # 3. Check if it was a subscription and get plan details
         plan = None
         download_filename = ""
-
-        # 2. If no subscription invoice, find the latest TOP-UP receipt
-        if not transaction:
-            transaction = Transaction.query.filter(
-                Transaction.user_id == user_id,
-                Transaction.status == 'completed',
-                Transaction.subscription_id == None
-            ).order_by(Transaction.created_at.desc()).first()
-            
-            # If a top-up is found, we set filename for receipt
-            if transaction:
-                download_filename = f"InstantResumeAI_Receipt_as_Invoice_{transaction.transaction_id}.pdf"
         
-        # 3. If still no transaction at all, then return 404
-        if not transaction:
-             return jsonify(message="No invoice or receipt history found"), 404
-
-        # 4. If it was a subscription, get its plan details
         if transaction.subscription_id:
+            # This was a subscription purchase
             user_sub = UserSubscription.query.filter_by(subscription_id=transaction.subscription_id).first()
-            if not user_sub:
-                 return jsonify(message="Subscription data linked to invoice is missing"), 404
-            plan = SubscriptionPlan.query.get(user_sub.plan_id)
+            if user_sub:
+                plan = SubscriptionPlan.query.get(user_sub.plan_id)
+            
             if not plan:
-                 return jsonify(message="Plan data linked to invoice is missing"), 404
+                 print(f"Warning: Could not find plan details for sub {transaction.subscription_id}")
+            
             download_filename = f"InstantResumeAI_Invoice_{transaction.transaction_id}.pdf"
         
-        # 5. Call the INVOICE generator for BOTH cases.
-        #    The function in pdf_service.py is smart enough to handle `plan=None`.
+        else:
+            # This was a top-up (plan is None)
+            download_filename = f"InstantResumeAI_Invoice_Receipt_{transaction.transaction_id}.pdf"
+        
+        # 4. Call the INVOICE generator for BOTH cases.
+        #    The `create_subscription_invoice` function correctly handles `plan=None`.
         pdf_path = pdf_service.create_subscription_invoice(user, plan, transaction)
         
         if not pdf_path or not os.path.exists(pdf_path):
             return jsonify(message="Could not generate invoice file"), 500
 
-        # 6. Use after_this_request for cleanup
+        # 5. Use after_this_request for cleanup
         @after_this_request
         def cleanup_invoice(response):
             if pdf_path and os.path.exists(pdf_path):
@@ -417,11 +408,11 @@ def download_invoice():
                     print(f"Error cleaning up temp invoice file: {e}")
             return response
 
-        # 7. Send the file
+        # 6. Send the file
         return send_file(
             pdf_path,
             as_attachment=True,
-            download_name=download_filename, # Use the dynamic filename
+            download_name=download_filename,
             mimetype='application/pdf'
         )
 

@@ -7,10 +7,12 @@ from app.models.user import User
 from app.models.activity import ActivityLog
 from app.models.session import UserSession
 from app.models.subscription import UserSubscription, SubscriptionPlan
+from app.models.transactions import Transaction
 from app.services.email_service import EmailService
 from app.services.auth_service import AuthService
 from app.services.password_reset_service import PasswordResetService
 from app.utils.validators import validate_email, validate_password, validate_username
+from app.models.transactions import Transaction
 from app.models.resume import ResumeEnhancement
 from datetime import datetime, timedelta
 import re
@@ -371,7 +373,7 @@ def get_user_status():
     try:
         current_user_id = int(get_jwt_identity())
         
-        # Force a fresh query to get the most up-to-date data
+        # Force a fresh query
         db.session.expire_all()
         user_subscription = UserSubscription.query.filter_by(user_id=current_user_id).first()
         
@@ -385,23 +387,22 @@ def get_user_status():
         enhancement_count = ResumeEnhancement.query.filter_by(user_id=current_user_id).count()
         purchased_credits = user_subscription.enhancement_credits or 0
         
-        # --- START OF THE CORRECT CALCULATION LOGIC ---
+        # ... (your existing calculation logic for remaining_enhancements) ...
         remaining_enhancements = 0
         if plan.resume_limit is not None:
-            # For limited plans (like 'Free - 3 Enhancements')
-            # First, calculate how many free enhancements are left from the base plan. This cannot be negative.
             enhancements_left_in_plan = max(0, plan.resume_limit - enhancement_count)
-            # The total remaining is the free ones left plus any purchased credits.
             remaining_enhancements = enhancements_left_in_plan + purchased_credits
         else:
-            # For unlimited plans, it's always 'unlimited'
             remaining_enhancements = 'unlimited'
-        # --- END OF THE CORRECT CALCULATION LOGIC ---
         
-        # This part correctly formats the plan name for display
         display_plan_name = plan.plan_name
         if purchased_credits > 0 and plan.plan_type == 'free':
             display_plan_name = f"{plan.plan_name} + {purchased_credits} Credits"
+
+        has_invoice_history = db.session.query(
+            Transaction.query.filter_by(user_id=current_user_id, status='completed')
+                           .exists()
+        ).scalar()
 
         return jsonify({
             'message': 'User status retrieved successfully',
@@ -410,38 +411,15 @@ def get_user_status():
                 'resume_limit': plan.resume_limit,
                 'enhancement_count': enhancement_count,
                 'remaining_enhancements': remaining_enhancements,
-                'purchased_credits': purchased_credits
+                'purchased_credits': purchased_credits,
+                
+               'has_invoice_history': has_invoice_history
             }
         }), 200
         
     except Exception as e:
         return jsonify({'message': 'Failed to retrieve user status', 'error': str(e)}), 500
 
-@auth_bp.route('/stats', methods=['GET'])
-@jwt_required()
-def get_user_stats():
-    try:
-        current_user_id = get_jwt_identity()
-        user_subscription = UserSubscription.query.filter_by(user_id=current_user_id).first()
-
-        if not user_subscription:
-            return jsonify({'message': 'No active subscription found for user'}), 404
-            
-        enhancement_count = ActivityLog.query.filter(
-            ActivityLog.user_id == current_user_id, 
-            ActivityLog.action == 'resume_enhanced',
-            ActivityLog.created_at >= user_subscription.start_date
-        ).count()
-        
-        return jsonify({
-            'message': 'Stats retrieved successfully',
-            'stats': {
-                'enhancement_count': enhancement_count
-            }
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'message': 'Failed to retrieve user stats', 'error': str(e)}), 500
 
 @auth_bp.route('/cleanup-expired-tokens', methods=['POST'])
 def cleanup_expired_tokens():

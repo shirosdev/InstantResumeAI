@@ -6,45 +6,28 @@ import { useAuth } from '../hooks/useAuth';
 import billingService from '../services/billingService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
-import '../styles/Billing.css'; // New CSS file for styling
+import '../styles/Billing.css';
 
 const Billing = () => {
   const { userStatus, loading: authLoading } = useAuth();
   
-  // State for the INVOICE button
-  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
-  
-  // NEW state for the RECEIPT button
-  const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
-  
+  // --- SIMPLIFIED STATE ---
+  const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState('');
 
+  // --- SIMPLIFIED HANDLER ---
   const handleDownloadInvoice = async () => {
-    setIsDownloadingInvoice(true);
+    setIsDownloading(true);
     setError('');
     try {
+      // We only call the single 'downloadInvoice' service
       await billingService.downloadInvoice();
     } catch (err) {
       console.error(err);
       // Use the specific error message from the server
-      setError(err.message || 'No subscription invoice found.');
+      setError(err.message || 'No invoice or receipt found.');
     } finally {
-      setIsDownloadingInvoice(false);
-    }
-  };
-
-  // NEW handler for the receipt button
-  const handleDownloadReceipt = async () => {
-    setIsDownloadingReceipt(true);
-    setError('');
-    try {
-      await billingService.downloadReceipt();
-    } catch (err) {
-      console.error(err);
-      // Use the specific error message from the server
-      setError(err.message || 'No credit receipt found.');
-    } finally {
-      setIsDownloadingReceipt(false);
+      setIsDownloading(false);
     }
   };
 
@@ -90,43 +73,38 @@ const Billing = () => {
             </div>
           </div>
 
-          {/* RECTIFIED Card for Invoice History */}
+          {/* --- COMPLETELY REPLACED CARD for Invoice History --- */}
           <div className="billing-card">
             <h3>Invoice History</h3>
             <p className="invoice-description">
-              Download your latest subscription or credit invoices.
+              Download your latest invoice for any subscription or credit purchase.
             </p>
             <div className="invoice-history-list">
               
-              {/* Button for Subscription Invoices */}
-              <div className="invoice-item">
-                <div className="invoice-details">
-                  <strong>Latest Subscription Invoice</strong>
-                  <span>(For monthly/annual plans)</span>
+              {!userStatus.has_invoice_history ? (
+                // Show this message if no transactions exist
+                <div className="invoice-item">
+                  <p className="invoice-description" style={{textAlign: 'center', width: '100%', marginBottom: 0}}>
+                    You have no invoices yet. Your transactions will appear here after a purchase.
+                  </p>
                 </div>
-                <button 
-                  className="submit-button"
-                  onClick={handleDownloadInvoice}
-                  disabled={isDownloadingInvoice}
-                >
-                  {isDownloadingInvoice ? 'Generating...' : 'Download'}
-                </button>
-              </div>
+              ) : (
+                // Otherwise, show the single download button
+                <div className="invoice-item">
+                  <div className="invoice-details">
+                    <strong>Latest Invoice</strong>
+                    <span>(For all purchases)</span>
+                  </div>
+                  <button 
+                    className="submit-button"
+                    onClick={handleDownloadInvoice}
+                    disabled={isDownloading}
+                  >
+                    {isDownloading ? 'Generating...' : 'Download'}
+                  </button>
+                </div>
+              )}
               
-              {/* NEW Button for Top-Up Receipts */}
-              <div className="invoice-item">
-                <div className="invoice-details">
-                  <strong>Latest Credit Receipt</strong>
-                  <span>(For top-up purchases)</span>
-                </div>
-                <button 
-                  className="submit-button"
-                  onClick={handleDownloadReceipt}
-                  disabled={isDownloadingReceipt}
-                >
-                  {isDownloadingReceipt ? 'Generating...' : 'Download'}
-                </button>
-              </div>
             </div>
           </div>
         </div>
