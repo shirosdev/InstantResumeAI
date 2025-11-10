@@ -1,4 +1,5 @@
 // frontend/src/components/Navbar.jsx
+// --- UPDATED FILE ---
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -97,12 +98,15 @@ const Navbar = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/pricing" className="nav-link" onClick={closeMobileMenu}>
+                  Pricing
+                </Link>
+              </li>
+              <li>
                 <Link to="/profile" className="nav-link" onClick={closeMobileMenu}>
                   Profile
                 </Link>
               </li>
-              
-              {/* THE "INVESTORS" LINK HAS BEEN REMOVED FROM THIS SECTION */}
               
               {/* Desktop user greeting (only render on desktop) */}
               {isDesktop && (
@@ -131,14 +135,21 @@ const Navbar = () => {
                   How It Works
                 </Link>
               </li>
+              
+              <li>
+                <Link to="/pricing" className="nav-link" onClick={closeMobileMenu}>
+                  Pricing
+                </Link>
+              </li>
+              
               <li>
                 <Link to="/investors" className="nav-link" onClick={closeMobileMenu}>
                   Investors
                 </Link>
               </li>
-              <li>
-                
-              </li>
+              
+              {/* --- THIS EMPTY LI HAS BEEN REMOVED --- */}
+              
               <li>
                 <Link to="/contact" className="nav-link" onClick={closeMobileMenu}>
                   Contact
