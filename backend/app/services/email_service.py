@@ -19,6 +19,9 @@ class EmailService:
         self.from_email = os.getenv('FROM_EMAIL', f'noreply@{self.mailgun_domain}')
         self.from_name = os.getenv('FROM_NAME', 'InstantResumeAI')
         self.admin_email = os.getenv('ADMIN_EMAIL', 'info@instantresumeai.com')
+        # --- ADD THIS LINE ---
+        self.support_email = 'support@instantresumeai.com'
+        # --- END ADD ---
         self.api_base_url = f"https://api.mailgun.net/v3/{self.mailgun_domain}"
 
     def send_welcome_email(self, to_email: str, user_name: str) -> bool:
@@ -212,7 +215,11 @@ class EmailService:
                 to_email=to_email,
                 subject=subject,
                 html_content=html_content,
-                text_content=text_content
+                text_content=text_content,
+                # --- ADD THESE LINES ---
+                reply_to_email=self.support_email,
+                reply_to_name="InstantResumeAI Support"
+                # --- END ADD ---
             )
         except Exception as e:
             logger.error(f"Failed to send password reset email to {to_email}: {str(e)}")
@@ -228,7 +235,11 @@ class EmailService:
                 to_email=to_email,
                 subject=subject,
                 html_content=html_content,
-                text_content=text_content
+                text_content=text_content,
+                # --- ADD THESE LINES ---
+                reply_to_email=self.support_email,
+                reply_to_name="InstantResumeAI Support"
+                # --- END ADD ---
             )
         except Exception as e:
             logger.error(f"Failed to send password change confirmation to {to_email}: {str(e)}")
