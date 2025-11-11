@@ -37,7 +37,10 @@ class User(db.Model):
     activity_logs = relationship('ActivityLog', back_populates='user', cascade='all, delete-orphan')
     enhancements = relationship('ResumeEnhancement', back_populates='user', cascade='all, delete-orphan')
     support_tickets = relationship('SupportTicket', back_populates='user', cascade='all, delete-orphan')
+    
+    # --- ADD THIS LINE ---
     transactions = relationship('Transaction', back_populates='user', cascade='all, delete-orphan')
+    # --- END OF ADDITION ---
     
     
     def to_dict(self):
