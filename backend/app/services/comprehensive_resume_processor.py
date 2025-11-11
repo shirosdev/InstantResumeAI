@@ -12,7 +12,7 @@ from docx.shared import Pt, RGBColor
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 import diff_match_patch as dmp_module
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Callable # Make sure Callable is imported
 from dataclasses import dataclass
 from enum import Enum
 from docx.text.paragraph import Paragraph
@@ -41,6 +41,21 @@ class ResumeSection:
     paragraph_indices: List[int]
 
 class IntegratedResumeService:
+
+    # --- ADD PROGRESS STEPS ---
+    PROGRESS_STEPS = [
+        {"step": 1, "description": "Analyzing resume structure and sections"},
+        {"step": 2, "description": "Identifying key information to preserve"},
+        {"step": 3, "description": "Generating new content based on instructions (if any)"},
+        {"step": 4, "description": "Preparing content chunks for AI enhancement"},
+        {"step": 5, "description": "Enhancing resume content with AI (processing chunks)"},
+        {"step": 6, "description": "Applying enhancements while preserving formatting"},
+        {"step": 7, "description": "Integrating newly generated content"},
+        {"step": 8, "description": "Finalizing document and saving"},
+    ]
+    TOTAL_STEPS = len(PROGRESS_STEPS)
+    # --- END ADD ---
+
     def __init__(self):
         self.xml_illegal_char_re = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]')
         self.logger = logging.getLogger(__name__)
@@ -317,53 +332,115 @@ Example for a NEW JOB entry:
                         paragraphs.extend(cell.paragraphs)
         return paragraphs
 
-    def enhance_resume(self, original_file_path: str, job_description: str, output_path: str, user_instructions: Optional[str] = None) -> dict:
-        if not self.client: return {"success": False, "error": "OpenAI client not initialized."}
-        if not os.path.exists(original_file_path): return {"success": False, "error": "Original file not found."}
+    # --- THIS IS THE CORRECTED FUNCTION DEFINITION ---
+    def enhance_resume(
+        self,
+        original_file_path: str,
+        job_description: str,
+        output_path: str,
+        user_instructions: Optional[str] = None,
+        progress_callback: Optional[Callable] = None # <-- ADDED THIS ARGUMENT
+    ) -> dict:
+    # --- END OF CORRECTION ---
+        if not self.client: 
+            return {"success": False, "error": "OpenAI client not initialized."}
+        if not os.path.exists(original_file_path): 
+            return {"success": False, "error": "Original file not found."}
+
         try:
+            # --- Report Step 1 ---
+            if progress_callback:
+                progress_callback(step=1, total_steps=self.TOTAL_STEPS, description=self.PROGRESS_STEPS[0]["description"])
+
             doc = Document(original_file_path)
             all_paragraphs = self._get_all_paragraphs_in_order(doc)
             paragraph_map = {f"p_{i}": p for i, p in enumerate(all_paragraphs)}
             paragraph_texts = [p.text for p in all_paragraphs]
             sections_map = self._identify_resume_sections(paragraph_texts)
             self.logger.info(f"Identified section titles: {[title for title in sections_map.keys()]}")
+
+            # --- Report Step 2 ---
+            if progress_callback:
+                progress_callback(step=2, total_steps=self.TOTAL_STEPS, description=self.PROGRESS_STEPS[1]["description"])
+
             paragraphs_for_ai = {}
-            # The allowed_enhancement_types set has been removed to enhance all sections.
             for i, p in enumerate(all_paragraphs):
                 para_key = f"p_{i}"
                 original_text = self._sanitize_text(p.text)
                 if not original_text.strip(): 
                     continue
                 
-                # Now, every paragraph is a candidate for enhancement.
                 protected_regions = self._identify_protected_content(original_text)
                 paragraphs_for_ai[para_key] = self._create_protected_text_markup(original_text, protected_regions)
 
             if not paragraphs_for_ai and not user_instructions:
                 doc.save(output_path)
                 return {'success': True, 'summary': 'No content to enhance or add.'}
+
             async def run_enhancement_pipeline():
                 async with aiohttp.ClientSession() as session:
+                    
+                    # --- Report Step 3 ---
+                    if progress_callback:
+                        progress_callback(step=3, total_steps=self.TOTAL_STEPS, description=self.PROGRESS_STEPS[2]["description"])
+
                     new_content_task = self._async_generate_new_content(session, job_description, user_instructions, sections_map)
+
                     enhancement_tasks = []
+                    final_enhanced_paragraphs = {}
+
                     if paragraphs_for_ai:
+                        # --- Report Step 4 ---
+                        if progress_callback:
+                            progress_callback(step=4, total_steps=self.TOTAL_STEPS, description=self.PROGRESS_STEPS[3]["description"])
+
                         CHUNK_SIZE = 40
                         paragraph_items = list(paragraphs_for_ai.items())
                         chunks = [dict(paragraph_items[i:i + CHUNK_SIZE]) for i in range(0, len(paragraph_items), CHUNK_SIZE)]
                         system_prompt = self._construct_enhancement_system_prompt(sections_map)
-                        enhancement_tasks = [self._async_enhance_chunk(session, chunk, job_description, system_prompt) for chunk in chunks]
+
+                        # --- Report Step 5 (Initialization) ---
+                        chunk_count = len(chunks)
+                        processed_chunks = 0
+                        if progress_callback:
+                            progress_callback(step=5, total_steps=self.TOTAL_STEPS, description=f"Enhancing resume content with AI (0/{chunk_count} chunks)")
+
+                        async def _guarded(chunk):
+                            nonlocal processed_chunks
+                            result = await self._async_enhance_chunk(session, chunk, job_description, system_prompt)
+                            processed_chunks += 1
+                            # --- Report Step 5 (Progress) ---
+                            if progress_callback:
+                                progress_callback(step=5, total_steps=self.TOTAL_STEPS, description=f"Enhancing resume content with AI ({processed_chunks}/{chunk_count} chunks)")
+                            return result
+
+                        enhancement_tasks = [_guarded(chunk) for chunk in chunks]
+
+                    # Gather with bounded concurrency
                     new_paragraph_entries, *enhanced_chunks = await asyncio.gather(new_content_task, *enhancement_tasks)
-                final_enhanced_paragraphs = {}
-                for chunk_result in enhanced_chunks:
-                    final_enhanced_paragraphs.update(chunk_result)
-                return {"enhanced": final_enhanced_paragraphs, "new": new_paragraph_entries}
+                    
+                    for chunk_result in enhanced_chunks:
+                        final_enhanced_paragraphs.update(chunk_result)
+                    
+                    # --- Report Step 5 (Completion) ---
+                    if enhancement_tasks and progress_callback:
+                         progress_callback(step=5, total_steps=self.TOTAL_STEPS, description=f"Enhancing resume content with AI ({processed_chunks}/{chunk_count} chunks complete)")
+
+                    return {"enhanced": final_enhanced_paragraphs, "new": new_paragraph_entries or []}
+
             try:
                 enhancement_result = asyncio.run(run_enhancement_pipeline())
             except Exception as api_error:
                 self.logger.error(f"Enhancement pipeline failed: {str(api_error)}")
                 return {"success": False, "error": f"API error: {str(api_error)}"}
+
             enhanced_marked_texts = enhancement_result["enhanced"]
             new_paragraph_entries = enhancement_result["new"]
+
+            # --- Report Step 6 ---
+            if progress_callback:
+                progress_callback(step=6, total_steps=self.TOTAL_STEPS, description=self.PROGRESS_STEPS[5]["description"])
+
             enhancement_count = 0
             for key, enhanced_marked_text in enhanced_marked_texts.items():
                 if key in paragraph_map:
@@ -372,12 +449,29 @@ Example for a NEW JOB entry:
                     self._apply_enhanced_text_with_format_preservation(paragraph_map[key], original_para_text, final_enhanced_text)
                     if final_enhanced_text != original_para_text:
                         enhancement_count += 1
+            
+            # --- Report Step 7 ---
+            if progress_callback:
+                progress_callback(step=7, total_steps=self.TOTAL_STEPS, description=self.PROGRESS_STEPS[6]["description"])
+
             new_count = self._add_new_paragraphs_with_formatting(doc, new_paragraph_entries, sections_map, paragraph_map)
+
             self.logger.info(f"Applied {enhancement_count} paragraph enhancements.")
             self.logger.info(f"Added {new_count} new paragraphs.")
-            
+
+            # --- Report Step 8 ---
+            if progress_callback:
+                progress_callback(step=8, total_steps=self.TOTAL_STEPS, description=self.PROGRESS_STEPS[7]["description"])
+
             doc.save(output_path)
-            return {"success": True, "instructions_applied": bool(user_instructions and new_count > 0), "enhancements_made": enhancement_count + new_count, "message": f"Successfully enhanced {enhancement_count} sections and added {new_count} new paragraphs."}
+
+            return {
+                "success": True,
+                "instructions_applied": bool(user_instructions and new_count > 0),
+                "enhancements_made": enhancement_count + new_count,
+                "message": f"Successfully enhanced {enhancement_count} sections and added {new_count} new paragraphs."
+            }
+
         except Exception as e:
             self.logger.exception(f"Enhancement pipeline failed: {str(e)}")
             return {"success": False, "error": str(e)}
