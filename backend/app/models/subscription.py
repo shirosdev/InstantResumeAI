@@ -15,7 +15,10 @@ class SubscriptionPlan(db.Model):
     plan_type = Column(Enum('free', 'monthly', 'quarterly', 'semi_annual', 'annual'), nullable=False)
     price = Column(DECIMAL(10, 2), default=0.00)
     duration_days = Column(Integer, nullable=False)
+    
+    # This field stores the MONTHLY credits (e.g., 10 for Free, 30 for Starter)
     resume_limit = Column(Integer, nullable=True)  # NULL for unlimited
+    
     features = Column(JSON)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -38,7 +41,17 @@ class UserSubscription(db.Model):
     end_date = Column(Date, nullable=True)  # NULL for unlimited
     status = Column(Enum('active', 'expired', 'cancelled', 'pending'), default='active')
     auto_renew = Column(Boolean, default=False)
+    
+    # This field will ONLY store one-time top-up credits.
     enhancement_credits = Column(Integer, default=0)
+
+    # --- NEW FIELDS ---
+    # Tracks credits used from the monthly plan allowance
+    monthly_enhancements_used = Column(Integer, default=0, nullable=False)
+    # Tracks when the monthly_enhancements_used should be reset
+    credits_reset_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    # --- END NEW FIELDS ---
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

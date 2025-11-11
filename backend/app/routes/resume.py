@@ -7,7 +7,7 @@ import os
 import uuid
 import re
 from app.models.subscription import UserSubscription, SubscriptionPlan 
-from datetime import datetime
+from datetime import datetime, timedelta, date
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.auth_service import AuthService
 
@@ -99,7 +99,7 @@ def enhance_resume():
     if not user or not user.is_active:
         return jsonify({'message': 'User not found or is inactive'}), 401
 
-    # --- CREDIT CHECK LOGIC ---
+    # --- NEW CREDIT CHECK LOGIC ---
     try:
         db.session.expire_all()
         user_subscription = UserSubscription.query.filter_by(user_id=user_id_from_token).first()
@@ -110,19 +110,40 @@ def enhance_resume():
         if not plan:
              return jsonify({'message': 'Could not verify subscription plan.'}), 500
 
-        enhancement_count = ResumeEnhancement.query.filter_by(user_id=user_id_from_token).count()
+        # --- 1. Check for Expiry ---
+        if plan.plan_type != 'free' and user_subscription.end_date and user_subscription.end_date < date.today():
+            print(f"User {user_id_from_token}'s plan expired. Reverting to Freemium before enhancement.")
+            freemium_plan = SubscriptionPlan.query.filter_by(plan_name='Freemium').first()
+            if freemium_plan:
+                user_subscription.plan_id = freemium_plan.plan_id
+                user_subscription.start_date = date.today()
+                user_subscription.end_date = None
+                user_subscription.status = 'active'
+                user_subscription.monthly_enhancements_used = 0
+                user_subscription.credits_reset_at = datetime.utcnow()
+                db.session.commit()
+                plan = freemium_plan
         
-        total_available = 0
-        if plan.resume_limit is not None:
-            total_available = plan.resume_limit + (user_subscription.enhancement_credits or 0)
-        else:
-            total_available = float('inf') 
+        # --- 2. Check for Monthly Reset ---
+        if (datetime.utcnow() - user_subscription.credits_reset_at).days >= 30:
+            print(f"Resetting monthly credits for user {user_id_from_token} before enhancement.")
+            user_subscription.monthly_enhancements_used = 0
+            user_subscription.credits_reset_at = datetime.utcnow()
+            db.session.commit()
 
-        print(f"[CREDIT CHECK] User {user_id_from_token}: Used={enhancement_count}, Available={total_available}")
+        # --- 3. Check Credits ---
+        purchased_credits = user_subscription.enhancement_credits or 0
+        monthly_limit = plan.resume_limit if plan.resume_limit is not None else 0
+        used_this_month = user_subscription.monthly_enhancements_used or 0
+        
+        remaining_monthly = max(0, monthly_limit - used_this_month)
+        remaining_total = remaining_monthly + purchased_credits
 
-        if enhancement_count >= total_available:
+        print(f"[CREDIT CHECK] User {user_id_from_token}: Plan='{plan.plan_name}', MonthlyLimit={monthly_limit}, UsedThisMonth={used_this_month}, TopUps={purchased_credits}, TotalRemaining={remaining_total}")
+
+        if remaining_total <= 0:
             return jsonify({
-                'message': 'You have used all your free enhancements and credits. Please top-up to continue.',
+                'message': 'You have used all your available enhancements. Please purchase a top-up or upgrade your plan.',
                 'limit_reached': True
             }), 403
 
@@ -220,16 +241,17 @@ def enhance_resume():
         new_activity_log = ActivityLog(user_id=user_id_from_token, action='resume_enhanced', description=activity_description)
         db.session.add(new_activity_log)
         
-        if plan.resume_limit is not None and enhancement_count >= plan.resume_limit:
-            print(f"User {user_id_from_token} is using a purchased credit. Attempting to decrement.")
-            
-            db.session.query(UserSubscription).filter(
-                UserSubscription.user_id == user_id_from_token,
-                UserSubscription.enhancement_credits > 0
-            ).update({
-                'enhancement_credits': UserSubscription.enhancement_credits - 1,
-                'updated_at': datetime.utcnow()
-            }, synchronize_session=False)
+        # --- 4. Decrement Credits (New Logic) ---
+        if remaining_monthly > 0:
+            # Use a monthly credit first
+            user_subscription.monthly_enhancements_used += 1
+            print(f"User {user_id_from_token} used a monthly credit. Remaining: {remaining_monthly - 1}")
+        elif purchased_credits > 0:
+            # Otherwise, use a top-up credit
+            user_subscription.enhancement_credits -= 1
+            print(f"User {user_id_from_token} used a top-up credit. Remaining: {purchased_credits - 1}")
+        
+        user_subscription.updated_at = datetime.utcnow() # Mark as updated
         
         db.session.commit()
 

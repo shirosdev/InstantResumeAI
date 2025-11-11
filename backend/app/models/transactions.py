@@ -24,7 +24,7 @@ class Transaction(db.Model):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    user = relationship('User')
+    user = relationship('User', back_populates='transactions')
     subscription = relationship('UserSubscription')
 
     def __repr__(self):

@@ -1,4 +1,5 @@
 # backend/app/routes/auth.py
+# --- FULLY CORRECTED FILE ---
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_jwt
@@ -14,7 +15,7 @@ from app.services.password_reset_service import PasswordResetService
 from app.utils.validators import validate_email, validate_password, validate_username
 from app.models.transactions import Transaction
 from app.models.resume import ResumeEnhancement
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import re
 import uuid
 
@@ -370,10 +371,12 @@ def update_profile():
 @auth_bp.route('/status', methods=['GET'])
 @jwt_required()
 def get_user_status():
+    """
+    This is the primary endpoint for the frontend to get user status.
+    It handles plan expiry, monthly resets, and calculates credits correctly.
+    """
     try:
         current_user_id = int(get_jwt_identity())
-        
-        # Force a fresh query
         db.session.expire_all()
         user_subscription = UserSubscription.query.filter_by(user_id=current_user_id).first()
         
@@ -384,40 +387,81 @@ def get_user_status():
         if not plan:
             return jsonify({'message': 'Subscription plan not found'}), 404
 
-        enhancement_count = ResumeEnhancement.query.filter_by(user_id=current_user_id).count()
+        # --- 1. CHECK FOR PLAN EXPIRATION ---
+        if plan.plan_type != 'free' and user_subscription.end_date and user_subscription.end_date < date.today():
+            print(f"User {current_user_id}'s plan has expired. Reverting to Freemium.")
+            freemium_plan = SubscriptionPlan.query.filter_by(plan_name='Freemium').first()
+            if freemium_plan:
+                user_subscription.plan_id = freemium_plan.plan_id
+                user_subscription.start_date = date.today()
+                user_subscription.end_date = None
+                user_subscription.status = 'active'
+                user_subscription.monthly_enhancements_used = 0
+                user_subscription.credits_reset_at = datetime.utcnow()
+                db.session.commit()
+                plan = freemium_plan
+        
+        # --- 2. CHECK FOR MONTHLY CREDIT RESET ---
+        # Calculate next reset date (30 days after the last one)
+        # We'll use 30 days as a standard "month" for simplicity
+        next_reset_date = user_subscription.credits_reset_at + timedelta(days=30)
+        
+        if datetime.utcnow() >= next_reset_date:
+            print(f"Resetting monthly credits for user {current_user_id}.")
+            user_subscription.monthly_enhancements_used = 0
+            user_subscription.credits_reset_at = datetime.utcnow()
+            db.session.commit()
+            # Update the reset date for the response
+            next_reset_date = datetime.utcnow() + timedelta(days=30)
+
+        # --- 3. CALCULATE CREDITS (MODIFIED) ---
         purchased_credits = user_subscription.enhancement_credits or 0
+        monthly_limit = plan.resume_limit if plan.resume_limit is not None else 0
+        used_this_month = user_subscription.monthly_enhancements_used or 0
         
-        # ... (your existing calculation logic for remaining_enhancements) ...
-        remaining_enhancements = 0
-        if plan.resume_limit is not None:
-            enhancements_left_in_plan = max(0, plan.resume_limit - enhancement_count)
-            remaining_enhancements = enhancements_left_in_plan + purchased_credits
-        else:
-            remaining_enhancements = 'unlimited'
+        remaining_plan_credits = max(0, monthly_limit - used_this_month)
         
+        # Grand total
+        total_remaining_enhancements = remaining_plan_credits + purchased_credits
+        
+        # --- 4. PREPARE DISPLAY NAME (Unchanged) ---
         display_plan_name = plan.plan_name
-        if purchased_credits > 0 and plan.plan_type == 'free':
-            display_plan_name = f"{plan.plan_name} + {purchased_credits} Credits"
+        if purchased_credits > 0:
+             display_plan_name = f"{plan.plan_name} (+ {purchased_credits} Top-up)"
 
         has_invoice_history = db.session.query(
             Transaction.query.filter_by(user_id=current_user_id, status='completed')
                            .exists()
         ).scalar()
 
+        # --- 5. BUILD THE NEW RESPONSE (THE FIX) ---
         return jsonify({
             'message': 'User status retrieved successfully',
             'status': {
                 'plan_name': display_plan_name,
-                'resume_limit': plan.resume_limit,
-                'enhancement_count': enhancement_count,
-                'remaining_enhancements': remaining_enhancements,
-                'purchased_credits': purchased_credits,
+                'plan_id': plan.plan_id,
                 
-               'has_invoice_history': has_invoice_history
+                # --- NEW DETAILED CREDIT INFO ---
+                'plan_credit_limit': monthly_limit,           # e.g., 30 (for "Starter")
+                'plan_credits_used': used_this_month,         # e.g., 0
+                'remaining_plan_credits': remaining_plan_credits, # e.g., 30
+                'purchased_credits': purchased_credits,         # e.g., 0 (or 5 if they topped up)
+                'total_remaining_enhancements': total_remaining_enhancements, # e.g., 30
+                'credits_reset_date': next_reset_date.isoformat() + 'Z', # e.g., "2025-12-11T...Z"
+                # --- END NEW INFO ---
+
+                # --- LEGACY FIELDS (for compatibility, but we'll stop using them) ---
+                'enhancement_count': used_this_month, 
+                'remaining_enhancements': total_remaining_enhancements,
+                'total_available': monthly_limit + purchased_credits, 
+                
+                'has_invoice_history': has_invoice_history
             }
         }), 200
         
     except Exception as e:
+        import traceback
+        print(traceback.format_exc()) # Print full traceback for debugging
         return jsonify({'message': 'Failed to retrieve user status', 'error': str(e)}), 500
 
 

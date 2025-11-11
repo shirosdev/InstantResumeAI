@@ -1,9 +1,9 @@
 # backend/app/services/email_service.py
-# --- UPDATED TO USE MAILGUN INSTEAD OF SMTP ---
+# --- UPDATED TO ADD SUBSCRIPTION INVOICE EMAIL ---
 
-import requests  # Import requests
+import requests
 import os
-from email.utils import formataddr # Used for formatting 'From' address
+from email.utils import formataddr
 from datetime import datetime
 import logging
 from app.pdf_service import PDFService
@@ -14,18 +14,13 @@ class EmailService:
     """Service for sending emails via Mailgun API"""
     
     def __init__(self):
-        # --- Mailgun Configuration ---
         self.mailgun_domain = os.getenv('MAILGUN_DOMAIN')
         self.mailgun_api_key = os.getenv('MAILGUN_API_KEY')
-        
-        # This 'from_email' MUST be a verified sender on your Mailgun domain
-        # e.g., 'noreply@mg.yourdomain.com' or 'support@yourdomain.com'
         self.from_email = os.getenv('FROM_EMAIL', f'noreply@{self.mailgun_domain}')
         self.from_name = os.getenv('FROM_NAME', 'InstantResumeAI')
-        
+        self.admin_email = os.getenv('ADMIN_EMAIL', 'info@instantresumeai.com')
         self.api_base_url = f"https://api.mailgun.net/v3/{self.mailgun_domain}"
 
-    # --- NEW: Method to send a welcome email ---
     def send_welcome_email(self, to_email: str, user_name: str) -> bool:
         """Sends a welcome email to a new user upon registration."""
         try:
@@ -45,16 +40,12 @@ class EmailService:
     def send_broadcast_email(self, to_email: str, user_name: str, subject: str, html_message: str) -> bool:
         """Sends a generic broadcast email to a user."""
         try:
-            # Create a simple wrapper for the broadcast message
             full_html_content = f"""
             <p>Hi {user_name},</p>
             {html_message}
             <br>
             <p>Best regards,<br>The InstantResumeAI Team</p>
             """
-            
-            # Create a plain text version
-            # This is a simple conversion; a more complex one would strip HTML tags
             text_content = f"Hi {user_name},\n\n{html_message.replace('<br>', '\n').replace('<p>', '').replace('</p>', '\n')}\n\nBest regards,\nThe InstantResumeAI Team"
 
             return self._send_email(
@@ -68,17 +59,44 @@ class EmailService:
             return False
 
     def send_payment_receipt_email(self, user, payment_details) -> bool:
-        """Generates a PDF receipt and sends it as an email attachment."""
-        pdf_path = None # Ensure pdf_path is defined
+        """Generates a PDF receipt (for top-ups) and sends it as an email attachment."""
+        pdf_path = None
         try:
-            # 1. Generate the PDF
             pdf_service = PDFService()
             pdf_path = pdf_service.create_invoice_pdf(user, payment_details)
             
-            # 2. Prepare Email Content
-            subject = f"Your InstantResumeAI Invoice ({payment_details['payment_intent_id'][-6:]})"
+            subject = f"Your InstantResumeAI Receipt ({payment_details['payment_intent_id'][-6:]})"
             html_content = self._create_receipt_html(user.first_name or user.username, payment_details)
             text_content = self._create_receipt_text(user.first_name or user.username, payment_details)
+
+            success = self._send_email(
+                to_email=user.email,
+                subject=subject,
+                html_content=html_content,
+                text_content=text_content,
+                attachment_path=pdf_path
+            )
+            return success
+        except Exception as e:
+            logger.error(f"Failed to send payment receipt to {user.email}: {str(e)}")
+            return False
+        finally:
+            if pdf_path and os.path.exists(pdf_path):
+                os.remove(pdf_path)
+
+    # --- NEW METHOD FOR SUBSCRIPTION INVOICES ---
+    def send_subscription_invoice_email(self, user, plan, transaction) -> bool:
+        """Generates a PDF invoice for a subscription and sends it."""
+        pdf_path = None
+        try:
+            # 1. Generate the PDF using the correct service method
+            pdf_service = PDFService()
+            pdf_path = pdf_service.create_subscription_invoice(user, plan, transaction)
+            
+            # 2. Prepare Email Content
+            subject = f"Your InstantResumeAI Invoice (Plan: {plan.plan_name})"
+            html_content = self._create_subscription_html(user.first_name or user.username, plan, transaction)
+            text_content = self._create_subscription_text(user.first_name or user.username, plan, transaction)
 
             # 3. Send the email with the PDF attachment
             success = self._send_email(
@@ -88,10 +106,9 @@ class EmailService:
                 text_content=text_content,
                 attachment_path=pdf_path
             )
-            
             return success
         except Exception as e:
-            logger.error(f"Failed to send payment receipt to {user.email}: {str(e)}")
+            logger.error(f"Failed to send subscription invoice to {user.email}: {str(e)}")
             return False
         finally:
             # 4. Clean up the temporary PDF file
@@ -99,30 +116,49 @@ class EmailService:
                 os.remove(pdf_path)
 
     def _create_receipt_html(self, user_name: str, payment_details: dict) -> str:
-        # This helper function remains unchanged
         return f"""
         <p>Hi {user_name},</p>
-        <p>Thank you for your purchase. Your invoice is attached to this email as a PDF.</p>
+        <p>Thank you for your purchase. Your receipt is attached to this email as a PDF.</p>
         <p><b>Summary:</b><br>
         Item: {payment_details['credits_purchased']} x Enhancement Credits<br>
         Total Paid: ${payment_details['amount_paid']:.2f} USD<br>
-        Payment Method: {payment_details['payment_method_info']}<br>
         Transaction ID: {payment_details['payment_intent_id']}</p>
         <p>Your new credit balance is now available on your dashboard.</p>
         """
 
-
     def _create_receipt_text(self, user_name: str, payment_details: dict) -> str:
-        # This helper function remains unchanged
         return f"""
         Hi {user_name},\n
-        Thank you for your purchase. Your invoice is attached.\n
+        Thank you for your purchase. Your receipt is attached.\n
         Summary:\n
         - Item: {payment_details['credits_purchased']} x Enhancement Credits\n
         - Total Paid: ${payment_details['amount_paid']:.2f} USD\n
-        - Payment Method: {payment_details['payment_method_info']}\n
         - Transaction ID: {payment_details['payment_intent_id']}
         """
+
+    # --- NEW HELPER METHODS FOR SUBSCRIPTION EMAIL ---
+    def _create_subscription_html(self, user_name: str, plan, transaction) -> str:
+        return f"""
+        <p>Hi {user_name},</p>
+        <p>Thank you for subscribing to the <strong>{plan.plan_name}</strong> plan. Your invoice is attached as a PDF.</p>
+        <p><b>Summary:</b><br>
+        Item: {plan.plan_name} Plan<br>
+        Total Paid: ${transaction.amount:.2f} USD<br>
+        Transaction ID: {transaction.payment_gateway_id}</p>
+        <p>Your new plan is now active. You can check your status on your dashboard.</p>
+        """
+
+    def _create_subscription_text(self, user_name: str, plan, transaction) -> str:
+        return f"""
+        Hi {user_name},\n
+        Thank you for subscribing to the {plan.plan_name} plan. Your invoice is attached as a PDF.\n
+        Summary:\n
+        - Item: {plan.plan_name} Plan\n
+        - Total Paid: ${transaction.amount:.2f} USD\n
+        - Transaction ID: {transaction.payment_gateway_id}\n
+        Your new plan is now active. You can check your status on your dashboard.
+        """
+    # --- END NEW HELPER METHODS ---
         
     def send_contact_inquiry(self, from_name: str, from_email: str, subject: str, message_body: str) -> bool:
         """
@@ -130,10 +166,9 @@ class EmailService:
         Now correctly uses Mailgun's 'Reply-To' feature.
         """
         try:
-            to_email = self.from_email  # Sending to yourself
+            to_email = self.admin_email
             email_subject = f"New Contact Inquiry: {subject}"
             
-            # This HTML content remains the same
             html_content = f"""
             <h3>You have a new contact form submission:</h3>
             <p><strong>From:</strong> {from_name}</p>
@@ -144,7 +179,6 @@ class EmailService:
             <p>{message_body.replace('\n', '<br>')}</p>
             """
             
-            # This text content remains the same
             text_content = f"""
             You have a new contact form submission:
             
@@ -156,14 +190,13 @@ class EmailService:
             {message_body}
             """
 
-            # This call now passes the reply-to information to the Mailgun sender
             return self._send_email(
                 to_email=to_email,
                 subject=email_subject,
                 html_content=html_content,
                 text_content=text_content,
-                reply_to_email=from_email, # Set the Reply-To email
-                reply_to_name=from_name   # Set the Reply-To name
+                reply_to_email=from_email,
+                reply_to_name=from_name
             )
         except Exception as e:
             logger.error(f"Failed to send contact inquiry from {from_email}: {str(e)}")
@@ -201,7 +234,6 @@ class EmailService:
             logger.error(f"Failed to send password change confirmation to {to_email}: {str(e)}")
             return False
     
-    # --- THIS IS THE REBUILT MAILGUN SENDING METHOD ---
     def _send_email(self, 
                     to_email: str, 
                     subject: str, 
@@ -212,17 +244,13 @@ class EmailService:
                     reply_to_name: str = None) -> bool:
         """
         Sends an email using the Mailgun API.
-        - Handles attachments.
-        - Handles 'Reply-To' for the contact form.
         """
         if not self.mailgun_api_key or not self.mailgun_domain:
             logger.error("Mailgun credentials (API_KEY, DOMAIN) not configured")
             return False
         
-        # Format the "From" address
         from_address = formataddr((self.from_name, self.from_email))
         
-        # --- Build the Mailgun API payload ---
         data = {
             "from": from_address,
             "to": to_email,
@@ -231,16 +259,12 @@ class EmailService:
             "html": html_content
         }
         
-        # Add Reply-To header if provided (for contact form)
         if reply_to_email:
             reply_to_name = reply_to_name or reply_to_email
             data["h:Reply-To"] = formataddr((reply_to_name, reply_to_email))
             
-        # Prepare files dictionary for attachment
         files = None
         if attachment_path and os.path.exists(attachment_path):
-            # Mailgun expects a list of tuples for files
-            # ('attachment', ('filename.pdf', file_binary_data, 'application/pdf'))
             try:
                 with open(attachment_path, "rb") as attachment_file:
                     file_data = attachment_file.read()
@@ -248,15 +272,14 @@ class EmailService:
                     files = [("attachment", (file_name, file_data))]
             except Exception as e:
                 logger.error(f"Error reading attachment {attachment_path}: {e}")
-                return False # Fail if attachment can't be read
+                return False
         
-        # --- Send the request to Mailgun ---
         try:
             response = requests.post(
                 f"{self.api_base_url}/messages",
                 auth=("api", self.mailgun_api_key),
                 data=data,
-                files=files # requests handles multipart/form-data encoding
+                files=files
             )
             
             if response.status_code == 200:
@@ -273,7 +296,7 @@ class EmailService:
             logger.error(f"Unexpected error in Mailgun _send_email: {str(e)}")
             return False
             
-    # --- All HTML/Text creation helper methods remain unchanged ---
+    # --- HTML/Text creation helpers ---
     
     def _create_welcome_html(self, user_name: str, user_email: str) -> str:
         # This helper function remains unchanged

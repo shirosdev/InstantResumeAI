@@ -2,23 +2,25 @@
 // --- FULLY UPDATED FILE ---
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import { useAuth } from '../hooks/useAuth';
 import '../styles/Pricing.css'; // We will add styles to this
 
-// Data based on the provided image
+// --- THIS IS THE FIX ---
+// Prices are now numbers (e.g., 12) instead of strings (e.g., "$12")
 const pricingPlans = [
   {
+    id: 1, // Assuming 'Freemium' is plan_id 1
     name: 'Freemium',
     planType: 'Free',
     description: 'Perfect for getting started and trying out the basics.',
-    price: '$0',
+    price: 0, // Use number 0
     period: '',
     maxCap: '10/month',
     buttonText: 'Get Started Free',
-    buttonLink: '/signup',
+    buttonLink: '/signup', // Link for non-logged-in users
     isFeatured: false,
-    isDisabled: false,
+    isDisabled: false, // Freemium is always enabled
     features: [
       { name: 'Max Enhancements', value: '10 / month' },
       { name: 'Resume Preview', value: 'No' },
@@ -26,16 +28,17 @@ const pricingPlans = [
     ]
   },
   {
+    id: 2, // Assuming 'Starter' is plan_id 2
     name: 'Starter',
     planType: 'Paid',
     description: 'For job seekers applying to multiple roles.',
-    price: '$12',
+    price: 12.00, // Use number 12.00
     period: '/month',
     maxCap: '30/month',
-    buttonText: 'Coming Soon',
-    buttonLink: '#',
+    buttonText: 'Choose Starter', // Updated button text
+    buttonLink: '/checkout', // Link for navigation
     isFeatured: true,
-    isDisabled: true, // We'll disable this until the backend is ready
+    isDisabled: false,
     features: [
       { name: 'Max Enhancements', value: '30 / month' },
       { name: 'Enable Preview', value: 'Yes' },
@@ -44,16 +47,17 @@ const pricingPlans = [
     ]
   },
   {
+    id: 3, // Assuming 'Pro' is plan_id 3
     name: 'Pro',
     planType: 'Paid',
     description: 'For power users and professionals.',
-    price: '$24',
+    price: 24.00, // Use number 24.00
     period: '/month',
     maxCap: '100/month',
-    buttonText: 'Coming Soon',
-    buttonLink: '#',
+    buttonText: 'Choose Pro', // Updated button text
+    buttonLink: '/checkout', // Link for navigation
     isFeatured: false,
-    isDisabled: true, // We'll disable this until the backend is ready
+    isDisabled: false,
     features: [
       { name: 'Max Enhancements', value: '100 / month' },
       { name: 'Enable Preview', value: 'Yes' },
@@ -62,14 +66,15 @@ const pricingPlans = [
     ]
   },
   {
+    id: 4, // Assuming 'Enterprise' is plan_id 4
     name: 'Enterprise',
     planType: 'Paid',
     description: 'Custom solutions for teams and businesses.',
-    price: 'Contact Us',
+    price: 0, // Use number 0
     period: '',
     maxCap: '300+/month',
     buttonText: 'Contact Sales',
-    buttonLink: '/contact',
+    buttonLink: '/contact', // Always links to contact
     isFeatured: false,
     isDisabled: false,
     features: [
@@ -80,22 +85,41 @@ const pricingPlans = [
     ]
   }
 ];
+// --- END OF FIX ---
 
 const Pricing = () => {
   const { user, userStatus } = useAuth();
+  const navigate = useNavigate(); // Get navigate hook
+
+  // --- NEW: Handler to navigate to checkout with plan info ---
+  const handleSelectPlan = (plan) => {
+    // For paid plans, go to checkout
+    if (plan.price > 0) {
+      navigate('/checkout', { 
+        state: { 
+          purchaseType: 'subscription', 
+          item: plan // Pass the whole plan object
+        } 
+      });
+    } else if (plan.name === 'Enterprise') {
+      // For Enterprise, go to contact
+      navigate('/contact');
+    }
+    // For Freemium, do nothing or link to signup if not logged in
+  };
 
   // Function to determine button text/state
   const getButton = (plan) => {
-    // If the plan is disabled, show "Coming Soon"
+    // If the plan is disabled (e.g., old "Coming Soon" logic)
     if (plan.isDisabled) {
       return (
         <button className="plan-button disabled" disabled>
-          {plan.buttonText}
+          Coming Soon
         </button>
       );
     }
 
-    // If it's the Enterprise plan, link to contact
+    // Enterprise plan always links to /contact
     if (plan.name === 'Enterprise') {
       return (
         <Link to={plan.buttonLink} className="plan-button secondary">
@@ -105,10 +129,9 @@ const Pricing = () => {
     }
     
     // Check if user is logged in
-    if (user) {
-      // Check if this is their current plan
-      // We assume "Free - 3 Enhancements" is the name for the "Freemium" plan in the DB
-      const isCurrentPlan = userStatus?.plan_name?.includes('Free') && plan.name === 'Freemium';
+    if (user && userStatus) {
+      // Check if this is their current plan using plan_id
+      const isCurrentPlan = userStatus.plan_id === plan.id;
       
       if (isCurrentPlan) {
         return (
@@ -118,19 +141,24 @@ const Pricing = () => {
         );
       }
       
-      // If logged in but not this plan, show original button (e.g., Get Started)
-      // This will be updated when subscription logic is built
+      // If logged in, not current plan, and not enterprise: show purchase button
       return (
-        <Link to={plan.buttonLink} className="plan-button">
+        <button 
+          className="plan-button"
+          onClick={() => handleSelectPlan(plan)} // Navigate to checkout
+        >
           {plan.buttonText}
-        </Link>
+        </button>
       );
 
     } else {
-      // If not logged in, show the default button
+      // If not logged in, show the default button (e.g., Get Started Free -> /signup)
       return (
-        <Link to={plan.buttonLink} className="plan-button">
-          {plan.buttonText}
+        <Link 
+          to={plan.name === 'Freemium' ? '/signup' : '/login'} // Send to login for paid plans
+          className="plan-button"
+        >
+          {plan.name === 'Freemium' ? 'Get Started Free' : 'Sign In to Buy'}
         </Link>
       );
     }
@@ -144,7 +172,7 @@ const Pricing = () => {
           Select the perfect plan for your career needs.
         </p>
 
-        <div className="pricing-cards-4"> {/* Use new 4-column grid */}
+        <div className="pricing-cards-4">
           {pricingPlans.map((plan) => (
             <div 
               key={plan.name} 
@@ -158,8 +186,15 @@ const Pricing = () => {
                 <h2>{plan.name}</h2>
                 <p className="plan-description">{plan.description}</p>
                 <div className="plan-price">
-                  <span className="amount">{plan.price}</span>
-                  {plan.period && <span className="period">{plan.period}</span>}
+                  {/* Handle $0 vs priced plans */}
+                  {plan.price > 0 ? (
+                    <>
+                      <span className="amount">${plan.price}</span>
+                      {plan.period && <span className="period">{plan.period}</span>}
+                    </>
+                  ) : (
+                    <span className="amount">{plan.name === 'Enterprise' ? 'Contact Us' : '$0'}</span>
+                  )}
                 </div>
                 {getButton(plan)}
               </div>
@@ -177,7 +212,6 @@ const Pricing = () => {
           ))}
         </div>
 
-        {/* --- NEW SECTION for Top-Up --- */}
         <div className="top-up-cta">
           <div className="top-up-content">
             <h3>Need More Credits?</h3>
@@ -186,12 +220,12 @@ const Pricing = () => {
             </p>
           </div>
           <div className="top-up-action">
+            {/* --- UPDATED LINK TO /top-up --- */}
             <Link to="/top-up" className="plan-button secondary">
               Buy Top-Up Credits
             </Link>
           </div>
         </div>
-        {/* --- END NEW SECTION --- */}
 
       </div>
     </div>

@@ -1,12 +1,12 @@
 // frontend/src/services/billingService.js
+// --- UPDATED to handle both Top-Ups and Subscriptions ---
 
 import api from './api';
 
 const billingService = {
-  createPaymentIntent: () => {
-    return api.post('/billing/create-payment-intent', {});
-  },
-
+  /**
+   * Creates a payment intent for a one-time credit top-up.
+   */
   createTopUpPaymentIntent: (quantity, agreedToTerms) => {
     return api.post('/billing/create-payment-intent', { 
       quantity: quantity,
@@ -14,13 +14,25 @@ const billingService = {
     });
   },
 
-  downloadInvoice: async () => { // This is the only download function we need
+  /**
+   * Creates a payment intent for a subscription plan.
+   */
+  createSubscriptionPaymentIntent: (planId, agreedToTerms) => {
+    return api.post('/billing/create-payment-intent', { 
+      plan_id: planId,
+      agreedToTerms: agreedToTerms 
+    });
+  },
+
+  /**
+   * Downloads the latest invoice (can be for a top-up or subscription).
+   */
+  downloadInvoice: async () => {
     try {
       const response = await api.get('/billing/download-invoice', {
         responseType: 'blob', // Expect a file response
       });
 
-      // ... (all the existing blob handling logic remains the same) ...
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -57,8 +69,6 @@ const billingService = {
       throw error;
     }
   },
-
-  // --- The downloadReceipt function has been removed ---
 };
 
 export default billingService;

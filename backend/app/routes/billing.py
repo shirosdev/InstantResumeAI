@@ -1,5 +1,5 @@
 # backend/app/routes/billing.py
-# --- COMPLETE RECTIFIED FILE (FINAL) ---
+# --- FULLY CORRECTED FILE ---
 
 from flask import Blueprint, request, jsonify, current_app, send_file, after_this_request
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -7,7 +7,7 @@ import stripe
 import os
 import traceback
 import time
-from datetime import datetime, date
+from datetime import datetime, date, timedelta # Added timedelta
 
 from app import db
 from app.models.user import User
@@ -18,11 +18,14 @@ from app.pdf_service import PDFService
 
 billing_bp = Blueprint('billing', __name__)
 
-# --- All routes from create_payment to manual_add_credits remain unchanged ---
-
 @billing_bp.route('/create-payment-intent', methods=['POST'])
 @jwt_required()
 def create_payment():
+    """
+    Creates a Stripe PaymentIntent for EITHER a top-up or a subscription.
+    - Expects { "quantity": 5, "agreedToTerms": true } for top-ups.
+    - Expects { "plan_id": 2, "agreedToTerms": true } for subscriptions.
+    """
     stripe.api_key = current_app.config['STRIPE_SECRET_KEY']
     if not stripe.api_key:
         print("FATAL: Stripe secret key is NOT configured.")
@@ -30,27 +33,55 @@ def create_payment():
 
     try:
         data = request.get_json()
-        quantity = data.get('quantity', 5)
         user_id = get_jwt_identity()
 
+        plan_id = data.get('plan_id')
+        quantity = data.get('quantity')
         agreed_to_terms = data.get('agreedToTerms', False)
-        if not agreed_to_terms:
-            return jsonify({'message': 'You must agree to the non-refundable terms to proceed.'}), 400
+        
+        amount = 0
+        metadata = { 'user_id': str(user_id) }
+        description = ""
 
-        if not isinstance(quantity, int) or quantity <= 0:
-            return jsonify(error="Invalid quantity provided."), 400
+        if plan_id:
+            # Handle SUBSCRIPTION purchase
+            print(f"Handling SUBSCRIPTION payment for plan_id: {plan_id}")
+            plan = SubscriptionPlan.query.get(plan_id)
+            if not plan:
+                return jsonify(error="Plan not found."), 404
+            
+            # Don't allow purchase of free/enterprise plans this way
+            if plan.price <= 0:
+                 return jsonify(error="This plan cannot be purchased directly. Please contact support for Enterprise plans."), 400
+            
+            amount = int(plan.price * 100) # Get price from DB
+            metadata['plan_id'] = str(plan_id)
+            description = f"Subscription: {plan.plan_name}"
 
-        amount = quantity * 100
-        print(f"CREATING PAYMENT INTENT for user {user_id}: {quantity} credits for ${amount/100:.2f} USD")
+        elif quantity:
+            # Handle TOP-UP purchase
+            print(f"Handling TOP-UP payment for quantity: {quantity}")
+            if not agreed_to_terms:
+                return jsonify({'message': 'You must agree to the non-refundable terms to proceed.'}), 400
+            
+            if not isinstance(quantity, int) or quantity <= 0:
+                return jsonify(error="Invalid quantity provided."), 400
+
+            amount = int(quantity) * 100 # $1 per credit
+            metadata['credits_purchased'] = str(quantity)
+            description = f"{quantity} enhancement credits"
+        
+        else:
+            return jsonify(error="Invalid request. Must provide plan_id or quantity."), 400
+        
+        print(f"CREATING PAYMENT INTENT for user {user_id}: amount={amount} cents, metadata={metadata}")
 
         intent = stripe.PaymentIntent.create(
             amount=amount,
             currency='usd',
             automatic_payment_methods={'enabled': True},
-            metadata={
-                'user_id': str(user_id),
-                'credits_purchased': str(quantity)
-            }
+            metadata=metadata,
+            description=description
         )
         return jsonify({'clientSecret': intent.client_secret})
 
@@ -80,18 +111,21 @@ def webhook():
         payment_intent = event['data']['object']
         metadata = payment_intent.get('metadata', {})
         print(f"--- Handling 'payment_intent.succeeded' for PI_ID: {payment_intent['id']} ---")
-
-        try:
-            user_id = int(metadata.get('user_id'))
-            credits_purchased = int(metadata.get('credits_purchased'))
-        except (ValueError, TypeError):
-            print("ERROR: Could not parse metadata into integers.")
-            return jsonify(error='Invalid metadata format'), 400
         
         try:
-            payment_method_info = "Stripe"
-            payment_method_for_db = "stripe" 
+            user_id = int(metadata.get('user_id'))
+            plan_id_str = metadata.get('plan_id')
+            credits_str = metadata.get('credits_purchased')
 
+            # Get user and their current subscription
+            user = User.query.get(user_id)
+            user_subscription = UserSubscription.query.filter_by(user_id=user_id).first()
+            if not user or not user_subscription:
+                raise Exception(f"User or subscription not found for user_id {user_id}")
+
+            # Get payment method details
+            payment_method_info = "Stripe"
+            payment_method_for_db = "stripe"
             pi_with_pm = stripe.PaymentIntent.retrieve(payment_intent['id'], expand=['payment_method'])
             if pi_with_pm.payment_method:
                 pm_details = pi_with_pm.payment_method
@@ -102,40 +136,84 @@ def webhook():
                     payment_method_info = pm_details.type.title()
                     payment_method_for_db = pm_details.type
 
-            user_subscription = UserSubscription.query.filter_by(user_id=user_id).first()
-            if not user_subscription:
-                free_plan = SubscriptionPlan.query.filter_by(plan_name='Free - 3 Enhancements').first()
-                if not free_plan: raise Exception("Default 'Free - 3 Enhancements' plan not found.")
-                user_subscription = UserSubscription(user_id=user_id, plan_id=free_plan.plan_id, start_date=date.today(), status='active')
-                db.session.add(user_subscription)
+            new_transaction = None
+            email_service = EmailService()
+            
+            # --- THIS IS THE UPDATED WEBHOOK LOGIC ---
+            if plan_id_str:
+                # This is a SUBSCRIPTION purchase
+                plan_id = int(plan_id_str)
+                plan = SubscriptionPlan.query.get(plan_id)
+                if not plan:
+                    raise Exception(f"Plan not found for plan_id {plan_id}")
+                
+                print(f"Updating subscription for user {user_id} to plan {plan.plan_name}")
+                
+                # Update the user's subscription
+                user_subscription.plan_id = plan.plan_id
+                user_subscription.start_date = date.today()
+                user_subscription.end_date = date.today() + timedelta(days=plan.duration_days)
+                user_subscription.status = 'active'
+                
+                # --- THIS IS THE FIX ---
+                # DO NOT touch enhancement_credits. That's for top-ups.
+                # Instead, reset their monthly usage and the reset timer.
+                user_subscription.monthly_enhancements_used = 0
+                user_subscription.credits_reset_at = datetime.utcnow()
+                # --- END FIX ---
+                
+                # Create the transaction
+                new_transaction = Transaction(
+                    user_id=user_id,
+                    subscription_id=user_subscription.subscription_id,
+                    amount=payment_intent.get('amount', 0) / 100.0,
+                    currency='usd',
+                    payment_method=payment_method_for_db,
+                    payment_gateway_id=payment_intent.get('id'),
+                    status='completed',
+                    description=f"Subscription: {plan.plan_name}"
+                )
+                db.session.add(new_transaction)
+                db.session.commit() # Commit to get transaction ID
 
-            user_subscription.enhancement_credits = (user_subscription.enhancement_credits or 0) + credits_purchased
-            
-            new_transaction = Transaction(
-                user_id=user_id,
-                amount=payment_intent.get('amount', 0) / 100.0,
-                currency='usd',
-                payment_method=payment_method_for_db,
-                payment_gateway_id=payment_intent.get('id'),
-                status='completed',
-                description=f'{credits_purchased} enhancement credits',
-                subscription_id=None # Explicitly None for a top-up
-            )
-            db.session.add(new_transaction)
-            db.session.commit()
-            print("SUCCESS: Database commit successful.")
-            
-            user = User.query.get(user_id)
-            if user:
+                # Send SUBSCRIPTION INVOICE
+                email_service.send_subscription_invoice_email(user, plan, new_transaction)
+                print(f"Subscription invoice email queued for {user.email}.")
+
+            elif credits_str:
+                # This is a TOP-UP purchase (This logic is correct)
+                credits_purchased = int(credits_str)
+                print(f"Adding {credits_purchased} credits to user {user_id}")
+
+                user_subscription.enhancement_credits = (user_subscription.enhancement_credits or 0) + credits_purchased
+                
+                new_transaction = Transaction(
+                    user_id=user_id,
+                    amount=payment_intent.get('amount', 0) / 100.0,
+                    currency='usd',
+                    payment_method=payment_method_for_db,
+                    payment_gateway_id=payment_intent.get('id'),
+                    status='completed',
+                    description=f'{credits_purchased} enhancement credits',
+                    subscription_id=None
+                )
+                db.session.add(new_transaction)
+                db.session.commit() # Commit to get transaction ID
+
+                # Send TOP-UP RECEIPT
                 payment_details = {
                     "credits_purchased": credits_purchased,
                     "amount_paid": new_transaction.amount,
                     "payment_intent_id": new_transaction.payment_gateway_id,
                     "payment_method_info": payment_method_info
                 }
-                email_service = EmailService()
                 email_service.send_payment_receipt_email(user=user, payment_details=payment_details)
-                print(f"Receipt email queued for {user.email}.")
+                print(f"Top-up receipt email queued for {user.email}.")
+            
+            # --- END OF UPDATED LOGIC ---
+            
+            db.session.commit()
+            print("SUCCESS: Webhook database commit successful.")
         
         except Exception as e:
             print(f"\n--- DATABASE OR EMAIL ERROR during webhook processing ---\n{traceback.format_exc()}")
@@ -192,6 +270,7 @@ def webhook_test():
 def verify_user_credits():
     """
     Endpoint to verify user's current credit status
+    (This is deprecated by /auth/status but kept for now)
     """
     try:
         user_id = int(get_jwt_identity())
@@ -199,15 +278,27 @@ def verify_user_credits():
         user_subscription = UserSubscription.query.filter_by(user_id=user_id).first()
         if not user_subscription:
             return jsonify({'success': False, 'message': 'No subscription found'}), 404
+        
         plan = SubscriptionPlan.query.get(user_subscription.plan_id)
+        if not plan:
+            return jsonify({'success': False, 'message': 'Subscription plan not found'}), 404
+            
         from app.models.resume import ResumeEnhancement
         enhancement_count = ResumeEnhancement.query.filter_by(user_id=user_id).count()
+        
+        # --- START OF FIX ---
+        # Define variables with default values first
+        total_available = 0
+        remaining = 0
+        
         if plan and plan.resume_limit is not None:
             total_available = plan.resume_limit + (user_subscription.enhancement_credits or 0)
             remaining = total_available - enhancement_count
         else:
             total_available = 'unlimited'
             remaining = 'unlimited'
+        # --- END OF FIX ---
+            
         return jsonify({
             'success': True,
             'data': {
@@ -218,8 +309,8 @@ def verify_user_credits():
                 'plan_limit': plan.resume_limit if plan else None,
                 'enhancement_credits': user_subscription.enhancement_credits or 0,
                 'enhancements_used': enhancement_count,
-                'total_available': total_available,
-                'remaining': remaining,
+                'total_available': total_available, # Now correctly defined
+                'remaining': remaining,           # Now correctly defined
                 'subscription_status': user_subscription.status,
                 'last_updated': user_subscription.updated_at.isoformat() if user_subscription.updated_at else None
             }

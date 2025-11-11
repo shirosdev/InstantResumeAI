@@ -30,16 +30,20 @@ class AuthService:
     
     @staticmethod
     def assign_free_subscription(user_id):
-        """Assign free 3-enhancement plan to new user"""
+        """
+        Assign free 10-enhancement plan to new user.
+        MODIFIED: This now matches the "Freemium" plan from Pricing.jsx
+        """
         try:
-            # CRITICAL FIX: Explicitly select the limited free plan by name and limit.
+            # CRITICAL FIX: Find the 'Freemium' plan with 10 enhancements
             free_plan = SubscriptionPlan.query.filter_by(
-                plan_name='Free - 3 Enhancements',
-                resume_limit=3 
+                plan_name='Freemium',
+                resume_limit=10
             ).first()
 
             if not free_plan:
-                print("CRITICAL ERROR: Could not find the 'Free - 3 Enhancements' plan in the database!")
+                print("CRITICAL ERROR: Could not find the 'Freemium' (10 enhancement) plan in the database!")
+                print("Please run the seed_plans.py script.")
                 return False
 
             print(f"Assigning plan_id={free_plan.plan_id} ({free_plan.plan_name}) to user_id={user_id}")
@@ -49,7 +53,7 @@ class AuthService:
                 user_id=user_id,
                 plan_id=free_plan.plan_id,
                 start_date=datetime.utcnow().date(),
-                end_date=None,
+                end_date=None, # Free plan doesn't expire
                 status='active',
                 auto_renew=False,
                 enhancement_credits=0  # Explicitly initialize to 0
@@ -60,7 +64,7 @@ class AuthService:
             AuthService.log_activity(
                 user_id,
                 'subscription_created',
-                f'Free - 3 Enhancements plan assigned to user (plan_id={free_plan.plan_id})'
+                f'Freemium plan assigned to user (plan_id={free_plan.plan_id})'
             )
 
             print(f"Successfully assigned subscription to user_id={user_id}")
