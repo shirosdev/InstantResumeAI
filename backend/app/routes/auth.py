@@ -15,9 +15,12 @@ from app.services.password_reset_service import PasswordResetService
 from app.utils.validators import validate_email, validate_password, validate_username
 from app.models.transactions import Transaction
 from app.models.resume import ResumeEnhancement
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date # <-- Import date
 import re
 import uuid
+# --- ADD THIS IMPORT ---
+from sqlalchemy import func
+# --- END ADD ---
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -48,8 +51,11 @@ def register():
         if not is_valid_password:
             return jsonify({'message': password_error}), 400
         
-        if User.query.filter_by(username=username).first():
+        # --- THIS IS THE FIX ---
+        # Check for username case-insensitively
+        if User.query.filter(func.lower(User.username) == func.lower(username)).first():
             return jsonify({'message': 'Username already exists'}), 409
+        # --- END OF FIX ---
         
         if User.query.filter_by(email=email).first():
             return jsonify({'message': 'Email already registered'}), 409
@@ -387,7 +393,8 @@ def get_user_status():
         if not plan:
             return jsonify({'message': 'Subscription plan not found'}), 404
 
-        # --- 1. CHECK FOR PLAN EXPIRATION ---
+        # --- NEW LOGIC: 1. CHECK FOR PLAN EXPIRATION ---
+        # Check if plan is not free and end_date is in the past
         if plan.plan_type != 'free' and user_subscription.end_date and user_subscription.end_date < date.today():
             print(f"User {current_user_id}'s plan has expired. Reverting to Freemium.")
             freemium_plan = SubscriptionPlan.query.filter_by(plan_name='Freemium').first()
@@ -396,12 +403,16 @@ def get_user_status():
                 user_subscription.start_date = date.today()
                 user_subscription.end_date = None
                 user_subscription.status = 'active'
-                user_subscription.monthly_enhancements_used = 0
-                user_subscription.credits_reset_at = datetime.utcnow()
+                user_subscription.monthly_enhancements_used = 0 # Reset usage
+                user_subscription.credits_reset_at = datetime.utcnow() # Reset timer
                 db.session.commit()
+                
+                # Re-fetch the plan details to reflect Freemium
                 plan = freemium_plan
+            else:
+                print("CRITICAL: Freemium plan not found during expiry downgrade.")
         
-        # --- 2. CHECK FOR MONTHLY CREDIT RESET ---
+        # --- NEW LOGIC: 2. CHECK FOR MONTHLY CREDIT RESET ---
         # Calculate next reset date (30 days after the last one)
         # We'll use 30 days as a standard "month" for simplicity
         next_reset_date = user_subscription.credits_reset_at + timedelta(days=30)
@@ -414,7 +425,7 @@ def get_user_status():
             # Update the reset date for the response
             next_reset_date = datetime.utcnow() + timedelta(days=30)
 
-        # --- 3. CALCULATE CREDITS (MODIFIED) ---
+        # --- NEW LOGIC: 3. CALCULATE CREDITS (MODIFIED) ---
         purchased_credits = user_subscription.enhancement_credits or 0
         monthly_limit = plan.resume_limit if plan.resume_limit is not None else 0
         used_this_month = user_subscription.monthly_enhancements_used or 0
