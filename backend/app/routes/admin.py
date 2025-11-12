@@ -17,6 +17,14 @@ from app.models.support_ticket import SupportTicket
 from app.models.ticket_reply import TicketReply
 from flask_jwt_extended import get_jwt_identity
 from app.services.email_service import EmailService
+from google.analytics.data_v1beta import BetaAnalyticsDataClient
+from google.analytics.data_v1beta.types import (
+    DateRange,
+    Dimension,
+    Metric,
+    RunReportRequest,
+)
+import os
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -378,6 +386,22 @@ def get_system_stats():
     except Exception as e:
         return jsonify(message="Failed to retrieve system monitoring stats", error=str(e)), 500
 
+@admin_bp.route('/support-tickets/unresolved-count', methods=['GET'])
+@admin_required()
+def get_unresolved_ticket_count():
+    """
+    Fetches the count of unresolved support tickets for the notification badge.
+    """
+    try:
+        unresolved_count = db.session.query(func.count(SupportTicket.id))\
+                                     .filter(SupportTicket.status == 'unresolved')\
+                                     .scalar()
+        
+        return jsonify({'unresolved_count': unresolved_count}), 200
+    except Exception as e:
+        print(f"Error fetching unresolved ticket count: {e}")
+        return jsonify(message="Failed to fetch ticket count", error=str(e)), 500
+
 
 @admin_bp.route('/support-tickets', methods=['GET'])
 @admin_required()
@@ -501,3 +525,70 @@ def broadcast_email():
 
     except Exception as e:
         return jsonify(success=False, message=str(e)), 500
+
+@admin_bp.route('/analytics/visitors', methods=['GET'])
+@admin_required()
+def get_visitor_analytics():
+    """
+    Fetches visitor analytics from the Google Analytics Data API.
+    """
+    try:
+        property_id = os.getenv('GA_PROPERTY_ID')
+        if not property_id:
+            raise Exception("GA_PROPERTY_ID is not set in environment variables.")
+
+        # Using a default 30-day period
+        client = BetaAnalyticsDataClient()
+        request = RunReportRequest(
+            property=f"properties/{property_id}",
+            dimensions=[Dimension(name="date")],
+            metrics=[
+                Metric(name="activeUsers"),  # Total unique visitors
+                Metric(name="screenPageViews"), # Total pageviews
+                Metric(name="sessions"), # Total sessions
+            ],
+            date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            order_bys=[Dimension(name="date").order_by_dimension("ASCENDING")]
+        )
+
+        response = client.run_report(request)
+        
+        # Format the data for Chart.js
+        labels = []
+        visitors = []
+        pageviews = []
+        sessions = []
+        
+        total_visitors = 0
+        total_pageviews = 0
+        total_sessions = 0
+
+        for row in response.rows:
+            labels.append(datetime.strptime(row.dimension_values[0].value, "%Y%m%d").strftime("%m/%d"))
+            visitors.append(int(row.metric_values[0].value))
+            pageviews.append(int(row.metric_values[1].value))
+            sessions.append(int(row.metric_values[2].value))
+            
+            total_visitors += int(row.metric_values[0].value)
+            total_pageviews += int(row.metric_values[1].value)
+            total_sessions += int(row.metric_values[2].value)
+
+        return jsonify({
+            "daily_chart": {
+                "labels": labels,
+                "visitors": visitors,
+                "pageviews": pageviews,
+                "sessions": sessions,
+            },
+            "totals": {
+                "visitors": total_visitors,
+                "pageviews": total_pageviews,
+                "sessions": total_sessions,
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"Error fetching Google Analytics data: {e}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify(message="Failed to retrieve analytics data. Check server logs and GA configuration.", error=str(e)), 500

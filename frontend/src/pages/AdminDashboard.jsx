@@ -13,6 +13,7 @@ import UsageTracking from './admin/UsageTracking';
 import SecurityCompliance from './admin/SecurityCompliance';
 import Support from './admin/Support';
 import AdminActions from './admin/AdminActions';
+import VisitorAnalytics from './admin/VisitorAnalytics';
 
 const AdminPlaceholder = ({ title }) => (
   <div>
@@ -32,26 +33,40 @@ const adminNavLinks = [
   { title: 'System Monitoring', path: '/admin/monitoring' },
   { title: 'Support', path: '/admin/support' },
   { title: 'Admin Actions', path: '/admin/actions' },
+  { title: 'Visitor Analytics', path: '/admin/analytics' },
+  
 ];
 
 // This is the main layout component that fetches and holds the stats
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [unresolvedCount, setUnresolvedCount] = useState(0);
+  
 
+  // --- RECTIFIED useEffect ---
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchAllData = async () => {
       try {
-        const res = await adminService.getDashboardStats();
-        setStats(res.data);
+        // Fetch user stats and ticket count at the same time
+        const [statsRes, countRes] = await Promise.all([
+          adminService.getDashboardStats(),
+          adminService.getUnresolvedTicketCount() // <-- Call the new function
+        ]);
+        
+        setStats(statsRes.data);
+        setUnresolvedCount(countRes.data.unresolved_count); // <-- Set the count
+
       } catch (err) {
-        console.error("Failed to load admin stats", err);
+        console.error("Failed to load admin data", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchStats();
-  }, []);
+    
+    fetchAllData();
+  }, []); // Empty array, runs once on mount
+  // --- END RECTIFICATION ---
 
   return (
     <div className="admin-layout">
@@ -59,9 +74,13 @@ const AdminDashboard = () => {
         <div className="sidebar-section">
           <ul className="sidebar-links">
             {adminNavLinks.map((link) => (
-              <li key={link.path}> {/* FIX: Use the unique path as the key */}
+              <li key={link.path}>
                 <NavLink to={link.path} end={link.end}>
                   <span>{link.title}</span>
+                  {/* --- FIX: Check title, not key --- */}
+                  {link.title === 'Support' && unresolvedCount > 0 && (
+                    <span className="notification-badge">{unresolvedCount}</span>
+                  )}
                 </NavLink>
               </li>
             ))}
@@ -83,6 +102,7 @@ const AdminRoutes = () => {
             <Route path="/" element={<AdminDashboard />}>
                 <Route index element={<AdminOverview />} />
                 <Route path="user-management" element={<UserManagement />} />
+                <Route path="analytics" element={<VisitorAnalytics />} />
                 <Route path="security" element={<SecurityCompliance />} />
                 <Route path="billing" element={<AdminPlaceholder title="Subscription & Billing" />} />
                 <Route path="usage-tracking" element={<UsageTracking />} />

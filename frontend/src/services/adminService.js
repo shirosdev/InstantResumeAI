@@ -40,6 +40,9 @@ const adminService = {
   getSupportTickets: () => {
     return api.get('/admin/support-tickets');
   },
+  getUnresolvedTicketCount: () => {
+    return api.get('/admin/support-tickets/unresolved-count');
+  },
 
   resolveSupportTicket: (ticketId) => {
     return api.put(`/admin/support-tickets/${ticketId}/resolve`);
@@ -74,6 +77,12 @@ const adminService = {
   },
   sendBroadcastEmail: (subject, message) => {
     return api.post('/admin/broadcast-email', { subject, message });
+  },
+  getVisitorAnalytics: () => {
+    return api.get('/admin/analytics/visitors');
+  },
+  resolveSupportTicket: (ticketId) => {
+    return api.put(`/admin/support-tickets/${ticketId}/resolve`);
   },
 
 };
