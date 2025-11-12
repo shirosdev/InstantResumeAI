@@ -101,7 +101,7 @@ const AdminRoutes = () => {
             <Route path="/" element={<AdminDashboard />}>
                 <Route index element={<AdminOverview />} />
                 <Route path="user-management" element={<UserManagement />} />
-                <Route path="analytics" element={<VisitorAnalytics />} />
+                
                 <Route path="security" element={<SecurityCompliance />} />
                 <Route path="billing" element={<AdminPlaceholder title="Subscription & Billing" />} />
                 <Route path="usage-tracking" element={<UsageTracking />} />
