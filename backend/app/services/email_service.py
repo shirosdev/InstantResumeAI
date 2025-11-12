@@ -288,7 +288,7 @@ class EmailService:
                 <div class="content">
                     <p>{greeting}</p>
                     <p>This is a confirmation that your support ticket with the subject "<b>{ticket_subject}</b>" has been marked as resolved by our team.</p>
-                    <p>If you feel your issue is not fully addressed, or if you have any other questions, please feel free to reply to this email (which may reopen the ticket) or submit a new query on our <a href="http://localhost:3000/contact">contact page</a>.</p>
+                    <p>If you feel your issue is not fully addressed, or if you have any other questions, please feel free to reply to this email (which may reopen the ticket) or submit a new query on our <a href="https://instantresumeai.com/contact">contact page</a>.</p>
                     <p>Thank you for using InstantResumeAI!</p>
                     <p>Best regards,<br>The InstantResumeAI Team</p>
                 </div>
@@ -420,7 +420,7 @@ class EmailService:
                         <li>Download a polished version that's recruiter-ready.</li>
                     </ul>
                     <div class="button-container">
-                        <a href="http://localhost:3000/dashboard" class="button">🚀 Enhance My Resume Now</a>
+                        <a href="htts://instantresumeai.com/dashboard" class="button">🚀 Enhance My Resume Now</a>
                     </div>
                     <p>We're here to make sure your resume doesn't just get noticed — it gets remembered.</p>
                     <p>If you didn't create this account, please ignore this email.</p>
