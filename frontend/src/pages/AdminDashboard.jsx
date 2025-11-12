@@ -13,7 +13,6 @@ import UsageTracking from './admin/UsageTracking';
 import SecurityCompliance from './admin/SecurityCompliance';
 import Support from './admin/Support';
 import AdminActions from './admin/AdminActions';
-import VisitorAnalytics from './admin/VisitorAnalytics';
 
 const AdminPlaceholder = ({ title }) => (
   <div>
