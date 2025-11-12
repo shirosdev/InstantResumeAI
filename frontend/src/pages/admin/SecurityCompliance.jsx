@@ -1,8 +1,35 @@
+// src/pages/admin/SecurityCompliance.jsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import adminService from '../../services/adminService';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Pagination from '../../components/Pagination';
 import '../../styles/AdminDashboard.css'; // Reusing some styles
+
+// --- HELPER FUNCTION TO FIX DATES ---
+const formatDate = (dateString) => {
+  if (!dateString) {
+    return 'N/A';
+  }
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+    // Using a clear, consistent format
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch (e) {
+    return 'Invalid Date';
+  }
+};
+// --- END HELPER FUNCTION ---
 
 const SecurityCompliance = () => {
   const [users, setUsers] = useState([]);
@@ -83,7 +110,8 @@ const SecurityCompliance = () => {
                     {user.is_active ? 'Active' : 'Suspended'}
                   </span>
                 </td>
-                <td>{user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}</td>
+                {/* --- APPLYING DATE FIX HERE --- */}
+                <td>{formatDate(user.last_login)}</td>
                 <td>
                   <button className="action-button" onClick={() => handleViewDetails(user)}>View Details</button>
                 </td>
@@ -105,7 +133,7 @@ const SecurityCompliance = () => {
   );
 };
 
-// This is the new Modal component for displaying security details
+// Modal component for displaying security details
 const SecurityDetailsModal = ({ user, onClose, onUpdate }) => {
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -140,7 +168,7 @@ const SecurityDetailsModal = ({ user, onClose, onUpdate }) => {
     if (text && typeof text === 'string') {
       return text.length > length ? text.substring(0, length) + '...' : text;
     }
-    return 'N/A'; // Return 'N/A' if text is null or not a string
+    return 'N/A';
   };
 
   return (
@@ -170,7 +198,8 @@ const SecurityDetailsModal = ({ user, onClose, onUpdate }) => {
                   <tbody>
                     {details.login_history.map(log => (
                       <tr key={log.id} className={log.is_suspicious ? 'suspicious' : ''}>
-                        <td>{new Date(log.time).toLocaleString()}</td>
+                        {/* --- APPLYING DATE FIX HERE --- */}
+                        <td>{formatDate(log.time)}</td>
                         <td>{log.ip_address || 'N/A'}</td>
                         <td title={log.user_agent || 'Not Available'}>{truncate(log.user_agent)}</td>
                       </tr>
@@ -188,7 +217,8 @@ const SecurityDetailsModal = ({ user, onClose, onUpdate }) => {
                   <tbody>
                     {details.active_sessions.map(s => (
                       <tr key={s.id}>
-                        <td>{new Date(s.last_activity).toLocaleString()}</td>
+                        {/* --- APPLYING DATE FIX HERE --- */}
+                        <td>{formatDate(s.last_activity)}</td>
                         <td>{s.ip_address || 'N/A'}</td>
                         <td title={s.user_agent || 'Not Available'}>{truncate(s.user_agent)}</td>
                       </tr>
@@ -206,9 +236,10 @@ const SecurityDetailsModal = ({ user, onClose, onUpdate }) => {
                   <tbody>
                     {details.audit_trail.map(log => (
                       <tr key={log.id}>
-                        <td>{new Date(log.time).toLocaleString()}</td>
+                        {/* --- APPLYING DATE FIX HERE --- */}
+                        <td>{formatDate(log.time)}</td>
                         <td>{log.action}</td>
-                        <td>{log.description}</td>
+                        <td title={log.description}>{truncate(log.description)}</td>
                       </tr>
                     ))}
                   </tbody>
