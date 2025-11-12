@@ -428,6 +428,19 @@ def resolve_support_ticket(ticket_id):
         ticket.status = 'resolved'
         ticket.resolved_at = datetime.utcnow() # ADD THIS LINE
         db.session.commit()
+
+        try:
+            email_service = EmailService()
+            email_service.send_ticket_resolved_confirmation(
+                to_email=ticket.email,
+                user_name=ticket.name,
+                ticket_subject=ticket.subject
+            )
+            print(f"Successfully sent 'resolved' email to {ticket.email}")
+        except Exception as email_e:
+            # Log the email error but don't fail the API request,
+            # since the ticket *was* successfully resolved in the DB.
+            print(f"WARNING: Failed to send 'resolved' email for ticket {ticket_id}: {str(email_e)}")
         
         return jsonify(message="Ticket marked as resolved", ticket=ticket.to_dict()), 200
     except Exception as e:

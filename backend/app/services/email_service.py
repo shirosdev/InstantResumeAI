@@ -244,6 +244,80 @@ class EmailService:
         except Exception as e:
             logger.error(f"Failed to send password change confirmation to {to_email}: {str(e)}")
             return False
+    def send_ticket_resolved_confirmation(self, to_email: str, user_name: str, ticket_subject: str) -> bool:
+        """Sends confirmation email after a support ticket is resolved"""
+        try:
+            subject = f"Your Support Ticket has been Resolved (Ref: {ticket_subject[:30]}...)"
+            html_content = self._create_ticket_resolved_html(user_name, ticket_subject)
+            text_content = self._create_ticket_resolved_text(user_name, ticket_subject)
+            return self._send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
+                text_content=text_content,
+                reply_to_email=self.support_email,
+                reply_to_name="InstantResumeAI Support"
+            )
+        except Exception as e:
+            logger.error(f"Failed to send ticket resolved confirmation to {to_email}: {str(e)}")
+            return False
+
+    def _create_ticket_resolved_html(self, user_name: str, ticket_subject: str) -> str:
+        """Creates HTML content for the ticket resolved email"""
+        greeting = f"Hello {user_name}," if user_name else "Hello,"
+        
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Support Ticket Resolved</title>
+            <style>
+                body {{ font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                .footer {{ text-align: center; margin-top: 30px; font-size: 14px; color: #666; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>✓ Support Ticket Resolved</h1>
+                </div>
+                <div class="content">
+                    <p>{greeting}</p>
+                    <p>This is a confirmation that your support ticket with the subject "<b>{ticket_subject}</b>" has been marked as resolved by our team.</p>
+                    <p>If you feel your issue is not fully addressed, or if you have any other questions, please feel free to reply to this email (which may reopen the ticket) or submit a new query on our <a href="http://localhost:3000/contact">contact page</a>.</p>
+                    <p>Thank you for using InstantResumeAI!</p>
+                    <p>Best regards,<br>The InstantResumeAI Team</p>
+                </div>
+                <div class="footer">
+                    <p>© {datetime.now().year} InstantResumeAI. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+    def _create_ticket_resolved_text(self, user_name: str, ticket_subject: str) -> str:
+        """Creates plain text content for the ticket resolved email"""
+        greeting = f"Hello {user_name}," if user_name else "Hello,"
+        
+        return f"""
+            {greeting}
+
+            This is a confirmation that your support ticket with the subject "{ticket_subject}" has been marked as resolved by our team.
+
+            If you feel your issue is not fully addressed, or if you have any other questions, please feel free to reply to this email (which may reopen the ticket) or submit a new query on our contact page: https://instantresumeai.com/contact
+
+            Thank you for using InstantResumeAI!
+
+            Best regards,
+            The InstantResumeAI Team
+
+            © {datetime.now().year} InstantResumeAI. All rights reserved.
+                    """
     
     def _send_email(self, 
                     to_email: str, 
