@@ -57,9 +57,10 @@ def create_app():
          "https://frontend-production-d76f.up.railway.app",
          "https://www.instantresumeai.com"
      ]}},
-     supports_credentials=True,
-     allow_headers=["Content-Type", "Authorization"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        allow_headers=["Content-Type", "Authorization", "Accept"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         # --- THIS IS THE FIX FOR DOWNLOADING ---
+        expose_headers=["Content-Disposition"]
     )
 
     from app.models.user import User
