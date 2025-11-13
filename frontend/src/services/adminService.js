@@ -78,6 +78,23 @@ const adminService = {
   sendBroadcastEmail: (subject, message) => {
     return api.post('/admin/broadcast-email', { subject, message });
   },
+
+  getRevenueStats: (startDate, endDate) => {
+    // Pass dates as query parameters
+    let params = {};
+    if (startDate) params.start_date = startDate.toISOString();
+    if (endDate) params.end_date = endDate.toISOString();
+    
+    return api.get('/admin/billing/revenue-stats', { params });
+  },
+
+  getSubscriptionActivity: (startDate, endDate, page = 1) => {
+    let params = { page };
+    if (startDate) params.start_date = startDate.toISOString();
+    if (endDate) params.end_date = endDate.toISOString();
+
+    return api.get('/admin/billing/subscription-activity', { params });
+  },
   
   resolveSupportTicket: (ticketId) => {
     return api.put(`/admin/support-tickets/${ticketId}/resolve`);

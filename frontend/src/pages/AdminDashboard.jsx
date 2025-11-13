@@ -13,6 +13,7 @@ import UsageTracking from './admin/UsageTracking';
 import SecurityCompliance from './admin/SecurityCompliance';
 import Support from './admin/Support';
 import AdminActions from './admin/AdminActions';
+import SubscriptionBilling from './admin/SubscriptionBilling';
 
 const AdminPlaceholder = ({ title }) => (
   <div>
@@ -103,7 +104,7 @@ const AdminRoutes = () => {
                 <Route path="user-management" element={<UserManagement />} />
                 
                 <Route path="security" element={<SecurityCompliance />} />
-                <Route path="billing" element={<AdminPlaceholder title="Subscription & Billing" />} />
+                <Route path="billing" element={<SubscriptionBilling />} />
                 <Route path="usage-tracking" element={<UsageTracking />} />
                 {/* FIX: Removed the duplicate route for "monitoring" */}
                 <Route path="monitoring" element={<SystemMonitoring />} />

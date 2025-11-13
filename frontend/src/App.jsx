@@ -34,6 +34,7 @@ import CheckoutPage from './pages/Checkout';
 import PaymentStatusPage from './pages/PaymentStatus'; 
 import AnalyticsTracker from './components/AnalyticsTracker';
 import Billing from './pages/Billing';
+import 'react-datepicker/dist/react-datepicker.css';
 
 // Styles
 import './App.css';
