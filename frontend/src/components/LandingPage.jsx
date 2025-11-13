@@ -258,7 +258,7 @@ const LandingPage = () => {
                     <h2 className="cta-title">Get started in minutes — it's free</h2>
                     <p className="cta-subtitle">Join thousands of job seekers who've upgraded their resumes with AI</p>
                      <Link to="/signup" className="cta-button primary large">
-                        Try InstantResumeai for Free
+                        Try InstantResumeAi for Free
                     </Link>
                     <p className="cta-bottom-text">No credit card required • Get results in under 5 minutes</p>
                 </div>
