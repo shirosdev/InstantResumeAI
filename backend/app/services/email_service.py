@@ -309,7 +309,7 @@ class EmailService:
 
             This is a confirmation that your support ticket with the subject "{ticket_subject}" has been marked as resolved by our team.
 
-            If you feel your issue is not fully addressed, or if you have any other questions, please feel free to reply to this email (which may reopen the ticket) or submit a new query on our contact page: https://instantresumeai.com/contact
+            If you feel your issue is not fully addressed, or if you have any other questions, please feel free to reply to this email or submit a new query on our contact page: https://instantresumeai.com/contact
 
             Thank you for using InstantResumeAI!
 
