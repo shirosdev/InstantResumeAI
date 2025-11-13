@@ -62,7 +62,7 @@ def get_all_users():
     """Provides a paginated list of all users with search functionality."""
     try:
         page = request.args.get('page', 1, type=int)
-        # FIX 1: Changed per_page type from str back to int
+       
         per_page = request.args.get('per_page', 15, type=int)
         search_query = request.args.get('search_query', '', type=str)
         
@@ -70,7 +70,7 @@ def get_all_users():
         
         if search_query:
             search_term = f"%{search_query}%"
-            # FIX 2: Removed the invalid search on the integer user_id field
+            
             query = query.filter(
                 or_(
                     User.username.like(search_term),

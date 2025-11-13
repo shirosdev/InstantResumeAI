@@ -188,7 +188,6 @@ const SubscriptionBilling = () => {
                     <td>{formatDate(sub.date)}</td>
                     <td>{sub.username}</td>
                     <td>{sub.email}</td>
-                    {/* --- MODIFICATION: Show top-ups differently --- */}
                     <td>
                       <span className={`status-badge ${sub.plan_name.includes('Top-Up') ? 'inactive' : 'active'}`}>
                         {sub.plan_name}

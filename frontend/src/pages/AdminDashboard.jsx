@@ -106,7 +106,7 @@ const AdminRoutes = () => {
                 <Route path="security" element={<SecurityCompliance />} />
                 <Route path="billing" element={<SubscriptionBilling />} />
                 <Route path="usage-tracking" element={<UsageTracking />} />
-                {/* FIX: Removed the duplicate route for "monitoring" */}
+                
                 <Route path="monitoring" element={<SystemMonitoring />} />
                 <Route path="support" element={<Support />} />
                 <Route path="actions" element={<AdminActions />} />

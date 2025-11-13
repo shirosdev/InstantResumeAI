@@ -36,7 +36,7 @@ import AnalyticsTracker from './components/AnalyticsTracker';
 import Billing from './pages/Billing';
 import 'react-datepicker/dist/react-datepicker.css';
 
-// Styles
+
 import './App.css';
 import './styles/Pages.css';
 import './styles/Pricing.css';
