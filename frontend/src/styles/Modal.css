@@ -111,3 +111,94 @@
     color: var(--error-color);
     border: 1px solid var(--border-accent);
 }
+.modal-content.large {
+  max-width: 800px; /* Wider for resumes */
+  max-height: 90vh; /* Taller */
+  display: flex;
+  flex-direction: column;
+}
+
+.resume-preview-content {
+  flex-grow: 1; /* Allows the content to fill the space */
+  overflow-y: auto; /* Adds a scrollbar if content is too long */
+  background: #F9FAFB; /* Light gray background */
+  border: 1px solid var(--border-primary);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  line-height: 1.6;
+}
+
+/* Basic styling for the converted HTML */
+.resume-preview-content h1,
+.resume-preview-content h2,
+.resume-preview-content h3 {
+  color: var(--text-primary);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.resume-preview-content p {
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+.resume-preview-content ul,
+.resume-preview-content ol {
+  padding-left: 2rem;
+  margin-bottom: 1rem;
+}
+.resume-preview-content li {
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.modal-content.large {
+  max-width: 800px; /* Wider for resumes */
+  max-height: 90vh; /* Taller */
+  display: flex;
+  flex-direction: column;
+}
+
+.resume-preview-content {
+  flex-grow: 1; /* Allows the content to fill the space */
+  overflow-y: auto; /* Adds a scrollbar if content is too long */
+  background: #F9FAFB; /* Light gray background */
+  border: 1px solid var(--border-primary);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  line-height: 1.6;
+}
+
+/* Basic styling for the converted HTML */
+.resume-preview-content h1,
+.resume-preview-content h2,
+.resume-preview-content h3 {
+  color: var(--text-primary);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.resume-preview-content p {
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+.resume-preview-content ul,
+.resume-preview-content ol {
+  padding-left: 2rem;
+  margin-bottom: 1rem;
+}
+.resume-preview-content li {
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+/* --- Make sure this rule is in your Modal.css file for the 'Close' button --- */
+.modal-actions .submit-button.secondary {
+  background: transparent !important;
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+.modal-actions .submit-button.secondary:hover:not(:disabled) {
+  background: var(--bg-secondary) !important;
+  border-color: var(--text-secondary);
+  box-shadow: var(--shadow-lg);
+  transform: scale(1.03);
+}

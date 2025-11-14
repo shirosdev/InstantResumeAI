@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 // --- NEW IMPORTS ---
 import EnhancementProgress from '../components/EnhancementProgress'; // Import the new component
 import '../styles/EnhancementProgress.css'; // Import the new CSS
+import ResumePreviewModal from '../components/ResumePreviewModal'; // Import the preview modal
 // --- END NEW IMPORTS ---
 
 
@@ -73,7 +74,12 @@ const EnhancementWorkbench = () => {
   // --- NEW STATE FOR PROGRESS ---
   const [progressStep, setProgressStep] = useState(0);
   const [progressDescription, setProgressDescription] = useState('');
-  // --- END NEW STATE ---
+  
+  // --- NEW STATES FOR PREVIEW ---
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState('');
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  // --- END NEW STATES ---
 
   useEffect(() => {
     fetchUserStatus();
@@ -105,7 +111,7 @@ const EnhancementWorkbench = () => {
     }
   }, []);
 
-  // --- NEW: USEEFFECT FOR SIMULATING PROGRESS ---
+  // --- USEEFFECT FOR SIMULATING PROGRESS ---
   useEffect(() => {
     let timer;
     if (isProcessing) {
@@ -115,7 +121,7 @@ const EnhancementWorkbench = () => {
 
       // Function to advance the step
       const advanceStep = (step) => {
-        if (step > TOTAL_STEPS -1 ) {
+        if (step > TOTAL_STEPS -1) {
           // Simulation finished, but we'll let the actual API call handle the final state change
           return;
         }
@@ -167,8 +173,6 @@ const EnhancementWorkbench = () => {
     setError('');
     
     // Note: The simulation will run *in parallel* with the actual API call.
-    // In a real implementation, the simulation would be replaced by
-    // WebSocket/SSE listeners that update the progress state.
     
     try {
       const response = await resumeService.enhanceResume(resumeFile, jobDescription, userInstructions);
@@ -223,6 +227,33 @@ const EnhancementWorkbench = () => {
       setError("Could not save your agreement. Please try again.");
     }
   };
+  
+  // --- NEW HANDLERS FOR PREVIEW ---
+  const handlePreview = async () => {
+    if (!enhancementResult?.enhanced_resume_id) {
+      setError('No enhanced resume ID available');
+      return;
+    }
+    
+    setIsPreviewLoading(true);
+    setError('');
+    
+    try {
+      const html = await resumeService.getResumePreview(enhancementResult.enhanced_resume_id);
+      setPreviewHtml(html);
+      setShowPreview(true);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not load preview.');
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
+  const handleClosePreview = () => {
+    setShowPreview(false);
+    setPreviewHtml('');
+  };
+  // --- END NEW HANDLERS ---
 
   const handleReset = () => {
     // ... (This function remains the same, but add progress reset)
@@ -263,6 +294,278 @@ const EnhancementWorkbench = () => {
   }
 
   const hasHitLimit = userStatus && userStatus.resume_limit !== null && userStatus.remaining_enhancements <= 0;
+
+  // --- ALL HELPER COMPONENTS ARE DEFINED *INSIDE* EnhancementWorkbench ---
+  // --- This allows them to access parent state/handlers like handlePreview ---
+
+  const DisclaimerModal = ({ onAgree,userStatus }) => {
+    const [isChecked, setIsChecked] = useState(false);
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content disclaimer-modal-content">
+          <h3 className="disclaimer-title">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="30"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            Important Notice Before You Proceed
+          </h3>
+          <div className="disclaimer-text">
+            I understand and agree that the resume generated/enhanced by InstantResumeAI is AI-assisted content. I am solely responsible for reviewing, verifying, and using the final document, and InstantResumeAI is not liable for any inaccuracies, misrepresentations, and/or outcomes resulting from its use.
+          </div>
+  
+          {userStatus && (
+            <div className="credit-usage-notification">
+              <p>
+                <strong>1 credit has been used.</strong>
+              </p>
+              <p>
+                You have <strong>{userStatus.remaining_enhancements === 'unlimited' ? 'unlimited' : userStatus.remaining_enhancements}</strong> credits remaining.
+              </p>
+            </div>
+          )}
+  
+          <div className="disclaimer-agreement">
+            <input 
+              type="checkbox" 
+              id="disclaimer-checkbox" 
+              checked={isChecked}
+              onChange={() => setIsChecked(!isChecked)}
+            />
+            <label htmlFor="disclaimer-checkbox">
+              I understand and agree to the terms above.
+            </label>
+          </div>
+          <p className="disclaimer-note">
+            InstantResumeAI provides AI-powered assistance to help you create and refine your resume. We do not guarantee job offers, interview calls, or compliance with every employer’s specific requirements. Please ensure accuracy and truthfulness before using your resume for professional purposes.
+          </p>
+          <div className="modal-actions">
+            <button 
+              className="submit-button" 
+              onClick={onAgree}
+              disabled={!isChecked}
+            >
+              Agree & Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  const InstructionPromptModal = ({ onChoice }) => {
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content instruction-prompt">
+          <div className="modal-icon">
+            <svg className="customize-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+          </div>
+          <h3>Customize Your Enhancement</h3>
+          <p>Would you like to add specific instructions for how your resume should be enhanced?</p>
+          <p className="modal-subtitle">
+            This allows you to emphasize certain skills, adjust tone, or focus on specific experiences.
+          </p>
+          <div className="modal-actions">
+            <button 
+              className="submit-button secondary" 
+              onClick={() => onChoice(false)}
+            >
+              No, Use Standard Enhancement
+            </button>
+            <button 
+              className="submit-button" 
+              onClick={() => onChoice(true)}
+            >
+              Yes, Add Instructions
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  const UserInstructionsStep = ({ userInstructions, setUserInstructions, onEnhance, isProcessing, onBack }) => {
+    const [showExamples, setShowExamples] = useState(false);
+    const exampleInstructions = [
+      "Emphasize leadership and team management experience over technical implementation details",
+      "Minimize references to technologies older than 5 years, focus on modern tech stack",
+      "Highlight international experience and cross-cultural collaboration",
+      "Downplay senior-level titles to avoid appearing overqualified",
+      "Focus heavily on quantifiable achievements and ROI metrics",
+      "Address the 2-year gap by emphasizing continuous learning and certifications"
+    ];
+    return (
+      <div className="workbench-panel">
+        <h3>Step 3: Add Your Custom Instructions</h3>
+        <p>Provide specific guidance on how you want your resume enhanced.</p>
+        <div className="instruction-info-box">
+          <div className="info-icon">💡</div>
+          <div className="info-content">
+            <strong>Your instructions have top priority</strong>
+            <p>The AI will prioritize your specific requirements above standard optimization practices.</p>
+          </div>
+        </div>
+        <div className="examples-section">
+          <button 
+            className="examples-toggle"
+            onClick={() => setShowExamples(!showExamples)}
+          >
+            {showExamples ? 'Hide' : 'Show'} Example Instructions
+            <span className={`arrow ${showExamples ? 'up' : 'down'}`}>▼</span>
+          </button>
+          {showExamples && (
+            <div className="examples-list">
+              {exampleInstructions.map((example, index) => ( // Corrected .map usage
+                <div 
+                  key={index} 
+                  className="example-item"
+                  onClick={() => setUserInstructions(example)}
+                >
+                  <span className="example-icon">→</span>
+                  {example}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <textarea
+          className="instructions-textarea"
+          value={userInstructions}
+          onChange={(e) => setUserInstructions(e.target.value)}
+          placeholder="Example: 'Focus on cloud architecture experience and AWS certifications. Minimize mentions of junior roles. Emphasize team leadership in all project descriptions.'"
+          rows="8"
+          disabled={isProcessing}
+        />
+        <div className="character-count">
+          {userInstructions.length} / 1000 characters
+          {userInstructions.length > 800 && (
+            <span className="warning"> (approaching limit)</span>
+          )}
+        </div>
+        <div className="panel-actions">
+          <button className="submit-button secondary" onClick={onBack} disabled={isProcessing}>
+            Back
+          </button>
+          <button 
+            className="submit-button" 
+            onClick={onEnhance} 
+            disabled={isProcessing || userInstructions.length === 0}
+          >
+            {isProcessing ? <><span className="spinner"></span>Enhancing...</> : 'Enhance Resume'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+  
+  const AutoProcessingStep = () => {
+    // This component is now effectively replaced by the logic in Step 3's render
+    return (
+      <div className="workbench-panel">
+        <h3>Step 3: Standard Enhancement in Progress</h3>
+        <p>You've selected the standard enhancement. The AI is now processing your resume.</p>
+        <div className="processing-placeholder">
+          <div className="spinner-large"></div>
+          <p>Please wait, this may take a moment...</p>
+        </div>
+        <textarea className="instructions-textarea" placeholder="Processing, please wait..." rows="8" disabled={true} />
+        <div className="character-count">...</div>
+        <div className="panel-actions">
+          <button className="submit-button secondary" disabled={true}>Back</button>
+          <button className="submit-button" disabled={true}><span className="spinner"></span>Enhancing...</button>
+        </div>
+      </div>
+    );
+  };
+  
+  
+  const JobDescriptionStep = ({ resumeFile, jobDescription, setJobDescription, onNext, onBack }) => {
+    return (
+      <div className="workbench-panel">
+        <h3>Step 2: Add the Job Description</h3>
+        <p>Paste the description for your target role below.</p>
+        <div className="resume-preview-card">
+          <strong>Selected Resume:</strong> {resumeFile.name}
+        </div>
+        <textarea
+          className="jd-textarea"
+          value={jobDescription}
+          onChange={(e) => setJobDescription(e.target.value)}
+          placeholder="Paste the job description here..."
+          rows="12"
+        />
+        <div className="panel-actions">
+          <button className="submit-button secondary" onClick={onBack}>Back</button>
+          <button className="submit-button" onClick={onNext} disabled={jobDescription.length < 50}>Next</button>
+        </div>
+      </div>
+    );
+  };
+  
+  const ResumeUploadStep = ({ onUpload }) => {
+    const [error, setError] = useState('');
+    const handleFileChange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 10 * 1024 * 1024) { setError('File size must be less than 10MB'); return; }
+        if (!file.name.toLowerCase().endsWith('.docx')) { setError('Please upload a DOCX file.'); return; }
+        setError('');
+        onUpload(file);
+      }
+    };
+    return (
+      <div className="workbench-panel">
+        <h3>Step 1: Upload Your Resume</h3>
+        <p>Begin by uploading your resume in .docx format.</p>
+        {error && <div className="error-message">{error}</div>}
+        <label htmlFor="resume-upload" className="file-drop-zone">
+          <svg className="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span>Click to browse or drag & drop</span>
+          <span className="file-format-info">DOCX files only, max 10MB</span>
+        </label>
+        <input type="file" id="resume-upload" accept=".docx" onChange={handleFileChange} style={{ display: 'none' }} />
+      </div>
+    );
+  };
+
+  const ResultsStep = ({ onDownload, onReset, isDownloadDisabled }) => {
+    // This component is defined inside EnhancementWorkbench,
+    // so it has access to its parent's state and handlers
+    const { userStatus } = useAuth();
+    const canPreview = userStatus && userStatus.plan_id > 1; // plan_id 1 is Freemium
+  
+    return (
+      <div className="workbench-panel results-panel">
+        <div className="results-icon">✓</div>
+        <h3>Enhancement Complete!</h3>
+        <p>Your AI-powered resume is ready for download.</p>
+        <p>Please download your resume now. Download links are temporary and will expire in 10 minutes. We recommend saving all files immediately</p>
+        <div className="panel-actions simplified">
+          <button className="submit-button secondary" onClick={onReset}>Enhance Another</button>
+          
+          {/* --- PREVIEW BUTTON --- */}
+          {canPreview && (
+            <button 
+              className="submit-button secondary" 
+              onClick={handlePreview}
+              disabled={isPreviewLoading}
+            >
+              {isPreviewLoading ? 'Loading...' : 'Preview'}
+            </button>
+          )}
+          {/* --- END PREVIEW BUTTON --- */}
+          
+          <button className="submit-button" onClick={onDownload} disabled={isDownloadDisabled}>
+            {isDownloadDisabled ? 'Agree to Terms to Download' : 'Download Your Resume'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+  
+  // --- END OF HELPER COMPONENT DEFINITIONS ---
 
   return (
     <div className="page-container">
@@ -358,267 +661,16 @@ const EnhancementWorkbench = () => {
             </div>
           </>
         )}
-      </div>
-    </div>
-  );
-};
 
-// ... (DisclaimerModal, InstructionPromptModal, UserInstructionsStep, AutoProcessingStep, JobDescriptionStep, ResumeUploadStep, ResultsStep components remain the same)
-// Note: I'm including UserInstructionsStep and AutoProcessingStep below just in case,
-// but they are unchanged from the previous version you provided.
-
-const DisclaimerModal = ({ onAgree,userStatus }) => {
-  // ... (This component is unchanged)
-  const [isChecked, setIsChecked] = useState(false);
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content disclaimer-modal-content">
-        <h3 className="disclaimer-title">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="30"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          Important Notice Before You Proceed
-        </h3>
-        <div className="disclaimer-text">
-          I understand and agree that the resume generated/enhanced by InstantResumeAI is AI-assisted content. I am solely responsible for reviewing, verifying, and using the final document, and InstantResumeAI is not liable for any inaccuracies, misrepresentations, and/or outcomes resulting from its use.
-        </div>
-
-        {userStatus && (
-          <div className="credit-usage-notification">
-            <p>
-              <strong>1 credit has been used.</strong>
-            </p>
-            <p>
-              You have <strong>{userStatus.remaining_enhancements === 'unlimited' ? 'unlimited' : userStatus.remaining_enhancements}</strong> credits remaining.
-            </p>
-          </div>
-        )}
-
-        <div className="disclaimer-agreement">
-          <input 
-            type="checkbox" 
-            id="disclaimer-checkbox" 
-            checked={isChecked}
-            onChange={() => setIsChecked(!isChecked)}
+        {/* --- ADD THE MODAL RENDER --- */}
+        {showPreview && (
+          <ResumePreviewModal 
+            htmlContent={previewHtml} 
+            onClose={handleClosePreview} 
           />
-          <label htmlFor="disclaimer-checkbox">
-            I understand and agree to the terms above.
-          </label>
-        </div>
-        <p className="disclaimer-note">
-          InstantResumeAI provides AI-powered assistance to help you create and refine your resume. We do not guarantee job offers, interview calls, or compliance with every employer’s specific requirements. Please ensure accuracy and truthfulness before using your resume for professional purposes.
-        </p>
-        <div className="modal-actions">
-          <button 
-            className="submit-button" 
-            onClick={onAgree}
-            disabled={!isChecked}
-          >
-            Agree & Continue
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const InstructionPromptModal = ({ onChoice }) => {
-  // ... (This component is unchanged)
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content instruction-prompt">
-        <div className="modal-icon">
-          <svg className="customize-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-              d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-          </svg>
-        </div>
-        <h3>Customize Your Enhancement</h3>
-        <p>Would you like to add specific instructions for how your resume should be enhanced?</p>
-        <p className="modal-subtitle">
-          This allows you to emphasize certain skills, adjust tone, or focus on specific experiences.
-        </p>
-        <div className="modal-actions">
-          <button 
-            className="submit-button secondary" 
-            onClick={() => onChoice(false)}
-          >
-            No, Use Standard Enhancement
-          </button>
-          <button 
-            className="submit-button" 
-            onClick={() => onChoice(true)}
-          >
-            Yes, Add Instructions
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const UserInstructionsStep = ({ userInstructions, setUserInstructions, onEnhance, isProcessing, onBack }) => {
-  // ... (This component is unchanged)
-  const [showExamples, setShowExamples] = useState(false);
-  const exampleInstructions = [
-    "Emphasize leadership and team management experience over technical implementation details",
-    "Minimize references to technologies older than 5 years, focus on modern tech stack",
-    "Highlight international experience and cross-cultural collaboration",
-    "Downplay senior-level titles to avoid appearing overqualified",
-    "Focus heavily on quantifiable achievements and ROI metrics",
-    "Address the 2-year gap by emphasizing continuous learning and certifications"
-  ];
-  return (
-    <div className="workbench-panel">
-      <h3>Step 3: Add Your Custom Instructions</h3>
-      <p>Provide specific guidance on how you want your resume enhanced.</p>
-      <div className="instruction-info-box">
-        <div className="info-icon">💡</div>
-        <div className="info-content">
-          <strong>Your instructions have top priority</strong>
-          <p>The AI will prioritize your specific requirements above standard optimization practices.</p>
-        </div>
-      </div>
-      <div className="examples-section">
-        <button 
-          className="examples-toggle"
-          onClick={() => setShowExamples(!showExamples)}
-        >
-          {showExamples ? 'Hide' : 'Show'} Example Instructions
-          <span className={`arrow ${showExamples ? 'up' : 'down'}`}>▼</span>
-        </button>
-        {showExamples && (
-          <div className="examples-list">
-            {exampleInstructions.map((example, index) => ( // Corrected .map usage
-              <div 
-                key={index} 
-                className="example-item"
-                onClick={() => setUserInstructions(example)}
-              >
-                <span className="example-icon">→</span>
-                {example}
-              </div>
-            ))}
-          </div>
         )}
-      </div>
-      <textarea
-        className="instructions-textarea"
-        value={userInstructions}
-        onChange={(e) => setUserInstructions(e.target.value)}
-        placeholder="Example: 'Focus on cloud architecture experience and AWS certifications. Minimize mentions of junior roles. Emphasize team leadership in all project descriptions.'"
-        rows="8"
-        disabled={isProcessing}
-      />
-      <div className="character-count">
-        {userInstructions.length} / 1000 characters
-        {userInstructions.length > 800 && (
-          <span className="warning"> (approaching limit)</span>
-        )}
-      </div>
-      <div className="panel-actions">
-        <button className="submit-button secondary" onClick={onBack} disabled={isProcessing}>
-          Back
-        </button>
-        <button 
-          className="submit-button" 
-          onClick={onEnhance} 
-          disabled={isProcessing || userInstructions.length === 0}
-        >
-          {isProcessing ? <><span className="spinner"></span>Enhancing...</> : 'Enhance Resume'}
-        </button>
-      </div>
-    </div>
-  );
-};
+        {/* --- END MODAL RENDER --- */}
 
-const AutoProcessingStep = () => {
-  // ... (This component is unchanged but won't be used if isProcessing shows the new component)
-  // We'll keep it for now, but the new logic in EnhancementWorkbench's render
-  // effectively replaces this.
-  return (
-    <div className="workbench-panel">
-      <h3>Step 3: Standard Enhancement in Progress</h3>
-      <p>You've selected the standard enhancement. The AI is now processing your resume.</p>
-      <div className="processing-placeholder">
-        <div className="spinner-large"></div>
-        <p>Please wait, this may take a moment...</p>
-      </div>
-      <textarea className="instructions-textarea" placeholder="Processing, please wait..." rows="8" disabled={true} />
-      <div className="character-count">...</div>
-      <div className="panel-actions">
-        <button className="submit-button secondary" disabled={true}>Back</button>
-        <button className="submit-button" disabled={true}><span className="spinner"></span>Enhancing...</button>
-      </div>
-    </div>
-  );
-};
-
-
-const JobDescriptionStep = ({ resumeFile, jobDescription, setJobDescription, onNext, onBack }) => {
-  // ... (This component is unchanged)
-  return (
-    <div className="workbench-panel">
-      <h3>Step 2: Add the Job Description</h3>
-      <p>Paste the description for your target role below.</p>
-      <div className="resume-preview-card">
-        <strong>Selected Resume:</strong> {resumeFile.name}
-      </div>
-      <textarea
-        className="jd-textarea"
-        value={jobDescription}
-        onChange={(e) => setJobDescription(e.target.value)}
-        placeholder="Paste the job description here..."
-        rows="12"
-      />
-      <div className="panel-actions">
-        <button className="submit-button secondary" onClick={onBack}>Back</button>
-        <button className="submit-button" onClick={onNext} disabled={jobDescription.length < 50}>Next</button>
-      </div>
-    </div>
-  );
-};
-
-const ResumeUploadStep = ({ onUpload }) => {
-  // ... (This component is unchanged)
-  const [error, setError] = useState('');
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) { setError('File size must be less than 10MB'); return; }
-      if (!file.name.toLowerCase().endsWith('.docx')) { setError('Please upload a DOCX file.'); return; }
-      setError('');
-      onUpload(file);
-    }
-  };
-  return (
-    <div className="workbench-panel">
-      <h3>Step 1: Upload Your Resume</h3>
-      <p>Begin by uploading your resume in .docx format.</p>
-      {error && <div className="error-message">{error}</div>}
-      <label htmlFor="resume-upload" className="file-drop-zone">
-        <svg className="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <span>Click to browse or drag & drop</span>
-        <span className="file-format-info">DOCX files only, max 10MB</span>
-      </label>
-      <input type="file" id="resume-upload" accept=".docx" onChange={handleFileChange} style={{ display: 'none' }} />
-    </div>
-  );
-};
-
-const ResultsStep = ({ onDownload, onReset, isDownloadDisabled }) => {
-  // ... (This component is unchanged)
-  return (
-    <div className="workbench-panel results-panel">
-      <div className="results-icon">✓</div>
-      <h3>Enhancement Complete!</h3>
-      <p>Your AI-powered resume is ready for download.</p>
-      <p>Please download your resume now. Download links are temporary and will expire in 10 minutes. We recommend saving all files immediately</p>
-      <div className="panel-actions simplified">
-        <button className="submit-button secondary" onClick={onReset}>Enhance Another</button>
-        <button className="submit-button" onClick={onDownload} disabled={isDownloadDisabled}>
-          {isDownloadDisabled ? 'Agree to Terms to Download' : 'Download Your Resume'}
-        </button>
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
 # backend/app/routes/resume.py
-# --- FULL RECTIFIED FILE ---
 
 from flask import Blueprint, request, jsonify, send_file
 from werkzeug.utils import secure_filename
@@ -10,7 +9,6 @@ from app.models.subscription import UserSubscription, SubscriptionPlan
 from datetime import datetime, timedelta, date
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.auth_service import AuthService
-
 import docx
 from app import db
 from app.models.user import User
@@ -19,6 +17,9 @@ from app.models.activity import ActivityLog
 from app.services.comprehensive_resume_processor import IntegratedResumeService
 from app.services.enhancement_validator import EnhancementValidator
 from app.models.resume import ResumeEnhancement
+import mammoth
+from app.models.subscription import UserSubscription
+from flask import after_this_request
 
 resume_bp = Blueprint('resume', __name__)
 
@@ -429,3 +430,41 @@ def log_disclaimer_agreement():
 
     except Exception as e:
         return jsonify({'message': 'Failed to log agreement', 'error': str(e)}), 500
+
+@resume_bp.route('/preview/<resume_id>', methods=['GET'])
+@jwt_required()
+def preview_enhanced_resume(resume_id):
+    """
+    Provides an HTML preview of the enhanced resume for paying users.
+    """
+    try:
+        # 1. --- PERMISSION CHECK (CRITICAL) ---
+        user_id = int(get_jwt_identity())
+        user_sub = UserSubscription.query.filter_by(user_id=user_id).first()
+        
+        # plan_id 1 is 'Freemium'
+        if not user_sub or user_sub.plan_id == 1:
+            return jsonify({'message': 'Preview is not available on your plan.'}), 403
+
+        # 2. --- Find the file ---
+        if not re.match(r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$', resume_id):
+            return jsonify({'message': 'Invalid resume ID format'}), 400
+            
+        enhanced_filename = f"enhanced_{resume_id}.docx"
+        filepath = os.path.join(UPLOAD_FOLDER, 'enhanced', enhanced_filename)
+        
+        if not os.path.exists(filepath):
+            return jsonify({'message': 'File not found. It may have expired.'}), 404
+
+        # 3. --- Convert DOCX to HTML ---
+        with open(filepath, "rb") as docx_file:
+            result = mammoth.convert_to_html(docx_file)
+            html_content = result.value # The generated HTML
+            
+        return jsonify({'html_content': html_content}), 200
+
+    except Exception as e:
+        import traceback
+        print(f"Error during preview generation: {e}")
+        print(traceback.format_exc())
+        return jsonify({'message': 'Could not generate resume preview', 'error': str(e)}), 500

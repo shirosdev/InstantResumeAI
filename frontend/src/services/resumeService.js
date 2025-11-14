@@ -111,6 +111,12 @@ const resumeService = {
   getHistory: async () => {
     return api.get('/resume/history');
   },
+  
+  getResumePreview: async (resumeId) => {
+    // This will return the JSON object with the { html_content: "..." }
+    const response = await api.get(`/resume/preview/${resumeId}`);
+    return response.data.html_content;
+  },
 
   // Validate file before upload
   validateFile: (file) => {
@@ -164,6 +170,7 @@ const resumeService = {
     
     return { valid: true };
   }
+  
 };
 
 export default resumeService;
