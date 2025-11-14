@@ -232,6 +232,7 @@ body {
   text-decoration: none;
   transition: color 0.3s ease;
   font-size: 0.875rem;
+  font-weight: 600
 }
 
 .nav-link:hover {
@@ -282,6 +283,7 @@ body {
   color: var(--navbar-text);
   font-size: 0.875rem;
   margin-right: 1rem; /* Add some spacing */
+  font-weight: 600;
 }
 @media (min-width: 768px) {
   .user-greeting-mobile { display: none; } /* Hide mobile greeting on desktop */
@@ -298,6 +300,7 @@ body {
    border: none;
    cursor: pointer;
    padding: 0; /* Remove padding if it looks like a link */
+   font-weight: 600;
 }
 .logout-btn:hover {
   color: var(--navbar-text-hover); /* Uses light theme variable */
