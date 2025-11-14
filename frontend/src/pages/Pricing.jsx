@@ -79,7 +79,7 @@ const pricingPlans = [
     isDisabled: false,
     features: [
       { name: 'Max Enhancements', value: 'Custom' },
-      { name: 'Calculation Based', value: 'Yes' },
+      { name: 'Features', value: 'Customised' },
       { name: 'Dedicated Support', value: 'Yes' },
       { name: 'Team Management', value: 'Yes' },
     ]
