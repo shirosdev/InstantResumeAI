@@ -40,7 +40,7 @@ const Pricing = () => {
         { label: 'Limited ATS', value: 'Yes' }
       ],
       buttonText: 'Choose Starter',
-      buttonLink: '/checkout?plan=starter', // Placeholder link
+      buttonLink: '/checkout?plan=starter', 
       buttonClass: 'plan-button',
       isRecommended: false
     },
@@ -94,7 +94,7 @@ const Pricing = () => {
           {plans.map((plan) => (
             <div key={plan.id} className={`pricing-card ${plan.isRecommended ? 'recommended' : ''}`}>
               {plan.isRecommended && (
-                <div className="recommended-badge">Recommended</div>
+                <div className="recommended-badge">Most Popular</div>
               )}
               
               <div className="card-header">
