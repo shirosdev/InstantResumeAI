@@ -35,6 +35,8 @@ import PaymentStatusPage from './pages/PaymentStatus';
 import AnalyticsTracker from './components/AnalyticsTracker';
 import Billing from './pages/Billing';
 import 'react-datepicker/dist/react-datepicker.css';
+import ScrollToTop from './components/ScrollToTop';
+
 
 
 import './App.css';
@@ -70,6 +72,7 @@ const AppContent = () => {
   return (
     <div className="App">
       <Navbar />
+      <ScrollToTop />
       <main id="main-content" className="main-content">
 
       <AnalyticsTracker />
