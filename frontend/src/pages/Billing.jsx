@@ -1,30 +1,26 @@
 // frontend/src/pages/Billing.jsx
-// --- COMPLETE RECTIFIED FILE ---
+// --- COMPLETE UPDATED FILE ---
 
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import billingService from '../services/billingService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
-import '../styles/Billing.css';
+import '../styles/Billing.css'; // Make sure this CSS is imported
 
 const Billing = () => {
   const { userStatus, loading: authLoading } = useAuth();
   
-  // --- SIMPLIFIED STATE ---
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState('');
 
-  // --- SIMPLIFIED HANDLER ---
   const handleDownloadInvoice = async () => {
     setIsDownloading(true);
     setError('');
     try {
-      // We only call the single 'downloadInvoice' service
       await billingService.downloadInvoice();
     } catch (err) {
       console.error(err);
-      // Use the specific error message from the server
       setError(err.message || 'No invoice or receipt found.');
     } finally {
       setIsDownloading(false);
@@ -46,8 +42,9 @@ const Billing = () => {
         {error && <div className="error-message main-error">{error}</div>}
 
         <div className="billing-cards-container">
-          {/* Card for Current Plan (Unchanged) */}
-          <div className="billing-card">
+          
+          {/* Card for Current Plan - UPDATED CLASS */}
+          <div className="billing-card-modern"> 
             <h3>Current Subscription Plan</h3>
             <div className="plan-details-grid">
               <strong>Plan:</strong>
@@ -73,8 +70,8 @@ const Billing = () => {
             </div>
           </div>
 
-          {/* --- COMPLETELY REPLACED CARD for Invoice History --- */}
-          <div className="billing-card">
+          {/* Card for Invoice History - UPDATED CLASS */}
+          <div className="billing-card-modern">
             <h3>Invoice History</h3>
             <p className="invoice-description">
               Download your latest invoice for any subscription or credit purchase.
