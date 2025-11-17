@@ -4,6 +4,8 @@ import React, { useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import '../styles/Dashboard.css';
+// Make sure ResumeEnhancement.css is imported for the button styles
+import '../styles/ResumeEnhancement.css'; 
 
 const Dashboard = () => {
   const { user, userStatus, loading, fetchUserStatus } = useAuth();
@@ -11,19 +13,6 @@ const Dashboard = () => {
   useEffect(() => {
     fetchUserStatus();
   }, [fetchUserStatus]);
-
-  // --- NEW: Helper to format the reset date ---
-  const getResetDate = () => {
-    if (!userStatus || !userStatus.credits_reset_date) return null;
-    try {
-      const date = new Date(userStatus.credits_reset_date);
-      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-    } catch (e) {
-      return null;
-    }
-  };
-  const resetDate = getResetDate();
-  // --- END NEW HELPER ---
 
   return (
     <div className="dashboard-container">
@@ -36,63 +25,42 @@ const Dashboard = () => {
         </div>
 
         <div className="dashboard-stats">
-          
-          {/* --- THIS IS THE UPDATED STAT CARD --- */}
           <div className="stat-card">
             <h3>Enhancement Credits</h3>
-            {loading || !userStatus ? (
-              <div className="stat-number">...</div>
-            ) : (
-              <>
-                <div className="stat-card-split">
-                  <div className="stat-item">
-                    {/* Shows Plan Credits: e.g., 30 / 30 */}
-                    <p className="stat-number">
-                      {userStatus.remaining_plan_credits}
-                      <span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>
-                        {' '}/ {userStatus.plan_credit_limit}
-                      </span>
-                    </p>
-                    <p className="stat-description">
-                      Plan Credits
-                      {resetDate && (
-                        <span style={{ display: 'block', fontSize: '0.75rem', marginTop: '2px' }}>
-                          (Resets {resetDate})
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="stat-item">
-                    {/* Shows Top-Up Credits: e.g., 5 */}
-                    <p className="stat-number">
-                      {userStatus.purchased_credits}
-                    </p>
-                    <p className="stat-description">
-                      Top-Up Credits
-                      <span style={{ display: 'block', fontSize: '0.75rem', marginTop: '2px' }}>
-                        (Never Expire)
-                      </span>
-                    </p>
-                  </div>
-                </div>
-                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                  <Link to="/top-up" style={{ 
-                      color: 'var(--text-accent)',
-                      textDecoration: 'none',
-                      fontWeight: '500',
-                      fontSize: '0.9rem'
-                    }}>
-                    Purchase More Credits
-                  </Link>
-                </div>
-              </>
-            )}
+            <div className="stat-card-split">
+              <div className="stat-item">
+                <p className="stat-number">
+                  {loading || !userStatus ? '...' : userStatus.enhancement_count}
+                </p>
+                <p className="stat-description">Used</p>
+              </div>
+              <div className="stat-item">
+                <p className="stat-number">
+                  {loading || !userStatus ? '...' :
+                    userStatus.remaining_enhancements === 'unlimited' ? '∞' : userStatus.remaining_enhancements
+                  }
+                </p>
+                <p className="stat-description">Remaining</p>
+              </div>
+            </div>
+            {/* RECTIFIED: Changed from text link to button style */}
+            <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+              <Link 
+                to="/top-up" 
+                className="submit-button secondary"
+                style={{ 
+                  padding: '0.6rem 1.2rem', 
+                  fontSize: '0.9rem', 
+                  width: 'auto', 
+                  display: 'inline-flex' 
+                }}
+              >
+                Purchase More Credits
+              </Link>
+            </div>
           </div>
-          {/* --- END OF UPDATED STAT CARD --- */}
-
           <div className="stat-card">
             <h3>Subscription Status</h3>
-            {/* This will now show "Starter (+ 5 Top-up)" if they have top-ups */}
             <p className="stat-status">{loading || !userStatus ? '...' : userStatus.plan_name}</p>
             <p className="stat-description">Current subscription plan</p>
           </div>
@@ -105,7 +73,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* --- Action cards remain the same --- */}
         <div className="dashboard-actions">
           <div className="action-card">
             <h2>View History</h2>
@@ -121,6 +88,7 @@ const Dashboard = () => {
               Start Enhancing
             </Link>
           </div>
+          
           <div className="action-card">
             <h2>Billing Info</h2>
             <p>Review your current plan and download invoices.</p>

@@ -1,137 +1,143 @@
-/* src/styles/Billing.css - UPDATED */
+/* src/styles/Billing.css */
 
+/* Page Background */
 .billing-page .page-container {
-  background: var(--gradient-hero);
+  background: var(--gradient-hero); /* Light pinkish gradient */
   padding-top: var(--navbar-height);
   min-height: calc(100vh - var(--navbar-height));
   padding-bottom: 4rem;
 }
 
 .billing-page .container {
-  max-width: 900px;
+  max-width: 1000px; /* Slightly wider for better spacing */
 }
 
+/* Main Grid Container */
 .billing-cards-container {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Responsive columns */
   gap: 2rem;
-  margin-top: 2rem;
+  margin-top: 3rem;
+  align-items: stretch; /* Ensures cards are same height */
 }
 
-@media (min-width: 768px) {
-  .billing-cards-container {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-  }
-}
-
-/* --- NEW MODERN CARD STYLING --- */
-/* This class mimics the .workbench-panel style for a premium feel */
-.billing-card-modern {
+/* Card Styling */
+.billing-card {
   background: var(--bg-primary); /* White */
-  border: 1px solid var(--border-primary); /* Light gray border */
-  border-radius: 20px;
+  border: 1px solid var(--border-primary); /* Light Gray */
+  border-radius: 20px; /* Modern rounded corners */
   padding: 2.5rem;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-xl); /* Soft shadow to lift off page */
+  display: flex;
+  flex-direction: column; /* Stack content vertically */
+  transition: transform 0.3s ease;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* Makes cards in the grid the same height */
 }
 
-.billing-card-modern::before {
+.billing-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--border-accent);
+}
+
+/* Top Border Accent (Optional aesthetic touch) */
+.billing-card::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 4px;
-  background: var(--gradient-button); /* Red gradient accent */
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  background: var(--gradient-button);
 }
 
-.billing-card-modern:hover::before {
-  opacity: 1;
-}
-
-/* Custom header for these cards (left-aligned) */
-.billing-card-modern h3 {
+.billing-card h3 {
   color: var(--text-primary);
   font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-primary);
-  text-align: left; 
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center; /* Center the header */
+  letter-spacing: -0.5px;
 }
 
-/* --- Plan Details Grid --- */
+/* Strict Grid for Details */
 .plan-details-grid {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 1rem 1.5rem;
-  align-items: center;
-  font-size: 1rem; /* Slightly larger text */
+  grid-template-columns: 1fr auto; /* Label takes space, value takes what it needs */
+  row-gap: 1.2rem; /* Vertical spacing between rows */
+  column-gap: 1.5rem; /* Gap between Label and Value */
+  margin-bottom: 2rem;
+  font-size: 1rem;
 }
 
+/* Labels (Left side) */
 .plan-details-grid strong {
-  color: var(--text-primary);
+  color: var(--text-secondary); /* Muted color for labels */
   font-weight: 500;
-  text-align: right;
-}
-
-.plan-details-grid span {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.plan-details-grid .plan-remaining {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-accent);
-}
-
-/* --- Actions Button --- */
-.billing-card-actions {
-  margin-top: auto; /* Pushes button to bottom */
-  padding-top: 2rem;
-  border-top: 1px solid var(--border-primary);
-  display: flex;
-  justify-content: center;
-}
-
-/* --- Invoice History List --- */
-.invoice-description {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  margin-bottom: 1.5rem;
   text-align: left;
 }
 
+/* Values (Right side) */
+.plan-details-grid span {
+  color: var(--text-primary); /* Dark color for values */
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Specific style for the red number */
+.plan-details-grid .plan-remaining {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-accent); /* Red */
+}
+
+/* Card Footer / Actions */
+.billing-card-actions {
+  margin-top: auto; /* Pushes button to the very bottom */
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-primary); /* Separator line */
+  text-align: center;
+}
+
+/* Consistent Button Styling */
+.billing-card .submit-button {
+  width: 100%; /* Full width button */
+  justify-content: center;
+  padding: 0.9rem;
+  font-size: 1rem;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Invoice Section Styling */
+.invoice-description {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  line-height: 1.6;
+}
+
 .invoice-history-list {
+  flex-grow: 1; /* Takes up available space */
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-top: auto; /* Push this list to bottom */
 }
 
-/* NEW Invoice Item Style */
+/* The Invoice Row Item */
 .invoice-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.25rem;
-  background: var(--bg-primary); /* White background */
+  padding: 1.2rem;
+  background: var(--bg-secondary); /* Very light gray background */
   border: 1px solid var(--border-primary);
-  border-radius: var(--border-radius-lg);
-  transition: all 0.3s ease;
+  border-radius: 12px;
+  transition: all 0.2s ease;
 }
 
 .invoice-item:hover {
-  background: var(--bg-secondary);
+  background: white;
   border-color: var(--text-accent);
   box-shadow: var(--shadow-lg);
 }
@@ -139,24 +145,70 @@
 .invoice-details {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem; /* Add gap */
+  text-align: left;
 }
 
 .invoice-details strong {
   color: var(--text-primary);
-  font-weight: 600; /* Bolder */
-  font-size: 1rem; /* Larger */
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 .invoice-details span {
   color: var(--text-secondary);
   font-size: 0.85rem;
+  margin-top: 0.2rem;
 }
 
-/* Style the download button */
+/* Adjust download button inside the row */
 .invoice-item .submit-button {
-  padding: 0.6rem 1.2rem;
+  width: auto; /* Auto width inside the row */
+  padding: 0.6rem 1.5rem;
   font-size: 0.9rem;
-  min-width: 110px;
-  /* It will inherit primary button styles */
+  min-width: 120px;
+}
+
+/* --- RECTIFIED: NEW STYLES FOR TOP-UP PAGE --- */
+.top-up-select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 12px; /* Rounded modern look */
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  /* Custom arrow */
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236B7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem top 50%;
+  background-size: 0.8rem auto;
+}
+
+.top-up-select:focus {
+  outline: none;
+  border-color: var(--text-accent);
+  background-color: var(--bg-primary);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.top-up-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-primary);
+}
+
+.top-up-terms input[type="checkbox"] {
+  margin-top: 0.25rem;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--text-accent);
+  cursor: pointer;
 }
