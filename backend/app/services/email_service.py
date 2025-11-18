@@ -89,19 +89,22 @@ class EmailService:
 
     # --- NEW METHOD FOR SUBSCRIPTION INVOICES ---
     def send_subscription_invoice_email(self, user, plan, transaction) -> bool:
-        """Generates a PDF invoice for a subscription and sends it."""
+        """Generates a PDF invoice (Sub or Top-up) and sends it."""
         pdf_path = None
         try:
-            # 1. Generate the PDF using the correct service method
+            # 1. Generate PDF (pdf_service handles plan=None correctly)
             pdf_service = PDFService()
             pdf_path = pdf_service.create_subscription_invoice(user, plan, transaction)
             
-            # 2. Prepare Email Content
-            subject = f"Your InstantResumeAI Invoice (Plan: {plan.plan_name})"
-            html_content = self._create_subscription_html(user.first_name or user.username, plan, transaction)
-            text_content = self._create_subscription_text(user.first_name or user.username, plan, transaction)
+            # Determine display name
+            item_name = plan.plan_name if plan else (transaction.description or "Credits Top-Up")
 
-            # 3. Send the email with the PDF attachment
+            # 2. Prepare Content
+            subject = f"Your InstantResumeAI Invoice ({item_name})"
+            html_content = self._create_subscription_html(user.first_name or user.username, item_name, transaction)
+            text_content = self._create_subscription_text(user.first_name or user.username, item_name, transaction)
+
+            # 3. Send email
             success = self._send_email(
                 to_email=user.email,
                 subject=subject,
@@ -111,10 +114,9 @@ class EmailService:
             )
             return success
         except Exception as e:
-            logger.error(f"Failed to send subscription invoice to {user.email}: {str(e)}")
+            logger.error(f"Failed to send invoice to {user.email}: {str(e)}")
             return False
         finally:
-            # 4. Clean up the temporary PDF file
             if pdf_path and os.path.exists(pdf_path):
                 os.remove(pdf_path)
 
@@ -140,26 +142,26 @@ class EmailService:
         """
 
     # --- NEW HELPER METHODS FOR SUBSCRIPTION EMAIL ---
-    def _create_subscription_html(self, user_name: str, plan, transaction) -> str:
+    def _create_subscription_html(self, user_name: str, item_name: str, transaction) -> str:
         return f"""
         <p>Hi {user_name},</p>
-        <p>Thank you for subscribing to the <strong>{plan.plan_name}</strong> plan. Your invoice is attached as a PDF.</p>
+        <p>Thank you for your purchase of <strong>{item_name}</strong>. Your invoice is attached as a PDF.</p>
         <p><b>Summary:</b><br>
-        Item: {plan.plan_name} Plan<br>
+        Item: {item_name}<br>
         Total Paid: ${transaction.amount:.2f} USD<br>
         Transaction ID: {transaction.payment_gateway_id}</p>
-        <p>Your new plan is now active. You can check your status on your dashboard.</p>
+        <p>Your purchase is now active. You can check your status on your dashboard.</p>
         """
 
-    def _create_subscription_text(self, user_name: str, plan, transaction) -> str:
+    def _create_subscription_text(self, user_name: str, item_name: str, transaction) -> str:
         return f"""
         Hi {user_name},\n
-        Thank you for subscribing to the {plan.plan_name} plan. Your invoice is attached as a PDF.\n
+        Thank you for your purchase of {item_name}. Your invoice is attached as a PDF.\n
         Summary:\n
-        - Item: {plan.plan_name} Plan\n
+        - Item: {item_name}\n
         - Total Paid: ${transaction.amount:.2f} USD\n
         - Transaction ID: {transaction.payment_gateway_id}\n
-        Your new plan is now active. You can check your status on your dashboard.
+        Your purchase is now active. You can check your status on your dashboard.
         """
     # --- END NEW HELPER METHODS ---
         

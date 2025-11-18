@@ -8,9 +8,10 @@ import '../styles/Pricing.css';
 const Pricing = () => {
   const { user } = useAuth();
 
+  // DATA MATCHING YOUR DATABASE EXACTLY
   const plans = [
     {
-      id: 'freemium',
+      id: 1, 
       name: 'Freemium',
       description: 'Perfect for getting started and trying out the basics.',
       price: '$0',
@@ -23,11 +24,12 @@ const Pricing = () => {
       ],
       buttonText: user ? 'Current Plan' : 'Get Started',
       buttonLink: user ? '/dashboard' : '/signup',
+      buttonState: null,
       buttonClass: user ? 'plan-button active' : 'plan-button',
       isRecommended: false
     },
     {
-      id: 'starter',
+      id: 2, // MATCHES DATABASE ID FOR STARTER
       name: 'Starter',
       description: 'For job seekers applying to multiple roles.',
       price: '$12',
@@ -40,12 +42,17 @@ const Pricing = () => {
         { label: 'Limited ATS', value: 'Yes' }
       ],
       buttonText: 'Choose Starter',
-      buttonLink: '/checkout?plan=starter', 
+      buttonLink: '/checkout',
+      // Pass numeric ID in state
+      buttonState: { 
+        purchaseType: 'subscription', 
+        item: { id: 2, name: 'Starter', price: 12, features: [{value: '30 Enhancements'}] } 
+      },
       buttonClass: 'plan-button',
       isRecommended: false
     },
     {
-      id: 'pro',
+      id: 3, // MATCHES DATABASE ID FOR PRO
       name: 'Pro',
       description: 'For power users and professionals.',
       price: '$24',
@@ -58,12 +65,17 @@ const Pricing = () => {
         { label: 'Resume Match', value: 'Yes' }
       ],
       buttonText: 'Choose Pro',
-      buttonLink: '/checkout?plan=pro', // Placeholder link
+      buttonLink: '/checkout',
+      // Pass numeric ID in state
+      buttonState: { 
+        purchaseType: 'subscription', 
+        item: { id: 3, name: 'Pro', price: 24, features: [{value: '100 Enhancements'}] } 
+      },
       buttonClass: 'plan-button',
-      isRecommended: true // This triggers the tag
+      isRecommended: true 
     },
     {
-      id: 'enterprise',
+      id: 4, 
       name: 'Enterprise',
       description: 'Custom solutions for teams and businesses.',
       price: 'Contact Us',
@@ -77,6 +89,7 @@ const Pricing = () => {
       ],
       buttonText: 'Contact Sales',
       buttonLink: '/contact',
+      buttonState: null,
       buttonClass: 'plan-button outline',
       isRecommended: false
     }
@@ -106,7 +119,12 @@ const Pricing = () => {
                   {plan.period && <span className="period">{plan.period}</span>}
                 </div>
                 
-                <Link to={plan.buttonLink} className={plan.buttonClass}>
+                {/* PASS STATE CORRECTLY HERE */}
+                <Link 
+                  to={plan.buttonLink} 
+                  state={plan.buttonState} 
+                  className={plan.buttonClass}
+                >
                   {plan.buttonText}
                 </Link>
               </div>
@@ -125,7 +143,6 @@ const Pricing = () => {
           ))}
         </div>
 
-        {/* Bottom Section for Top-Ups */}
         <div className="pricing-footer-section">
           <div className="top-up-card">
             <div className="top-up-content">
