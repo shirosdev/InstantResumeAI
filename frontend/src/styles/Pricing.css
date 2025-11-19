@@ -16,12 +16,12 @@
 
 .pricing-title {
   text-align: center;
-  
+  /* Responsive font size: min 1.8rem, max 2.25rem */
   font-size: clamp(1.8rem, 3vw, 2.25rem); 
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
-  margin-top: 1.5rem; 
+  margin-top: 1.5rem; /* Reduced top margin */
   line-height: 1.2;
 }
 
@@ -46,6 +46,7 @@
   align-items: stretch; 
 }
 
+/* Pricing card structure */
 .pricing-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
