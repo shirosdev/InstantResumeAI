@@ -37,6 +37,7 @@ html2docx==1.6.0
 idna==3.10
 ipykernel==6.29.5
 jsonpath-python==1.0.6
+mammoth
 mysql-connector-python==9.3.0
 networkx==3.4.2
 openai==1.55.3

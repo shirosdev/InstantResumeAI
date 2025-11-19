@@ -1,299 +1,436 @@
+/* Pages.css - UPDATED FOR LIGHT THEME */
 
-.pricing-container {
-  min-height: calc(100vh - var(--navbar-height));
+/* General page container with proper navbar spacing */
+.page-container {
+  min-height: calc(100vh - var(--navbar-height)); /* Use global navbar height */
+  padding: 2rem 1rem 4rem;
+  /* background: var(--gradient-hero); /* Replaced complex gradient */
   padding-top: var(--navbar-height);
-  padding-bottom: 4rem;
-  background: var(--gradient-hero);
+  /* Use a simpler light background */
+  background-color: var(--bg-secondary); /* Use light secondary background */
 }
 
-.container {
-  max-width: 1400px; /* Increased width to fit 4 cards comfortably */
-  margin: 0 auto;
-  padding: 0 1.5rem;
+.page-container .content-section h2 {
+  text-align: center; /* Center the h2 heading within the content section */
+  margin-bottom: 2.5rem; /* Add a bit more space below the centered heading */
 }
 
-.pricing-title {
+.page-container h1 {
   text-align: center;
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 2.8rem;
+  color: var(--text-primary); /* Dark text */
   margin-bottom: 1rem;
-  margin-top: 2rem;
+  font-weight: 600;
   line-height: 1.2;
 }
 
-.pricing-subtitle {
+.page-subtitle {
   text-align: center;
-  color: var(--text-secondary);
-  font-size: 1.15rem;
-  margin-bottom: 4rem;
+  font-size: 1.2rem;
+  color: var(--text-secondary); /* Medium gray text */
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+  margin-bottom: 2rem; /* Added margin */
+}
+
+.content-section {
+  max-width: 900px;
+  margin: 0 auto 3rem;
+  color: var(--text-primary); /* Dark text */
+  line-height: 1.8;
+  padding: 0 1rem;
+}
+
+.content-section h2 {
+  color: var(--text-accent); /* Red accent text */
+  margin: 3rem 0 1.5rem;
+  font-size: 1.8rem;
+  font-weight: 500;
+}
+
+.lead-text {
+  font-size: 1.3rem;
+  margin-bottom: 2rem;
+  text-align: center;
   font-weight: 400;
+  color: var(--text-secondary); /* Medium gray text */
 }
 
-
-.pricing-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 3rem;
-  align-items: stretch; /* Make cards equal height */
-}
-
-/* Pricing card structure */
-.pricing-card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
+/* CTA Section (Light Theme) */
+.cta-section {
+  text-align: center;
+  margin: 4rem auto;
+  padding: 3rem 2rem;
+  background: var(--bg-primary); /* White background */
   border-radius: var(--border-radius-2xl);
-  overflow: visible; /* Allow badge to pop out */
+  border: 1px solid var(--border-primary); /* Light gray border */
+  max-width: 800px;
+  box-shadow: var(--shadow-xl); /* Add shadow */
+}
+
+.cta-section h2 {
+  color: var(--text-primary); /* Dark text */
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+/* Contact Page Layout - Simplified for light theme */
+.contact-content {
+  display: grid;
+  grid-template-columns: 1fr; /* Stack info and form */
+  gap: 3rem; /* Adjusted gap */
+  max-width: 700px; /* Narrower max-width */
+  margin: 0 auto;
+  align-items: start;
+}
+
+.contact-info h2 {
+  color: var(--text-accent); /* Red accent */
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.contact-info p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  color: var(--text-secondary); /* Medium gray */
+  text-align: center;
+}
+
+.contact-details {
+  margin-top: 2rem;
+  display: grid; /* Use grid for details too */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.contact-item {
+  margin-bottom: 0; /* Remove margin as grid handles gap */
+  padding: 1.5rem;
+  background: var(--bg-secondary); /* Light gray background */
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-primary); /* Light border */
   transition: all 0.3s ease;
-  position: relative;
-  display: flex;
-  flex-direction: column;
+  text-align: center;
+}
+
+.contact-item:hover {
+  border-color: var(--text-accent); /* Red border */
+  background: var(--bg-primary); /* White on hover */
+  transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
 }
 
-.pricing-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-xl);
-  border-color: var(--text-accent);
+.contact-item h3 {
+  color: var(--text-primary); /* Dark text */
+  margin-bottom: 0.8rem;
+  font-size: 1.3rem;
 }
 
-/* Recommended Card Styling */
-.pricing-card.recommended {
-  border: 2px solid var(--text-accent); /* Red border */
-  transform: scale(1.05); /* Slightly larger */
-  z-index: 2; /* Sit above others */
-  box-shadow: 0 20px 40px rgba(220, 38, 38, 0.15);
-}
-
-.pricing-card.recommended:hover {
-  transform: scale(1.05) translateY(-5px);
-}
-
-.recommended-badge {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--gradient-button);
-  color: white;
-  padding: 0.3rem 1.2rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
-  white-space: nowrap;
-}
-
-/* Card header */
-.card-header {
-  padding: 2.5rem 1.5rem 1.5rem;
-  text-align: center;
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.plan-badge-pill {
-  display: inline-block;
-  padding: 0.3rem 0.8rem;
-  border-radius: 6px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  margin-bottom: 1rem;
-}
-.plan-badge-pill.free {
-  background-color: #FEF2F2;
-  color: #B91C1C;
-}
-.plan-badge-pill.paid {
-  background-color: #FEF2F2;
-  color: var(--text-accent);
-}
-
-.card-header h2 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.plan-description {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
-  min-height: 3em; /* Align buttons */
-}
-
-/* Pricing display */
-.plan-price {
-  margin-bottom: 1.5rem;
-  color: var(--text-primary);
-}
-
-.plan-price .amount {
-  font-size: 2.2rem;
-  font-weight: 700;
-  line-height: 1;
-}
-.pricing-card.recommended .plan-price .amount {
-    color: var(--text-accent);
-}
-
-.plan-price .period {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  font-weight: 400;
-}
-
-/* Buttons */
-.plan-button {
-  display: block;
-  width: 100%;
-  padding: 0.8rem 1rem;
-  border-radius: var(--border-radius-full);
-  font-weight: 600;
+.contact-item p, .contact-item a {
+  color: var(--text-secondary); /* Medium gray */
   font-size: 1rem;
   text-decoration: none;
+}
+.contact-item a:hover {
+  color: var(--text-accent); /* Red link hover */
+}
+
+/* Contact Form Styling (Light Theme) */
+.contact-form-section h2 {
+  color: var(--text-accent); /* Red accent */
+  margin-bottom: 2rem;
+  font-size: 2rem;
   text-align: center;
-  background-image: var(--gradient-button);
-  color: white;
-  transition: all 0.3s ease;
-  border: none;
-  cursor: pointer;
 }
 
-.plan-button:hover {
-  box-shadow: var(--shadow-button-hover);
-  transform: translateY(-2px);
-}
-
-.plan-button.active {
-  background-image: none;
-  background-color: var(--success-color);
-  cursor: default;
-}
-.plan-button.active:hover {
-    transform: none;
-    box-shadow: none;
-}
-
-.plan-button.outline {
-  background-image: none;
-  background-color: transparent;
-  border: 1px solid var(--border-primary);
-  color: var(--text-primary);
-}
-.plan-button.outline:hover {
-  border-color: var(--text-primary);
-  background-color: var(--bg-secondary);
-}
-
-/* Features list */
-.card-features {
-  padding: 1.5rem;
-  flex: 1;
-}
-
-.card-features ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.card-features li {
+.contact-form {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.8rem 0;
-  border-bottom: 1px solid var(--border-primary);
-  font-size: 0.9rem;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.card-features li:last-child {
-  border-bottom: none;
+.contact-form .form-group {
+  display: flex;
+  flex-direction: column;
 }
 
-.feature-name {
+.contact-form label {
+  color: var(--text-primary); /* Dark label */
+  margin-bottom: 0.5rem;
   font-weight: 500;
-  color: var(--text-primary);
-  text-align: left;
+  font-size: 1rem;
 }
 
-.feature-value {
-  color: var(--text-secondary);
-  text-align: right;
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--border-primary); /* Light border */
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-secondary); /* Light gray background */
+  color: var(--text-primary); /* Dark text */
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.3s ease;
 }
 
-/* Footer Section (Top-Up) */
-.pricing-footer-section {
-  margin-top: 4rem;
-  padding: 2rem;
-  background: var(--bg-primary);
-  border-radius: var(--border-radius-xl);
-  border: 1px solid var(--border-primary);
+.contact-form input:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: var(--text-accent); /* Red border */
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15); /* Red ring */
+  background: var(--bg-primary); /* White background */
+}
+
+.contact-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: #9CA3AF; /* gray-400 equivalent */
+}
+
+/* Blog Page Layout (Light Theme) */
+.blog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Adjusted min size */
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem; /* Add padding */
+}
+
+.blog-card {
+  background: var(--bg-primary); /* White background */
+  border: 1px solid var(--border-primary); /* Light border */
+  border-radius: var(--border-radius-xl); /* Consistent rounding */
+  padding: 2rem; /* Adjusted padding */
+  transition: all 0.3s ease;
+  height: auto; /* Allow natural height */
   box-shadow: var(--shadow-lg);
 }
 
-.top-up-card {
+.blog-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--text-accent); /* Red border */
+  box-shadow: var(--shadow-xl);
+}
+
+.blog-card h2 {
+  color: var(--text-primary); /* Dark text */
+  font-size: 1.5rem;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.blog-date {
+  color: var(--text-secondary); /* Medium gray */
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.blog-excerpt {
+  color: var(--text-secondary); /* Medium gray */
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.read-more {
+  color: var(--text-accent); /* Red accent */
+  text-decoration: none;
+  font-weight: 600; /* Bolder */
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.read-more:hover {
+  color: var(--primary-red-dark); /* Darker red */
+  transform: translateX(5px);
+}
+
+/* Legal Pages Layout (Light Theme) */
+.legal-content {
+  max-width: 800px;
+  margin: 2rem auto; /* Added top margin */
+  color: var(--text-secondary); /* Medium gray base text */
+  line-height: 1.8;
+  padding: 2rem; /* Add padding */
+  background: var(--bg-primary); /* White background */
+  border: 1px solid var(--border-primary); /* Light border */
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.legal-content h2 {
+  color: var(--text-primary); /* Dark heading */
+  margin: 3rem 0 1.5rem;
+  font-size: 1.8rem;
+  font-weight: 600; /* Bolder heading */
+}
+
+.legal-content p {
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+.last-updated {
+  color: var(--text-secondary); /* Medium gray */
+  font-style: italic;
+  margin-bottom: 2rem;
+  text-align: right; /* Align right */
+  font-size: 0.9rem; /* Smaller text */
+}
+
+/* Process Steps Layout (Looks okay, uses light theme styles already) */
+.process-steps {
+  display: grid; /* Use grid for better alignment */
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem; /* Increased gap */
+  margin-top: 3rem;
+  max-width: 1100px; /* Adjusted width */
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1rem;
+}
+.process-step {
+  background: var(--bg-primary); /* White */
+  border: 1px solid var(--border-primary); /* Light gray border */
+  border-radius: var(--border-radius-xl);
+  padding: 2rem 1.5rem; /* Adjusted padding */
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+
+.process-step:hover {
+  transform: translateY(-5px);
+  border-color: var(--text-accent);
+  box-shadow: var(--shadow-xl);
+}
+
+.step-icon {
+  width: 60px;
+  height: 60px;
+  background: var(--gradient-button); /* Red gradient */
+  color: var(--text-on-gradient); /* White text */
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-
-.top-up-content h2 {
+  justify-content: center;
+  margin: 0 auto 1.5rem;
   font-size: 1.5rem;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
 }
 
-.top-up-content p {
-  color: var(--text-secondary);
-  max-width: 600px;
+.process-step h3 {
+  color: var(--text-primary); /* Dark text */
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  font-weight: 600; /* Bolder */
 }
 
-.top-up-action .cta-button {
-    /* Reusing CTA button styles if available, else standard button */
-    padding: 0.8rem 2rem;
-    border-radius: var(--border-radius-full);
-    font-weight: 600;
-    text-decoration: none;
-    border: 1px solid var(--border-primary);
-    color: var(--text-primary);
-    transition: all 0.3s ease;
-}
-.top-up-action .cta-button:hover {
-    border-color: var(--text-accent);
-    color: var(--text-accent);
-    background-color: var(--bg-secondary);
+.process-step p {
+  color: var(--text-secondary); /* Medium gray text */
+  font-size: 0.95rem;
+  line-height: 1.6; /* Increased line height */
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .pricing-cards {
-     grid-template-columns: repeat(2, 1fr);
-  }
-  .pricing-card.recommended {
-    transform: scale(1); /* Reset scale on smaller screens */
-    z-index: 1;
-  }
-  .pricing-card.recommended:hover {
-    transform: translateY(-5px);
-  }
+/* CTA Button Styling (Use primary auth button style) */
+.cta-button.primary {
+  /* Inherit from .auth-button if available globally, otherwise define here */
+  display: inline-flex;
+  background-image: var(--gradient-button);
+  background-color: var(--primary-red-medium);
+  color: white;
+  padding: 1rem 2.5rem;
+  border-radius: var(--border-radius-full);
+  text-decoration: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  border: none;
+  box-shadow: var(--shadow-lg);
 }
 
+.cta-button.primary:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-button-hover);
+}
+
+/* Secondary CTA Button (Light theme adaptation) */
+.cta-button.secondary {
+  display: inline-flex;
+  background: transparent;
+  border: 2px solid var(--text-accent); /* Red border */
+  color: var(--text-accent); /* Red text */
+  padding: calc(1rem - 2px) calc(2.5rem - 2px); /* Adjust padding for border */
+  border-radius: var(--border-radius-full);
+  text-decoration: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.cta-button.secondary:hover {
+  background: var(--text-accent); /* Red background */
+  color: white; /* White text */
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-button-hover);
+}
+
+
+/* Responsive Design Improvements */
 @media (max-width: 768px) {
-  .pricing-cards {
-    grid-template-columns: 1fr;
-    max-width: 450px;
-    margin-left: auto;
-    margin-right: auto;
+  .page-container {
+    padding: 3rem 1rem 3rem; /* Adjust padding */
+    padding-top: var(--navbar-height);
   }
-  .top-up-card {
-      flex-direction: column;
-      text-align: center;
-  }
+
+  .page-container h1 { font-size: 2.2rem; }
+  .page-subtitle { font-size: 1.1rem; margin-bottom: 2rem; }
+  .content-section { padding: 0 0.5rem; }
+  .contact-content { grid-template-columns: 1fr; gap: 2.5rem; }
+  .contact-item { padding: 1.5rem; }
+  .blog-grid { grid-template-columns: 1fr; padding: 0 0.5rem; }
+  .blog-card { padding: 2rem; }
+  .process-steps { grid-template-columns: 1fr; padding: 0 0.5rem; gap: 1.5rem; }
+  .process-step { padding: 2rem 1rem; }
+  .cta-section { margin: 2rem 0.5rem; padding: 2rem 1.5rem; }
+  .legal-content { padding: 1rem; margin: 1rem auto; } /* Adjust legal padding */
+}
+
+@media (max-width: 480px) {
+  .page-container { padding: 2rem 0.5rem 2rem; padding-top: var(--navbar-height); }
+  .page-container h1 { font-size: 1.8rem; }
+  .page-subtitle { font-size: 1rem; }
+  .content-section h2 { font-size: 1.5rem; margin: 2rem 0 1rem; }
+  .lead-text { font-size: 1.1rem; }
+  .contact-item { padding: 1.2rem; }
+  .contact-item h3 { font-size: 1.1rem; }
+  .blog-card { padding: 1.5rem; }
+  .blog-card h2 { font-size: 1.3rem; }
+  .process-step { padding: 1.5rem; }
+  .step-icon { width: 50px; height: 50px; font-size: 1.2rem; }
+  .process-step h3 { font-size: 1.1rem; }
+  .cta-section { padding: 1.5rem 1rem; }
+  .cta-section h2 { font-size: 1.6rem; }
+  .cta-button { padding: 0.8rem 2rem; font-size: 1rem; width: 100%; max-width: 300px; }
+  .legal-content h2 { font-size: 1.4rem; }
 }
