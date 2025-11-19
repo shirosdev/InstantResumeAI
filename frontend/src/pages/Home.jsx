@@ -12,7 +12,6 @@ import EnhancementProgress from '../components/EnhancementProgress';
 import '../styles/EnhancementProgress.css';
 import ResumePreviewModal from '../components/ResumePreviewModal';
 
-// --- MOVED OUTSIDE: Helper Components ---
 
 const Stepper = ({ currentStep }) => {
   const steps = ["Upload Resume", "Add Job Description", "Customize Instructions", "Download Enhanced Resume"];
