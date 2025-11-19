@@ -1,4 +1,5 @@
 // frontend/src/pages/Home.jsx
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import LandingPage from '../components/LandingPage';
@@ -10,6 +11,7 @@ import { Link } from 'react-router-dom';
 import EnhancementProgress from '../components/EnhancementProgress';
 import '../styles/EnhancementProgress.css';
 import ResumePreviewModal from '../components/ResumePreviewModal';
+
 
 const Stepper = ({ currentStep }) => {
   const steps = ["Upload Resume", "Add Job Description", "Customize Instructions", "Download Enhanced Resume"];
@@ -94,6 +96,9 @@ const InstructionPromptModal = ({ onChoice }) => {
         <p>Would you like to add specific instructions for how your resume should be enhanced?</p>
         <p className="modal-subtitle">
           This allows you to emphasize certain skills, adjust tone, or focus on specific experiences.
+        </p>
+        <p className="modal-subtitle">
+            Note: Do not include false, misleading, or unverifiable information in your resume. InstantResumeAI does not create or endorse fabricated skills, experiences, or qualifications.
         </p>
         <div className="modal-actions">
           <button 
