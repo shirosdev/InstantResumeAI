@@ -4,18 +4,16 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import './App.css';
+import { HelmetProvider } from 'react-helmet-async';
 import './styles/Auth.css';
 import App from './App';
 
 // Create root element
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-// Render WITHOUT StrictMode to avoid double-rendering issues
-
+// Render app with HelmetProvider wrapper
 root.render(
-  <App />
+  <HelmetProvider>
+    <App />
+  </HelmetProvider>
 );
-
-// Optional: Register service worker for PWA features
-// import reportWebVitals from './reportWebVitals';
-// reportWebVitals();
