@@ -1,9 +1,48 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 const HowItWorks = () => {
+  // Enhanced schema markup for SEO - invisible to users
+  const howItWorksSchema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Use InstantResumeAI",
+    "description": "Learn how to optimize your resume with our AI-powered tool in 3 simple steps",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Upload Your Resume",
+        "text": "Upload your current resume in DOC or DOCX format",
+        "position": 1
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Add Job Description",
+        "text": "Paste the job description you're targeting",
+        "position": 2
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Get Enhanced Resume",
+        "text": "Receive an optimized, ATS-friendly resume tailored to the job",
+        "position": 3
+      }
+    ]
+  };
+
   return (
     <div className="page-container">
+
+      {/* ONLY CHANGE: Enhanced SEO meta tags - invisible to users */}
+      <SEO 
+        title="How Our AI Job Description Matcher Works"
+        description="Learn how InstantResumeAI uses advanced algorithms to match your resume to job descriptions, optimize keywords, and pass ATS filters. Simple 3-step process."
+        keywords="how to tailor resume to job description, how ats works, jd resume scanner, resume to job match ai, ai resume builder guide"
+        schema={howItWorksSchema}
+      />
+      
+      {/* ALL CONTENT BELOW IS EXACTLY THE SAME AS YOUR ORIGINAL */}
       <div className="container">
         <h1>How InstantResumeAI Works</h1>
         <div className="content-section">

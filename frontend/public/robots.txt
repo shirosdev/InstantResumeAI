@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /admin
+Disallow: /checkout
+Disallow: /payment-status
+
+Sitemap: https://www.instantresumeai.com/sitemap.xml

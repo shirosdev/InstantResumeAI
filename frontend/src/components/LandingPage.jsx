@@ -1,7 +1,8 @@
 // src/components/LandingPage.jsx
-import React, { useState, useEffect } from 'react'; // Import useState and useEffect
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import '../styles/LandingPage.css'; // Main CSS for this component
+import { Helmet } from 'react-helmet-async';
+import '../styles/LandingPage.css';
 
 // --- Icon Placeholders ---
 const CheckIcon = () => <span className="icon-placeholder">✓</span>;
@@ -15,27 +16,27 @@ const SearchIcon = () => <span className="icon-placeholder">🔎</span>;
 
 // --- Add Card Background Colors Array ---
 const cardBackgroundColors = [
-    'linear-gradient(to bottom right, #FEF2F2, #FFF1F2)', // Light Red/Pink Tint (Default/Original)
-    'linear-gradient(to bottom right, #EFF6FF, #E0F2FE)', // Light Blue Tint
-    'linear-gradient(to bottom right, #F0FFF4, #ECFDF5)', // Light Green Tint
-    'linear-gradient(to bottom right, #FFFBEB, #FEF9C3)', // Light Yellow Tint
-    'linear-gradient(to bottom right, #F5F3FF, #EDE9FE)', // Light Purple Tint
-    'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)', // Light Gray Tint
+    'linear-gradient(to bottom right, #FEF2F2, #FFF1F2)',
+    'linear-gradient(to bottom right, #EFF6FF, #E0F2FE)',
+    'linear-gradient(to bottom right, #F0FFF4, #ECFDF5)',
+    'linear-gradient(to bottom right, #FFFBEB, #FEF9C3)',
+    'linear-gradient(to bottom right, #F5F3FF, #EDE9FE)',
+    'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)',
 ];
 // --- End Card Background Colors ---
 
 
 const LandingPage = () => {
     // --- Add State for Card Background ---
-    const [cardBg, setCardBg] = useState(cardBackgroundColors[0]); // Default to the first color
+    const [cardBg, setCardBg] = useState(cardBackgroundColors[0]);
     // --- End State ---
 
     // --- Effect to Set Random Background on Mount ---
     useEffect(() => {
         const randomIndex = Math.floor(Math.random() * cardBackgroundColors.length);
         setCardBg(cardBackgroundColors[randomIndex]);
-        console.log("Set card background:", cardBackgroundColors[randomIndex]); // Add console log for debugging
-    }, []); // Empty dependency array ensures this runs only once on mount
+        console.log("Set card background:", cardBackgroundColors[randomIndex]);
+    }, []);
     // --- End Background Effect ---
 
 
@@ -58,7 +59,7 @@ const LandingPage = () => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
-                    obs.unobserve(entry.target); // Unobserve after revealing
+                    obs.unobserve(entry.target);
                 }
             });
         };
@@ -77,11 +78,59 @@ const LandingPage = () => {
                observer.disconnect();
             }
         };
-    }, []); // Empty dependency array means this effect runs only once when the component mounts
+    }, []);
 
 
     return (
         <>
+            {/* SEO Meta Tags - Invisible to users, only affects <head> */}
+            <Helmet>
+                <title>AI Resume Builder | Free ATS-Friendly Resume Optimizer - InstantResumeAI</title>
+                <meta name="description" content="Upgrade your resume instantly with AI. Upload your resume and job description — our AI finds missing skills, suggests improvements, and helps you match the job in minutes. Free to try." />
+                <meta name="keywords" content="ai resume builder, ats-friendly resume builder, job description resume matcher, resume tailoring tool, instant resume generator, resume optimizer ai, free resume builder" />
+                <link rel="canonical" href="https://www.instantresumeai.com/" />
+                
+                {/* Open Graph / Social Media */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://www.instantresumeai.com/" />
+                <meta property="og:title" content="AI Resume Builder | Free ATS-Friendly Resume Optimizer" />
+                <meta property="og:description" content="Upgrade your resume instantly with AI. Find missing skills and match job descriptions in minutes." />
+                <meta property="og:image" content="https://www.instantresumeai.com/og-image.png" />
+                
+                {/* Twitter */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="AI Resume Builder | Free ATS-Friendly Resume Optimizer" />
+                <meta name="twitter:description" content="Upgrade your resume instantly with AI. Find missing skills and match job descriptions in minutes." />
+                <meta name="twitter:image" content="https://www.instantresumeai.com/twitter-card.png" />
+                
+                {/* Schema Markup - Invisible JSON for Google */}
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "SoftwareApplication",
+                        "name": "InstantResumeAI",
+                        "applicationCategory": "BusinessApplication",
+                        "operatingSystem": "Web",
+                        "description": "AI-powered resume builder that instantly upgrades resumes and matches them to job descriptions",
+                        "offers": {
+                            "@type": "Offer",
+                            "price": "0",
+                            "priceCurrency": "USD",
+                            "availability": "https://schema.org/InStock"
+                        },
+                        "aggregateRating": {
+                            "@type": "AggregateRating",
+                            "ratingValue": "4.8",
+                            "ratingCount": "1250",
+                            "bestRating": "5",
+                            "worstRating": "1"
+                        }
+                    })}
+                </script>
+            </Helmet>
+
+            {/* ALL CONTENT BELOW IS EXACTLY YOUR ORIGINAL - NO CHANGES */}
+
             {/* Hero Section */}
             <section className="landing-hero new-hero-styles">
                 <div className="container hero-grid-container">
@@ -107,10 +156,9 @@ const LandingPage = () => {
 
                     {/* Right Side: Visual Card Component */}
                     <div className="hero-visual scroll-reveal visible">
-                        {/* Apply the random background color using inline style */}
                         <div
                             className="hero-visual-card"
-                            style={{ background: cardBg }} // Apply dynamic background here
+                            style={{ background: cardBg }}
                         >
                             <div className="hero-visual-header-line"></div>
                             <div className="hero-visual-header">

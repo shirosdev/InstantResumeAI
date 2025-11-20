@@ -1,8 +1,32 @@
 import React from 'react';
+import SEO from '../components/SEO';
 
 const About = () => {
+  // Enhanced schema markup for SEO - invisible to users
+  const aboutSchema = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "About InstantResumeAI",
+    "description": "Learn about our AI-powered resume builder and our mission to help job seekers beat ATS systems",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "InstantResumeAI",
+      "description": "AI-powered resume optimization platform"
+    }
+  };
+
   return (
     <div className="page-container">
+
+      {/* ONLY CHANGE: Enhanced SEO meta tags - invisible to users */}
+      <SEO 
+        title="About Our AI Resume Builder & ATS Optimization Technology"
+        description="Learn about InstantResumeAI's mission to help job seekers beat ATS systems with AI-powered resume optimization. Professional resume tailoring made accessible to everyone."
+        keywords="ai resume builder technology, ats optimization platform, resume enhancement ai, about instantresumeai"
+        schema={aboutSchema}
+      />
+
+      {/* ALL CONTENT BELOW IS EXACTLY THE SAME AS YOUR ORIGINAL */}
       <div className="container">
         <h1>About InstantResumeAI</h1>
         <div className="content-section">
