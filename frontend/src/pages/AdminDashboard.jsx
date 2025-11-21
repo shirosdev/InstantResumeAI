@@ -42,7 +42,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unresolvedCount, setUnresolvedCount] = useState(0);
-  
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // --- RECTIFIED useEffect ---
   useEffect(() => {
@@ -68,14 +68,77 @@ const AdminDashboard = () => {
   }, []); // Empty array, runs once on mount
   // --- END RECTIFICATION ---
 
+  // Toggle mobile menu
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Close mobile menu when clicking overlay
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  // Close mobile menu when screen size changes to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div className="admin-layout">
-      <aside className="admin-sidebar">
+      {/* Mobile Menu Toggle Button */}
+      <button 
+        className="mobile-menu-toggle" 
+        onClick={toggleMobileMenu}
+        aria-label="Toggle menu"
+      >
+        <svg 
+          width="24" 
+          height="24" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        >
+          {isMobileMenuOpen ? (
+            <>
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </>
+          ) : (
+            <>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </>
+          )}
+        </svg>
+      </button>
+
+      {/* Overlay for mobile */}
+      <div 
+        className={`sidebar-overlay ${isMobileMenuOpen ? 'active' : ''}`}
+        onClick={closeMobileMenu}
+      ></div>
+
+      <aside className={`admin-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-section">
           <ul className="sidebar-links">
             {adminNavLinks.map((link) => (
               <li key={link.path}>
-                <NavLink to={link.path} end={link.end}>
+                <NavLink 
+                  to={link.path} 
+                  end={link.end}
+                  onClick={closeMobileMenu}
+                >
                   <span>{link.title}</span>
                   {/* --- FIX: Check title, not key --- */}
                   {link.title === 'Support' && unresolvedCount > 0 && (

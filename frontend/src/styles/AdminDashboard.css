@@ -504,15 +504,342 @@
 }
 
 
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .admin-layout { flex-direction: column; }
-  .admin-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-primary); padding: 1rem 0; }
-  .admin-content { padding: 1.5rem; }
-  .admin-submenu { flex-wrap: wrap; }
-  .admin-stats { grid-template-columns: 1fr; }
-  .usage-tracking-grid { grid-template-columns: 1fr; }
+
+
+/* ===== COMPREHENSIVE MOBILE RESPONSIVENESS ===== */
+
+/* Mobile Sidebar Toggle Button */
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: calc(var(--navbar-height) + 1rem);
+  left: 1rem;
+  z-index: 1000;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--border-radius-lg);
+  padding: 0.75rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
 }
+
+.mobile-menu-toggle:hover {
+  background: var(--bg-accent-light);
+  border-color: var(--text-accent);
+}
+
+/* Horizontal scrolling wrapper for tables */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -1.5rem;
+  padding: 0 1.5rem;
+}
+
+.table-responsive .admin-table {
+  min-width: 800px; /* Ensures table doesn't collapse on mobile */
+}
+
+/* Date Range Container */
+.date-range-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Tablet Breakpoint (768px - 991px) */
+@media (max-width: 991px) {
+  .admin-content {
+    padding: 1.5rem 1rem;
+  }
+
+  .admin-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .usage-tracking-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-bar input {
+    width: 200px;
+  }
+
+  .admin-action-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile Breakpoint (< 768px) */
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: block;
+  }
+
+  .admin-layout {
+    flex-direction: column;
+    position: relative;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: var(--navbar-height);
+    left: -100%;
+    width: 280px;
+    height: calc(100vh - var(--navbar-height));
+    border-right: 1px solid var(--border-primary);
+    border-bottom: none;
+    padding: 1rem 0;
+    transition: left 0.3s ease;
+    z-index: 999;
+    box-shadow: var(--shadow-xl);
+  }
+
+  .admin-sidebar.open {
+    left: 0;
+  }
+
+  /* Overlay when sidebar is open */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: var(--navbar-height);
+    left: 0;
+    width: 100%;
+    height: calc(100vh - var(--navbar-height));
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+
+  .admin-content {
+    padding: 1rem;
+    margin-top: 3.5rem; /* Space for mobile menu button */
+  }
+
+  .admin-submenu {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .admin-submenu a {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .admin-stats {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .admin-stats .stat-card {
+    padding: 1rem;
+  }
+
+  .admin-stats .stat-card .stat-number {
+    font-size: 1.75rem;
+  }
+
+  .admin-table-container {
+    padding: 1rem;
+    border-radius: var(--border-radius-lg);
+  }
+
+  .admin-table-container h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .search-bar {
+    width: 100%;
+  }
+
+  .search-bar input {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .admin-table th {
+    font-size: 0.7rem;
+  }
+
+  .status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .action-button {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.6rem;
+  }
+
+  .pagination-container {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .pagination-button {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .pagination-info {
+    width: 100%;
+    text-align: center;
+    margin: 0.5rem 0;
+  }
+
+  /* Modal adjustments for mobile */
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+    margin: 1rem;
+    padding: 1.5rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-content.large {
+    width: 95%;
+    max-width: 95%;
+  }
+
+  .security-details-grid {
+    gap: 1.5rem;
+  }
+
+  .table-wrapper {
+    margin: 0 -1rem;
+    padding: 0 1rem;
+  }
+
+  .mini-table th,
+  .mini-table td {
+    padding: 0.5rem 0.4rem;
+    font-size: 0.8rem;
+  }
+
+  /* Date picker container */
+  .date-range-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .date-range-container h3 {
+    font-size: 1rem;
+  }
+
+  .date-range-container .pagination-button {
+    width: 100%;
+  }
+
+  /* User details modal */
+  .user-details-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+
+  /* Chart containers */
+  .chart-container {
+    padding: 1rem;
+  }
+
+  .chart-container h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Action form adjustments */
+  .action-form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .action-button-container-right {
+    justify-content: stretch;
+  }
+
+  .action-button-container-right .action-button {
+    width: 100%;
+  }
+}
+
+/* Extra small devices (< 480px) */
+@media (max-width: 480px) {
+  .admin-content {
+    padding: 0.75rem;
+  }
+
+  .admin-table-container {
+    padding: 0.75rem;
+  }
+
+  .admin-stats .stat-card h3 {
+    font-size: 0.85rem;
+  }
+
+  .admin-stats .stat-card .stat-number {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .admin-action-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .admin-action-description {
+    font-size: 0.85rem;
+  }
+
+  .action-form-grid .action-button {
+    font-size: 0.85rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .modal-content {
+    padding: 1rem;
+  }
+
+  .modal-close {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+}
+
 
 .admin-action-card {
   margin-top: 2rem;
