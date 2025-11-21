@@ -1,4 +1,4 @@
-/* src/App.css - UPDATED WITH LIGHT THEME */
+/* src/App.css - COMPLETE AND RECTIFIED */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ==========================================
@@ -50,7 +50,7 @@
 
   /* --- Navbar (UPDATED FOR LIGHT THEME) --- */
   --navbar-height: 5rem; /* 64px */
-  --navbar-bg: rgba(255, 255, 255, 0.95); /* White semi-transparent */
+  --navbar-bg: rgba(255, 255, 255, 0.98); /* Nearly opaque white */
   --navbar-border: var(--border-primary); /* Light gray border */
   --navbar-text: var(--text-secondary); /* Medium gray text */
   --navbar-text-hover: var(--text-accent); /* Red text on hover */
@@ -68,16 +68,6 @@
   --border-radius-xl: 0.75rem; /* rounded-xl */
   --border-radius-2xl: 1rem; /* rounded-2xl */
   --border-radius-3xl: 1.5rem; /* rounded-3xl */
-
-  /* Variables from previous dark theme (can be removed if not used elsewhere) */
-  /* --gradient-abyss: ... */
-  /* --bio-luminescent: ... */
-  /* --thermal-vent: ... */
-  /* --coral-primary: ... */
-  /* --deep-ocean: ... */
-  /* --card-bg: ... */
-  /* --card-border: ... */
-  /* --text-muted: ... */
 }
 
 /* ==========================================
@@ -126,10 +116,8 @@ body {
   background: var(--gradient-hero);
 }
 
-/* Add other global utility styles if needed */
-
 /* ==========================================
-   NAVBAR STYLES (Light Theme Applied via variables)
+   NAVBAR STYLES
    ========================================== */
 .navbar {
   background: var(--navbar-bg);
@@ -152,32 +140,7 @@ body {
   margin: 0 auto;
   padding: 0 1rem;
   height: 100%;
-}
-.nav-links a.active { /* Assuming React Router adds an 'active' class */
-  color: var(--text-accent); /* Keep red text */
-  font-weight: 600; /* Make it bolder */
-  position: relative;
-}
-
-.nav-links a.active::after {
-  content: '';
-  position: absolute;
-  bottom: -4px; /* Adjust position below the text */
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: var(--text-accent); /* Red underline */
-}
-
-.nav-links .logout-btn.active::after {
-  display: none;
-}
-
-@media (min-width: 640px) {
-  .navbar-container { padding: 0 1.5rem; }
-}
-@media (min-width: 1024px) {
-  .navbar-container { padding: 0 2rem; }
+  position: relative; /* Essential for absolute positioning children */
 }
 
 .logo-link {
@@ -185,31 +148,9 @@ body {
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
+  z-index: 52; /* Ensure logo stays above mobile menu */
 }
 
-/* Logo styling remains the same as it uses the red gradient */
-.navbar-logo-icon {
-  width: 2rem;
-  height: 2rem;
-  background: linear-gradient(to right, #EF4444, #DC2626);
-  border-radius: var(--border-radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.navbar-logo-icon svg {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: var(--text-light);
-}
-.logo-text {
-  font-size: 1.25rem;
-  font-weight: 700;
-  background: var(--gradient-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
 .navbar-logo {
   height: 4rem;
   width: auto;
@@ -217,93 +158,183 @@ body {
   object-fit: contain;
 }
 
-.nav-links {
-  display: none;
+/* --- NEW: Navbar Actions Container --- */
+/* Wraps the greeting and toggle button so they stay together */
+.navbar-actions {
+  display: flex;
   align-items: center;
-  gap: 2rem;
-  list-style: none;
-}
-@media (min-width: 768px) {
-  .nav-links { display: flex; }
+  gap: 1rem;
+  z-index: 52; /* Ensure buttons stay above mobile menu */
 }
 
-.nav-link {
-  color: var(--navbar-text); /* Uses light theme variable */
-  text-decoration: none;
-  transition: color 0.3s ease;
-  font-size: 0.875rem;
-  font-weight: 600
-}
-
-.nav-link:hover {
-  color: var(--navbar-text-hover); /* Keep red text on hover */
-  background-color: var(--bg-secondary); /* Add very light gray background */
-  border-radius: var(--border-radius-lg); /* Optional: add rounding */
-  /* Adjust padding slightly if adding background */
-  padding: 0.3rem 0.6rem;
-  margin: -0.3rem -0.6rem; /* Negative margin to keep alignment */
-}
-
-/* Register/Signup Button uses light theme variable */
-.nav-link.register-link {
-  background: var(--gradient-button);
-  color: var(--text-on-gradient);
-  padding: 0.5rem 1.5rem;
-  border-radius: var(--border-radius-full);
-  transition: all 0.3s ease;
-  font-weight: 500;
-  border: 2px solid var(--primary-red-medium);
-}
-.nav-link.register-link:hover {
-  box-shadow: var(--shadow-button-hover); /* Keep shadow */
-  transform: scale(1.05);
-  /* Optional: Slightly lighten background on hover */
-  background: linear-gradient(to right, #FB7185, #F43F5E);
-}
-
+/* Mobile Toggle Button */
 .mobile-nav-toggle {
   display: block;
-  color: var(--navbar-text); /* Uses light theme variable */
+  color: var(--navbar-text); 
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.5rem; /* Make hamburger icon slightly larger */
+  font-size: 1.75rem; /* Larger click target */
   line-height: 1;
+  padding: 0.5rem;
+  transition: color 0.3s ease;
 }
 .mobile-nav-toggle:hover {
-  color: var(--navbar-text-hover); /* Uses light theme variable */
-}
-@media (min-width: 768px) {
-  .mobile-nav-toggle { display: none; }
+  color: var(--navbar-text-hover); 
 }
 
-/* Show user greeting in Navbar (adjust styling if needed) */
-.user-greeting, .user-greeting-mobile {
-  display: inline-block; /* Changed from none */
-  color: var(--navbar-text);
-  font-size: 0.875rem;
-  margin-right: 1rem; /* Add some spacing */
+/* --- MOBILE NAV LINKS (DEFAULT STATE) --- */
+.nav-links {
+  display: none; /* Hidden by default on mobile */
+  flex-direction: column;
+  position: absolute;
+  top: 100%; /* Directly below navbar */
+  left: 0;
+  right: 0; /* Span full width */
+  width: 100%;
+  background-color: white; /* Solid background to cover content */
+  border-bottom: 1px solid var(--border-primary);
+  padding: 1.5rem 1rem;
+  gap: 1.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  list-style: none;
+  z-index: 1000; /* Very high z-index to float over EVERYTHING */
+  align-items: center;
+  pointer-events: auto; /* Ensure links are clickable */
+}
+
+/* --- MOBILE NAV LINKS (OPEN STATE) --- */
+.nav-links.open {
+  display: flex !important; /* Force display when open class is present */
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Link Styles */
+.nav-link {
+  color: var(--navbar-text); 
+  text-decoration: none;
+  transition: color 0.3s ease;
+  font-size: 1.1rem; /* Slightly larger on mobile for touch targets */
   font-weight: 600;
-}
-@media (min-width: 768px) {
-  .user-greeting-mobile { display: none; } /* Hide mobile greeting on desktop */
-}
-@media (max-width: 767px) {
-  .user-greeting { display: none; } /* Hide desktop greeting on mobile */
-  .navbar-actions { display: flex; align-items: center; gap: 1rem; } /* Align mobile greeting and toggle */
+  display: block;
+  padding: 0.5rem 0;
+  width: 100%;
+  text-align: center;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
-.logout-btn {
-   color: var(--navbar-text); /* Uses light theme variable */
-   font-size: 0.875rem;
-   background: none;
-   border: none;
-   cursor: pointer;
-   padding: 0; /* Remove padding if it looks like a link */
-   font-weight: 600;
+.nav-link:hover {
+  color: var(--navbar-text-hover); 
+  background-color: var(--bg-secondary); 
+  border-radius: 8px;
 }
-.logout-btn:hover {
-  color: var(--navbar-text-hover); /* Uses light theme variable */
+
+/* Register/Signup Button specific styling */
+.nav-link.register-link {
+  background: var(--gradient-button);
+  color: var(--text-on-gradient);
+  padding: 0.8rem 2rem;
+  border-radius: var(--border-radius-full);
+  text-align: center;
+  width: 100%;
+  max-width: 250px;
+  border: 2px solid var(--primary-red-medium);
+}
+.nav-link.register-link:hover {
+  box-shadow: var(--shadow-button-hover);
+  transform: scale(1.05);
+}
+
+/* Mobile Greeting */
+.user-greeting-mobile {
+  display: inline-block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.user-greeting {
+    display: none; /* Hidden on mobile, shown on desktop */
+}
+
+/* --- DESKTOP STYLES (Over 768px) --- */
+@media (min-width: 768px) {
+  /* Hide Mobile Elements */
+  .mobile-nav-toggle { display: none; }
+  .user-greeting-mobile { display: none; }
+  
+  /* Show Desktop Greeting */
+  .user-greeting {
+      display: inline-block;
+      color: var(--navbar-text);
+      font-size: 0.875rem;
+      margin-right: 1rem;
+      font-weight: 600;
+  }
+
+  /* Reset Nav Links layout for Desktop Row */
+  .nav-links {
+    display: flex; /* Always visible */
+    flex-direction: row;
+    position: static;
+    width: auto;
+    height: auto;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    gap: 2rem;
+    animation: none;
+    z-index: auto;
+    transform: none;
+  }
+  
+  /* Ensure .open class doesn't mess up desktop layout */
+  .nav-links.open {
+    display: flex;
+    flex-direction: row;
+    position: static;
+    box-shadow: none;
+    animation: none;
+  }
+
+  /* Desktop specific link styling */
+  .nav-link {
+    font-size: 0.875rem;
+    padding: 0.3rem 0.6rem;
+    width: auto;
+  }
+  
+  .nav-link.register-link {
+     width: auto;
+     padding: 0.5rem 1.5rem;
+  }
+
+  .nav-link:hover {
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius-lg);
+    margin: 0; 
+  }
+  
+  /* Active State Line (Desktop Only) */
+  .nav-links a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--text-accent);
+  }
+  
+  .nav-links .logout-btn.active::after { display: none; }
 }
 
 
