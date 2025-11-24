@@ -4,32 +4,20 @@ import React, { useState, useEffect, useCallback } from 'react';
 import adminService from '../../services/adminService';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Pagination from '../../components/Pagination';
-import '../../styles/AdminDashboard.css'; // Reusing some styles
+import '../../styles/AdminDashboard.css'; 
 
 // --- HELPER FUNCTION TO FIX DATES ---
 const formatDate = (dateString) => {
-  if (!dateString) {
-    return 'N/A';
-  }
+  if (!dateString) return 'N/A';
   try {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return 'Invalid Date';
-    }
-    // Using a clear, consistent format
+    if (isNaN(date.getTime())) return 'Invalid Date';
     return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: true
     });
-  } catch (e) {
-    return 'Invalid Date';
-  }
+  } catch (e) { return 'Invalid Date'; }
 };
-// --- END HELPER FUNCTION ---
 
 const SecurityCompliance = () => {
   const [users, setUsers] = useState([]);
@@ -89,36 +77,40 @@ const SecurityCompliance = () => {
             />
           </div>
         </div>
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Status</th>
-              <th>Last Login</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(user => (
-              <tr key={user.user_id}>
-                <td>
-                  <div>{user.username}</div>
-                  <div className="text-muted">{user.email}</div>
-                </td>
-                <td>
-                  <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
-                    {user.is_active ? 'Active' : 'Suspended'}
-                  </span>
-                </td>
-                {/* --- APPLYING DATE FIX HERE --- */}
-                <td>{formatDate(user.last_login)}</td>
-                <td>
-                  <button className="action-button" onClick={() => handleViewDetails(user)}>View Details</button>
-                </td>
+        
+        {/* Main Table Wrapper */}
+        <div className="table-responsive">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Status</th>
+                <th>Last Login</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map(user => (
+                <tr key={user.user_id}>
+                  <td>
+                    <div>{user.username}</div>
+                    <div className="text-muted">{user.email}</div>
+                  </td>
+                  <td>
+                    <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
+                      {user.is_active ? 'Active' : 'Suspended'}
+                    </span>
+                  </td>
+                  <td>{formatDate(user.last_login)}</td>
+                  <td>
+                    <button className="action-button" onClick={() => handleViewDetails(user)}>View Details</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        
         <Pagination {...pagination} onPageChange={handlePageChange} />
       </div>
 
@@ -133,7 +125,7 @@ const SecurityCompliance = () => {
   );
 };
 
-// Modal component for displaying security details
+// Modal component
 const SecurityDetailsModal = ({ user, onClose, onUpdate }) => {
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -163,7 +155,6 @@ const SecurityDetailsModal = ({ user, onClose, onUpdate }) => {
     }
   };
 
-  // Helper function to safely truncate text
   const truncate = (text, length = 40) => {
     if (text && typeof text === 'string') {
       return text.length > length ? text.substring(0, length) + '...' : text;
@@ -192,13 +183,13 @@ const SecurityDetailsModal = ({ user, onClose, onUpdate }) => {
           <div className="security-details-grid">
             <div className="detail-section">
               <h4>Recent Login Activity</h4>
+              {/* The CSS fix now makes this scroll horizontally */}
               <div className="table-wrapper">
                 <table className="mini-table">
                   <thead><tr><th>Time</th><th>IP Address</th><th>Device</th></tr></thead>
                   <tbody>
                     {details.login_history.map(log => (
                       <tr key={log.id} className={log.is_suspicious ? 'suspicious' : ''}>
-                        {/* --- APPLYING DATE FIX HERE --- */}
                         <td>{formatDate(log.time)}</td>
                         <td>{log.ip_address || 'N/A'}</td>
                         <td title={log.user_agent || 'Not Available'}>{truncate(log.user_agent)}</td>
@@ -210,14 +201,13 @@ const SecurityDetailsModal = ({ user, onClose, onUpdate }) => {
             </div>
 
             <div className="detail-section">
-              <h4>Active Sessions (Multi-Login)</h4>
+              <h4>Active Sessions</h4>
                <div className="table-wrapper">
                 <table className="mini-table">
                   <thead><tr><th>Last Activity</th><th>IP Address</th><th>Device</th></tr></thead>
                   <tbody>
                     {details.active_sessions.map(s => (
                       <tr key={s.id}>
-                        {/* --- APPLYING DATE FIX HERE --- */}
                         <td>{formatDate(s.last_activity)}</td>
                         <td>{s.ip_address || 'N/A'}</td>
                         <td title={s.user_agent || 'Not Available'}>{truncate(s.user_agent)}</td>
@@ -236,7 +226,6 @@ const SecurityDetailsModal = ({ user, onClose, onUpdate }) => {
                   <tbody>
                     {details.audit_trail.map(log => (
                       <tr key={log.id}>
-                        {/* --- APPLYING DATE FIX HERE --- */}
                         <td>{formatDate(log.time)}</td>
                         <td>{log.action}</td>
                         <td title={log.description}>{truncate(log.description)}</td>

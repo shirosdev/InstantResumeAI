@@ -1,7 +1,7 @@
 // src/pages/AdminDashboard.jsx
 
 import React, { useState, useEffect } from 'react';
-import { NavLink, Routes, Route, Outlet } from 'react-router-dom';
+import { NavLink, Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import adminService from '../services/adminService';
 import '../styles/AdminDashboard.css';
 import SystemMonitoring from './admin/SystemMonitoring';
@@ -14,15 +14,7 @@ import SecurityCompliance from './admin/SecurityCompliance';
 import Support from './admin/Support';
 import AdminActions from './admin/AdminActions';
 import SubscriptionBilling from './admin/SubscriptionBilling';
-
-const AdminPlaceholder = ({ title }) => (
-  <div>
-    <div className="dashboard-header" style={{textAlign: 'left', maxWidth: 'none', marginLeft: 0}}>
-        <h1>{title}</h1>
-    </div>
-    <p>Content for the {title.toLowerCase()} section will be implemented here.</p>
-  </div>
-);
+import VisitorAnalytics from './admin/VisitorAnalytics';
 
 const adminNavLinks = [
   { title: 'Overview', path: '/admin', end: true },
@@ -34,28 +26,33 @@ const adminNavLinks = [
   { title: 'Support', path: '/admin/support' },
   { title: 'Admin Actions', path: '/admin/actions' },
   { title: 'Visitor Analytics', path: '/admin/analytics' },
-  
 ];
 
-// This is the main layout component that fetches and holds the stats
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unresolvedCount, setUnresolvedCount] = useState(0);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // State for mobile sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
 
-  // --- RECTIFIED useEffect ---
+  // Close sidebar automatically when route changes (mobile UX)
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location]);
+
+  // Fetch Data
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        // Fetch user stats and ticket count at the same time
         const [statsRes, countRes] = await Promise.all([
           adminService.getDashboardStats(),
-          adminService.getUnresolvedTicketCount() // <-- Call the new function
+          adminService.getUnresolvedTicketCount()
         ]);
         
         setStats(statsRes.data);
-        setUnresolvedCount(countRes.data.unresolved_count); // <-- Set the count
+        setUnresolvedCount(countRes.data.unresolved_count); 
 
       } catch (err) {
         console.error("Failed to load admin data", err);
@@ -65,50 +62,21 @@ const AdminDashboard = () => {
     };
     
     fetchAllData();
-  }, []); // Empty array, runs once on mount
-  // --- END RECTIFICATION ---
-
-  // Toggle mobile menu
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  // Close mobile menu when clicking overlay
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
-  // Close mobile menu when screen size changes to desktop
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 768) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return (
     <div className="admin-layout">
-      {/* Mobile Menu Toggle Button */}
+      {/* FIXED: Updated class name to 'admin-mobile-toggle' to match CSS.
+        This ensures it is hidden on desktop (display: none) and visible on mobile.
+      */}
       <button 
-        className="mobile-menu-toggle" 
-        onClick={toggleMobileMenu}
-        aria-label="Toggle menu"
+        className="admin-mobile-toggle"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        aria-label="Toggle Admin Menu"
       >
-        <svg 
-          width="24" 
-          height="24" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        >
-          {isMobileMenuOpen ? (
+        {/* Hamburger Icon */}
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {isSidebarOpen ? (
             <>
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -123,24 +91,26 @@ const AdminDashboard = () => {
         </svg>
       </button>
 
-      {/* Overlay for mobile */}
+      {/* FIXED: Updated class name to 'admin-sidebar-overlay' to match CSS.
+      */}
       <div 
-        className={`sidebar-overlay ${isMobileMenuOpen ? 'active' : ''}`}
-        onClick={closeMobileMenu}
-      ></div>
+        className={`admin-sidebar-overlay ${isSidebarOpen ? 'open' : ''}`}
+        onClick={() => setIsSidebarOpen(false)}
+      />
 
-      <aside className={`admin-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
+      {/* Sidebar */}
+      <aside className={`admin-sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-section">
+          {/* Mobile Header (Optional, visible only on mobile via CSS) */}
+          <div className="sidebar-header-mobile">
+             <h3>Admin Panel</h3>
+          </div>
+          
           <ul className="sidebar-links">
             {adminNavLinks.map((link) => (
               <li key={link.path}>
-                <NavLink 
-                  to={link.path} 
-                  end={link.end}
-                  onClick={closeMobileMenu}
-                >
+                <NavLink to={link.path} end={link.end}>
                   <span>{link.title}</span>
-                  {/* --- FIX: Check title, not key --- */}
                   {link.title === 'Support' && unresolvedCount > 0 && (
                     <span className="notification-badge">{unresolvedCount}</span>
                   )}
@@ -150,14 +120,13 @@ const AdminDashboard = () => {
           </ul>
         </div>
       </aside>
+
       <main className="admin-content">
-        {/* Pass stats and loading state to the child routes via Outlet context */}
         <Outlet context={{ stats, loading }} />
       </main>
     </div>
   );
 };
-
 
 const AdminRoutes = () => {
     return (
@@ -165,14 +134,13 @@ const AdminRoutes = () => {
             <Route path="/" element={<AdminDashboard />}>
                 <Route index element={<AdminOverview />} />
                 <Route path="user-management" element={<UserManagement />} />
-                
                 <Route path="security" element={<SecurityCompliance />} />
                 <Route path="billing" element={<SubscriptionBilling />} />
                 <Route path="usage-tracking" element={<UsageTracking />} />
-                
                 <Route path="monitoring" element={<SystemMonitoring />} />
                 <Route path="support" element={<Support />} />
                 <Route path="actions" element={<AdminActions />} />
+                <Route path="analytics" element={<VisitorAnalytics />} />
             </Route>
         </Routes>
     )

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import adminService from '../../services/adminService';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import '../../styles/AdminDashboard.css'; // Reusing some styles
+import '../../styles/AdminDashboard.css';
 
 const SystemMonitoring = () => {
   const [data, setData] = useState(null);
@@ -24,13 +24,8 @@ const SystemMonitoring = () => {
     fetchData();
   }, []);
 
-  if (loading) {
-    return <LoadingSpinner message="Loading System Data..." />;
-  }
-
-  if (error) {
-    return <div className="error-message">{error}</div>;
-  }
+  if (loading) return <LoadingSpinner message="Loading System Data..." />;
+  if (error) return <div className="error-message">{error}</div>;
 
   const { api_health, job_processing, external_services } = data;
 
@@ -43,7 +38,7 @@ const SystemMonitoring = () => {
       {/* API Health Section */}
       <div className="admin-table-container" style={{ marginBottom: '2rem' }}>
         <h3>API Health (Last 24 Hours)</h3>
-        <div className="dashboard-stats admin-stats" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: '1.5rem' }}>
+        <div className="dashboard-stats admin-stats" style={{ marginBottom: '1.5rem' }}>
           <div className="stat-card">
             <h3>Avg. Response Time</h3>
             <p className="stat-number">{api_health.avg_response_time} ms</p>
@@ -54,30 +49,33 @@ const SystemMonitoring = () => {
           </div>
         </div>
         <h4>Slowest Endpoints</h4>
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Method</th>
-              <th>Endpoint</th>
-              <th>Avg. Response Time (ms)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {api_health.slowest_endpoints.map((ep, i) => (
-              <tr key={i}>
-                <td>{ep.method}</td>
-                <td>{ep.endpoint}</td>
-                <td>{ep.avg_time}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* UPDATED: Use table-responsive for full view with horizontal scroll */}
+        <div className="table-responsive">
+            <table className="admin-table">
+            <thead>
+                <tr>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Avg. Response Time (ms)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {api_health.slowest_endpoints.map((ep, i) => (
+                <tr key={i}>
+                    <td>{ep.method}</td>
+                    <td>{ep.endpoint}</td>
+                    <td>{ep.avg_time}</td>
+                </tr>
+                ))}
+            </tbody>
+            </table>
+        </div>
       </div>
 
       {/* Job Processing Section */}
       <div className="admin-table-container" style={{ marginBottom: '2rem' }}>
         <h3>Background Job Processing</h3>
-        <div className="dashboard-stats admin-stats" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '1.5rem' }}>
+        <div className="dashboard-stats admin-stats" style={{ marginBottom: '1.5rem' }}>
           <div className="stat-card">
             <h3>Completed</h3>
             <p className="stat-number">{job_processing.status_counts.completed || 0}</p>
@@ -92,53 +90,57 @@ const SystemMonitoring = () => {
           </div>
         </div>
         <h4>Recent Failures</h4>
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Job ID</th>
-              <th>User ID</th>
-              <th>Failed At</th>
-            </tr>
-          </thead>
-          <tbody>
-             {job_processing.recent_failures.length > 0 ? job_processing.recent_failures.map(job => (
-              <tr key={job.enhancement_id}>
-                <td>{job.enhancement_id}</td>
-                <td>{job.user_id}</td>
-                <td>{new Date(job.failed_at).toLocaleString()}</td>
-              </tr>
-            )) : (
-              <tr><td colSpan="3" style={{textAlign: 'center'}}>No recent failures.</td></tr>
-            )}
-          </tbody>
-        </table>
+        {/* UPDATED: Use table-responsive */}
+        <div className="table-responsive">
+            <table className="admin-table">
+            <thead>
+                <tr>
+                <th>Job ID</th>
+                <th>User ID</th>
+                <th>Failed At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {job_processing.recent_failures.length > 0 ? job_processing.recent_failures.map(job => (
+                <tr key={job.enhancement_id}>
+                    <td>{job.enhancement_id}</td>
+                    <td>{job.user_id}</td>
+                    <td>{new Date(job.failed_at).toLocaleString()}</td>
+                </tr>
+                )) : (
+                <tr><td colSpan="3" style={{textAlign: 'center'}}>No recent failures.</td></tr>
+                )}
+            </tbody>
+            </table>
+        </div>
       </div>
       
        {/* External Services Section */}
       <div className="admin-table-container">
           <h3>External Service Status</h3>
-           <table className="admin-table">
-              <thead>
-                <tr>
-                    <th>Service</th>
-                    <th>Status</th>
-                    <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                    <td>OpenAI API</td>
-                    <td>
-                        <span className={`status-badge ${external_services.openai_api.indicator === 'operational' ? 'active' : 'inactive'}`}>
-                            {external_services.openai_api.indicator}
-                        </span>
-                    </td>
-                    <td>{external_services.openai_api.description}</td>
-                </tr>
-              </tbody>
-           </table>
+           <div className="table-responsive">
+             <table className="admin-table">
+                <thead>
+                  <tr>
+                      <th>Service</th>
+                      <th>Status</th>
+                      <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                      <td>OpenAI API</td>
+                      <td>
+                          <span className={`status-badge ${external_services.openai_api.indicator === 'operational' ? 'active' : 'inactive'}`}>
+                              {external_services.openai_api.indicator}
+                          </span>
+                      </td>
+                      <td>{external_services.openai_api.description}</td>
+                  </tr>
+                </tbody>
+             </table>
+           </div>
       </div>
-
     </div>
   );
 };

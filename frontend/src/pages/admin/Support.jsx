@@ -1,18 +1,15 @@
 // src/pages/admin/Support.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-// We no longer need useAuth
 import adminService from '../../services/adminService';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import '../../styles/AdminDashboard.css';
-import '../../styles/SupportThread.css'; // We can keep this for other styles if needed
+import '../../styles/SupportThread.css';
 
 const Support = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  // We no longer need selectedTicketId
-  // const [selectedTicketId, setSelectedTicketId] = useState(null);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -31,7 +28,6 @@ const Support = () => {
   }, [fetchTickets]);
 
   const handleResolve = async (ticketId) => {
-    // Add a confirmation before resolving
     if (window.confirm('Are you sure you have resolved this ticket via email?')) {
       try {
         await adminService.resolveSupportTicket(ticketId);
@@ -42,74 +38,64 @@ const Support = () => {
     }
   };
 
-  if (loading) {
-    return <LoadingSpinner message="Loading support tickets..." />;
-  }
-
-  if (error) {
-    return <div className="error-message">{error}</div>;
-  }
+  if (loading) return <LoadingSpinner message="Loading support tickets..." />;
+  if (error) return <div className="error-message">{error}</div>;
 
   return (
     <div>
       <div className="dashboard-header" style={{ textAlign: 'left', maxWidth: 'none', marginLeft: 0 }}>
         <h1>Support Tickets</h1>
         <p style={{color: 'var(--text-secondary)', fontSize: '1rem', textAlign: 'left', margin: 0}}>
-          Reply to user queries from your admin email (info@instantresumeai.com). Mark tickets as "Resolved" here when done.
+          Reply to user queries from your admin email. Mark tickets as "Resolved" here when done.
         </p>
       </div>
       
       <div className="admin-table-container">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Submitted</th>
-              <th>Resolved</th>
-              <th>From</th>
-              <th>Email (Reply-To)</th>
-              <th>Subject</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tickets.map(ticket => (
-              <tr key={ticket.id}>
-                <td>{new Date(ticket.submitted_at).toLocaleString()}</td>
-                <td>{ticket.resolved_at ? new Date(ticket.resolved_at).toLocaleString() : 'N/A'}</td>
-                <td>{ticket.name}</td>
-                {/* Add email as a dedicated column */}
-                <td><a href={`mailto:${ticket.email}`}>{ticket.email}</a></td>
-                
-                {/* Add a title attribute to see the full message on hover */}
-                <td title={`Message: ${ticket.message}`}>
-                  {ticket.subject}
-                </td>
-                
-                <td>
-                  <span className={`status-badge ${ticket.status === 'resolved' ? 'active' : 'inactive'}`}>
-                    {ticket.status}
-                  </span>
-                </td>
-                <td>
-                  {/* REMOVED the "View Thread" button */}
-                  {ticket.status === 'unresolved' && (
-                    <button className="action-button success" onClick={() => handleResolve(ticket.id)}>
-                      Mark as Resolved
-                    </button>
-                  )}
-                </td>
+        {/* --- WRAPPER ADDED HERE --- */}
+        <div className="table-responsive">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Submitted</th>
+                <th>Resolved</th>
+                <th>From</th>
+                <th>Email (Reply-To)</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {tickets.map(ticket => (
+                <tr key={ticket.id}>
+                  <td>{new Date(ticket.submitted_at).toLocaleString()}</td>
+                  <td>{ticket.resolved_at ? new Date(ticket.resolved_at).toLocaleString() : 'N/A'}</td>
+                  <td>{ticket.name}</td>
+                  <td><a href={`mailto:${ticket.email}`}>{ticket.email}</a></td>
+                  <td title={`Message: ${ticket.message}`}>
+                    {ticket.subject}
+                  </td>
+                  <td>
+                    <span className={`status-badge ${ticket.status === 'resolved' ? 'active' : 'inactive'}`}>
+                      {ticket.status}
+                    </span>
+                  </td>
+                  <td>
+                    {ticket.status === 'unresolved' && (
+                      <button className="action-button success" onClick={() => handleResolve(ticket.id)}>
+                        Mark as Resolved
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* --- END WRAPPER --- */}
       </div>
-
-      {/* REMOVED the TicketThreadModal component */}
     </div>
   );
 };
-
-// --- REMOVED THE ENTIRE TicketThreadModal COMPONENT ---
 
 export default Support;
