@@ -25,7 +25,6 @@ const adminNavLinks = [
   { title: 'System Monitoring', path: '/admin/monitoring' },
   { title: 'Support', path: '/admin/support' },
   { title: 'Admin Actions', path: '/admin/actions' },
-  { title: 'Visitor Analytics', path: '/admin/analytics' },
 ];
 
 const AdminDashboard = () => {
@@ -140,7 +139,6 @@ const AdminRoutes = () => {
                 <Route path="monitoring" element={<SystemMonitoring />} />
                 <Route path="support" element={<Support />} />
                 <Route path="actions" element={<AdminActions />} />
-                <Route path="analytics" element={<VisitorAnalytics />} />
             </Route>
         </Routes>
     )
