@@ -55,9 +55,9 @@ const BlogPost = () => {
 
         {!loading && !error && post && (
           <article className="blog-post-article">
-            {post.thumbnail && (
-              <img src={post.thumbnail} alt={post.title} className="blog-post-thumbnail" />
-            )}
+            {/* No separate hero image here - the post's own content already
+                opens with its lead image; showing post.thumbnail too would
+                duplicate it. Thumbnail is used only on the card/list view. */}
             <h1>{post.title}</h1>
             <p className="blog-date">{formatDate(post.published)}</p>
             {post.categories && post.categories.length > 0 && (
