@@ -9,6 +9,7 @@ this uses Blogger's public JSON feed, which works for any public blog.
 import os
 import time
 import re
+import threading
 import requests
 import bleach
 from flask import Blueprint, jsonify
@@ -172,3 +173,34 @@ def get_post(post_id):
     except requests.RequestException as e:
         print(f"Blog feed fetch error: {e}")
         return jsonify({'message': 'Unable to load this post right now.'}), 502
+
+
+# --- Keep the cache warm even with zero visitors -----------------------
+# _fetch_posts() above only hits Blogger when a request comes in, so a
+# quiet blog would otherwise only refresh on the next actual visit. That's
+# harmless for real visitors (their own request triggers a fresh fetch),
+# but this background loop refreshes proactively every CACHE_TTL_SECONDS
+# regardless of traffic - useful for SEO crawlers and so the very first
+# visitor after a quiet period never has to wait on a slow Blogger call.
+_refresher_started = False
+
+
+def _background_refresh_loop():
+    while True:
+        time.sleep(CACHE_TTL_SECONDS)
+        try:
+            _fetch_posts(force=True)
+            print("Blog cache refreshed in background")
+        except requests.RequestException as e:
+            print(f"Background blog refresh failed: {e}")
+
+
+def _start_background_refresher():
+    global _refresher_started
+    if _refresher_started:
+        return
+    _refresher_started = True
+    threading.Thread(target=_background_refresh_loop, daemon=True).start()
+
+
+_start_background_refresher()
