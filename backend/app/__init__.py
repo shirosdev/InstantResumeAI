@@ -55,7 +55,8 @@ def create_app():
     CORS(app, 
      resources={r"/api/*": {"origins": [
          "https://frontend-production-d76f.up.railway.app",
-         "https://www.instantresumeai.com"
+         "https://www.instantresumeai.com",
+         "https://instantresumeai.com"
      ]}},
         allow_headers=["Content-Type", "Authorization", "Accept"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
