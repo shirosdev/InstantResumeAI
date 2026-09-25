@@ -56,18 +56,28 @@ def _extract_link(entry):
     return BLOGGER_BLOG_URL
 
 
-# Blogger CDN image URLs encode their size as a path segment, e.g.
-# ".../s72-c/image.jpg" or ".../w400-h300/image.jpg". Replacing that segment
-# re-requests the same image at a different size instead of stretching it.
-_BLOGGER_SIZE_SEGMENT_RE = re.compile(r'/(?:s\d+(?:-c)?|w\d+-h\d+(?:-c)?)/')
+# Blogger CDN image URLs encode size as a path segment. Two shapes matter:
+#   ".../s72-c/image.jpg"            - a plain thumbnail, s72 = 72px cap
+#   ".../s72-w640-h426-c/image.jpg"  - a crop, but the leading "s72" STILL
+#                                      caps the source at 72px before the
+#                                      640x426 crop is applied, so the crop
+#                                      is upscaled from a tiny image and
+#                                      comes out blurry. Bumping that number
+#                                      (not removing the segment) keeps the
+#                                      same crop but removes the low-res cap.
 _FIRST_IMG_SRC_RE = re.compile(r'<img[^>]+src=["\']([^"\']+)["\']', re.IGNORECASE)
+_CAPPED_CROP_RE = re.compile(r'/s\d+-(w\d+-h\d+-c)/')
+_PLAIN_SIZE_RE = re.compile(r'/s\d+(-c)?/')
 
 
-def _resize_blogger_image(url, size='s640'):
+def _resize_blogger_image(url, size='s1600'):
     if not url:
         return None
-    if _BLOGGER_SIZE_SEGMENT_RE.search(url):
-        return _BLOGGER_SIZE_SEGMENT_RE.sub(f'/{size}/', url, count=1)
+    capped_crop = _CAPPED_CROP_RE.search(url)
+    if capped_crop:
+        return _CAPPED_CROP_RE.sub(f'/{size}-{capped_crop.group(1)}/', url, count=1)
+    if _PLAIN_SIZE_RE.search(url):
+        return _PLAIN_SIZE_RE.sub(f'/{size}/', url, count=1)
     return url
 
 
