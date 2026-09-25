@@ -103,6 +103,11 @@ const Navbar = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/blog" className="nav-link" onClick={closeMobileMenu}>
+                  Blog
+                </Link>
+              </li>
+              <li>
                 <Link to="/profile" className="nav-link" onClick={closeMobileMenu}>
                   Profile
                 </Link>
@@ -145,6 +150,11 @@ const Navbar = () => {
               <li>
                 <Link to="/investors" className="nav-link" onClick={closeMobileMenu}>
                   Investors
+                </Link>
+              </li>
+              <li>
+                <Link to="/blog" className="nav-link" onClick={closeMobileMenu}>
+                  Blog
                 </Link>
               </li>
               
