@@ -92,12 +92,14 @@ def create_app():
     from app.routes.contact import contact_bp
     from app.routes.admin import admin_bp
     from app.routes.billing import billing_bp
+    from app.routes.blog import blog_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(resume_bp, url_prefix='/api/resume')
     app.register_blueprint(contact_bp, url_prefix='/api/contact')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(billing_bp, url_prefix='/api/billing')
+    app.register_blueprint(blog_bp, url_prefix='/api/blog')
 
     # JWT error handlers
     @jwt.invalid_token_loader
