@@ -56,11 +56,31 @@ def _extract_link(entry):
     return BLOGGER_BLOG_URL
 
 
-def _extract_thumbnail(entry):
+# Blogger CDN image URLs encode their size as a path segment, e.g.
+# ".../s72-c/image.jpg" or ".../w400-h300/image.jpg". Replacing that segment
+# re-requests the same image at a different size instead of stretching it.
+_BLOGGER_SIZE_SEGMENT_RE = re.compile(r'/(?:s\d+(?:-c)?|w\d+-h\d+(?:-c)?)/')
+_FIRST_IMG_SRC_RE = re.compile(r'<img[^>]+src=["\']([^"\']+)["\']', re.IGNORECASE)
+
+
+def _resize_blogger_image(url, size='s640'):
+    if not url:
+        return None
+    if _BLOGGER_SIZE_SEGMENT_RE.search(url):
+        return _BLOGGER_SIZE_SEGMENT_RE.sub(f'/{size}/', url, count=1)
+    return url
+
+
+def _extract_thumbnail(entry, raw_content=''):
+    # Prefer the first full-resolution image actually embedded in the post -
+    # Blogger's own media$thumbnail is a tiny 72x72 crop that looks blurry
+    # when stretched up for the card view.
+    match = _FIRST_IMG_SRC_RE.search(raw_content or '')
+    if match:
+        return _resize_blogger_image(match.group(1))
     thumb = entry.get('media$thumbnail', {}).get('url')
     if thumb:
-        # Blogger thumbnails default to tiny (72x72) — request a larger crop.
-        return re.sub(r'/s72-c/', '/s640/', thumb)
+        return _resize_blogger_image(thumb)
     return None
 
 
@@ -86,7 +106,7 @@ def _parse_entry(entry):
         'updated': entry.get('updated', {}).get('$t'),
         'excerpt': _make_excerpt(pre_stripped),
         'content': clean_content,
-        'thumbnail': _extract_thumbnail(entry),
+        'thumbnail': _extract_thumbnail(entry, raw_content),
         'url': _extract_link(entry),
         'categories': categories,
     }
